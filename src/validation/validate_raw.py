@@ -6,8 +6,15 @@ import statistics
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
+import sys
 from urllib.parse import urlparse
-from src.crawler.config import ARTICLE_OUTPUT
+from src.crawler.crawler import ARTICLE_OUTPUT
+
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 logger = logging.getLogger(__name__)
 

@@ -5,9 +5,13 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 
-from src.crawler.article import ArticleCrawler
-from src.crawler.config import CATEGORIES, RSS_FEEDS, SITEMAP_URLS
-from src.crawler.sitemap import SitemapCrawler
+from src.crawler.crawler import (
+    CATEGORIES,
+    RSS_FEEDS,
+    SITEMAP_URLS,
+    ArticleCrawler,
+    SitemapCrawler,
+)
 from src.eda.text_statistics import sentence_count, word_count
 from src.organization.category_organizer import (
     CANONICAL_CATEGORIES,

@@ -221,21 +221,12 @@ ADY201m Project/
 Mỗi hàm trong mã nguồn được chú thích bằng 1 dòng comment `#` súc tích; tài liệu kỹ thuật tập trung được liệt kê tại đây:
 
 #### 1. Module Thu thập Dữ liệu (`src/crawler/`)
-- [`src/crawler/article.py`](src/crawler/article.py):
-  - `clean_text(text: str | None) -> str`: Chuẩn hóa khoảng trắng và làm sạch chuỗi thô.
-  - `fetch_html(url: str, session: requests.Session) -> str`: Tải nội dung HTML với cơ chế retry và header giả lập trình duyệt.
-  - `parse_article_html(html: str, url: str) -> dict`: Trích xuất 12 trường cấu trúc bài viết (tiêu đề, mô tả, nội dung, tác giả, thời gian xuất bản, chuyên mục, ID).
-  - `extract_author(soup: BeautifulSoup) -> str | None`: Định vị tác giả ở cuối bài báo trước `#article-end` có thuộc tính `align="right"`.
-  - `extract_article_id(soup: BeautifulSoup, url: str) -> str`: Trích xuất ID bài viết từ meta tags hoặc đường dẫn URL.
 - [`src/crawler/crawler.py`](src/crawler/crawler.py):
-  - `crawl_feed(feed_url: str, category_name: str, limit: int) -> list[dict]`: Thu thập tin tức từ luồng RSS theo chuyên mục.
-  - `main()`: Điều phối cào đồng thời 5 chuyên mục mục tiêu và lưu vào `data/raw/articles.jsonl`.
-- [`src/crawler/rss.py`](src/crawler/rss.py):
-  - `parse_feed(url: str) -> list[dict]`: Bóc tách danh sách tin bài từ tài liệu XML RSS.
-- [`src/crawler/sitemap.py`](src/crawler/sitemap.py):
-  - `parse_sitemap(sitemap_url: str) -> list[str]`: Bóc tách danh sách URL bài báo từ XML sitemap chính thức của VnExpress.
-- [`src/crawler/config.py`](src/crawler/config.py):
-  - Cấu hình thông số mạng, headers HTTP, URL RSS của 5 chuyên mục và các giới hạn thu thập.
+  - `fetch_url(url: str, retries: int, delay: float) -> str`: Tải trang với cơ chế retry và header giả lập trình duyệt.
+  - `ArticleCrawler`: Bóc tách 12 trường cấu trúc bài viết (tiêu đề, mô tả, nội dung, tác giả, thời gian xuất bản, chuyên mục, ID).
+  - `RSSCrawler`: Bóc tách và quét danh sách tin bài từ luồng RSS của 5 chuyên mục mục tiêu.
+  - `SitemapCrawler`: Bóc tách danh sách URL bài báo từ XML sitemap của VnExpress.
+  - `main()`: Điều phối cào cân bằng 5 chuyên mục mục tiêu và lưu vào `data/raw/articles.jsonl`.
 
 #### 2. Module Kiểm định Chất lượng (`src/validation/`)
 - [`src/validation/validate_raw.py`](src/validation/validate_raw.py):
