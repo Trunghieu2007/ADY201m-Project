@@ -1,8 +1,6 @@
 {
-  "phase": "Phase 3 — Data Preprocessing & Feature Engineering",
-  "version": "1.0",
+  "phase": "Phase T — Data Cleaning & Descriptive Feature Transformation",
   "raw_input": "data/raw/articles.jsonl",
-  "raw_sha256": "8f86ceb25c2b1ef605b235618ff425870e97aab05a50ca7cd5be0877ef0b5abc",
   "processed_output": "data/processed/articles_processed.jsonl",
   "feature_matrix": "data/processed/feature_matrix.csv",
   "records": 20,
@@ -30,15 +28,20 @@
     "Đầu tư": 14,
     "Đổi mới sáng tạo": 15
   },
-  "transformations": [
-    "Unicode NFC normalization",
-    "conservative removal of exact leading title/description duplication",
-    "whitespace normalization",
-    "URL removal from derived text only",
-    "conservative author normalization in author_clean",
-    "deterministic lexical/text features",
-    "integer encoding for category and subcategory",
-    "one-hot encoding for category and subcategory in feature_matrix.csv"
+  "descriptive_features": [
+    "char_count",
+    "word_count",
+    "sentence_count",
+    "unique_word_count",
+    "lexical_diversity",
+    "avg_word_length",
+    "title_char_count",
+    "title_word_count",
+    "description_char_count",
+    "description_word_count",
+    "title_to_content_word_ratio",
+    "publication_hour",
+    "publication_weekday"
   ],
   "raw_immutable": true
 }

@@ -79,7 +79,7 @@ flowchart TD
     end
 
     subgraph Phase3["3. Tiền xử lý & Chuẩn hóa NFC (Phase 3)"]
-        RawJSONL --> Preprocess["text_cleaning.py (Unicode NFC)\nauthor_cleaning.py"]
+        RawJSONL --> Preprocess["preprocess.py (Unicode NFC & Cleaning)"]
         Preprocess --> ProcessedJSONL[("data/processed/articles_processed.jsonl")]
         Preprocess --> FeatCSV[("data/processed/feature_matrix.csv")]
         Preprocess --> PrepReports["outputs/preprocessing/"]
@@ -268,21 +268,20 @@ Mỗi hàm trong mã nguồn được chú thích bằng 1 dòng comment `#` sú
   - Điều phối toàn bộ quy trình EDA, tạo checklist kiểm định và tóm tắt markdown `outputs/eda_summary/phase2_summary.md`.
 
 #### 4. Module Tiền xử lý & Làm sạch Dữ liệu (`src/preprocessing/`)
-- [`src/preprocessing/text_cleaning.py`](src/preprocessing/text_cleaning.py):
+- [`src/preprocessing/preprocess.py`](src/preprocessing/preprocess.py):
   - `normalize_unicode(text: str) -> str`: Chuẩn hóa văn bản sang bảng mã Unicode NFC.
   - `normalize_text(text: str) -> str`: Loại bỏ URL rác, quy chuẩn khoảng trắng và giữ nguyên dấu câu tiếng Việt.
   - `remove_leading_duplicate_blocks(content, title, description) -> str`: Khử triệt để phần tiêu đề/mô tả lặp lại ở đầu bài viết.
   - `lexical_features(text: str) -> dict`: Tính các đặc trưng thống kê từ vựng xác định.
-- [`src/preprocessing/author_cleaning.py`](src/preprocessing/author_cleaning.py):
   - `normalize_author(author: str | None) -> str | None`: Chuẩn hóa tên tác giả sang trường phái sinh `author_clean`, không ghi đè trường `author` thô.
-- [`src/preprocessing/preprocess.py`](src/preprocessing/preprocess.py):
-  - `preprocess_record(record, category_map, subcategory_map) -> dict`: Tiền xử lý bài viết, tạo `processed_text`, `processed_metadata` và `features`.
-  - `build_feature_matrix(rows) -> tuple[list[str], list[list]]`: Tạo ma trận đặc trưng 13 biến số văn bản kèm one-hot encoding danh mục.
+  - `preprocess_record(record, category_map, subcategory_map) -> dict`: Tiền xử lý bài viết, tạo `processed_text`, `processed_metadata` và `features` (13 chỉ số thống kê mô tả cho CSDL).
+  - `build_feature_matrix(rows) -> tuple[list[str], list[list]]`: Tạo ma trận 13 đặc trưng thống kê mô tả phục vụ trực tiếp bảng `dbo.ArticleFeatures`.
+  - `validate(...) -> dict`: Tự động kiểm tra bảo đảm tính bất biến của dữ liệu gốc và xác nhận tính toàn vẹn của kết quả tiền xử lý (không dùng SHA-256).
   - `run() -> dict`: Điều phối tạo tệp `data/processed/articles_processed.jsonl` và `data/processed/feature_matrix.csv`, lưu manifest vào `outputs/preprocessing/`.
 - [`src/preprocessing/validate_processed.py`](src/preprocessing/validate_processed.py):
-  - `validate() -> dict`: Kiểm tra bảo đảm tính bất biến của dữ liệu gốc, đối soát SHA-256 và xác nhận tính toàn vẹn của kết quả tiền xử lý.
+  - `validate() -> dict`: Điểm kiểm định độc lập cho dữ liệu sau tiền xử lý.
 - [`src/preprocessing/run_preprocessing.py`](src/preprocessing/run_preprocessing.py):
-  - Điều phối thực thi và kiểm định toàn bộ pipeline tiền xử lý.
+  - Điều phối thực thi và kiểm định toàn bộ pipeline tiền xử lý (Phase T).
 
 #### 5. Module Tự động Tổ chức Chuyên mục & Xu hướng Từ khóa (`src/organization/`)
 - [`src/organization/category_organizer.py`](src/organization/category_organizer.py):
