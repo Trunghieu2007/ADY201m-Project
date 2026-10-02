@@ -288,6 +288,9 @@ def main() -> None:
             save_jsonl(CRAWL_LOG_OUTPUT, {"url": url, "status": "failed", "error": str(exc), "timestamp": datetime.now(timezone.utc).isoformat()})
         time.sleep(REQUEST_DELAY)
     logger.info("Hoàn tất: %d thành công, %d thất bại", success, failed)
+    logger.info("Tự động kiểm định chất lượng dữ liệu thô (Phase E)...")
+    from .validate_raw import main as validate_main
+    validate_main()
 
 
 if __name__ == "__main__":
