@@ -54,16 +54,18 @@ CREDIT_REGEX = re.compile(
 # 2. Hàm hỗ trợ tải trang (HTTP Helper)
 # ==============================================================================
 def fetch_url(url: str, retries: int = 3, delay: float = 1.0) -> str:
-    """Tải nội dung văn bản từ URL với cơ chế thử lại (retry)."""
+    """Tải nội dung văn bản từ URL với cơ chế thử lại (retry) và bắt lỗi toàn diện."""
     headers = {"User-Agent": USER_AGENT, "Accept-Language": "vi-VN,vi;q=0.9,en;q=0.8"}
     for attempt in range(1, retries + 1):
         try:
             res = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
             res.raise_for_status()
             return res.text
-        except (requests.ConnectionError, requests.Timeout, requests.HTTPError):
+        except requests.RequestException as exc:
             if attempt == retries:
+                logger.error("Đã hết số lần thử lại (%d/%d) khi tải %s: %s", attempt, retries, url, exc)
                 raise
+            logger.warning("Lần thử %d/%d tải %s gặp lỗi: %s. Thử lại sau %.1fs...", attempt, retries, url, exc, delay * attempt)
             time.sleep(delay * attempt)
     return ""
 
@@ -224,9 +226,9 @@ class ArticleCrawler:
                 return str(tag["content"]).strip()
         return rss.get("published_at")
 
-    def parse(self, html: str, url: str, rss_metadata: dict | None = None) -> dict:
+    def parse(self, html: str | None, url: str, rss_metadata: dict | None = None) -> dict:
         """Phân tích HTML bài viết thành dictionary có cấu trúc."""
-        soup = BeautifulSoup(html, "lxml")
+        soup = BeautifulSoup(html or "", "lxml")
         rss = rss_metadata or {}
         title_el = soup.select_one("h1.title-detail") or soup.find("h1")
         title = title_el.get_text(" ", strip=True) if title_el else (self.get_meta(soup, property="og:title") or rss.get("title"))
@@ -266,7 +268,11 @@ class RSSCrawler:
 
     @staticmethod
     def parse_feed(xml_text: str, category: str) -> list[dict]:
-        root = ET.fromstring(xml_text)
+        try:
+            root = ET.fromstring(xml_text)
+        except (ET.ParseError, TypeError, ValueError) as exc:
+            logger.warning("Lỗi phân tích cú pháp XML RSS (%s): %s", category, exc)
+            return []
         articles = []
         for item in root.iter("item"):
             def get_text(tag: str) -> str | None:
