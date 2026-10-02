@@ -240,7 +240,41 @@ def run(raw_path: Path = RAW) -> dict:
     return manifest
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Entrypoint dòng lệnh cho Phase T — Transform.
+    Hỗ trợ chạy toàn bộ pipeline biến đổi hoặc chỉ kiểm định nhanh với cờ --check.
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Pipeline tiền xử lý dữ liệu và trích xuất đặc trưng mô tả (Phase T - Transform)"
+    )
+    parser.add_argument(
+        "--check",
+        "--validate-only",
+        action="store_true",
+        help="Chỉ kiểm định tính toàn vẹn dữ liệu đã tiền xử lý mà không chạy lại pipeline",
+    )
+    args = parser.parse_args()
+
     logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
-    res = run()
-    print(json.dumps(res, ensure_ascii=False, indent=2))
+
+    if args.check:
+        res = validate()
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+        sys.exit(0 if res.get("result") == "PASS" else 1)
+
+    manifest = run()
+    val = manifest.get("validation", {})
+    status = val.get("result", "UNKNOWN")
+    print(
+        f"Tiền xử lý hoàn tất: {status} "
+        f"({manifest.get('records', 0)} bản ghi, {len(DESCRIPTIVE_FEATURES)} đặc trưng mô tả)"
+    )
+    print(json.dumps(manifest, ensure_ascii=False, indent=2))
+    sys.exit(0 if status == "PASS" else 1)
+
+
+if __name__ == "__main__":
+    main()
+

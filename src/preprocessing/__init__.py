@@ -13,6 +13,7 @@ __all__ = [
     "preprocess_record",
     "remove_leading_duplicate_blocks",
     "run",
+    "main",
     "sentence_count",
     "tokenize",
     "validate",

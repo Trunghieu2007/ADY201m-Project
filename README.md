@@ -138,7 +138,7 @@ ADY201m Project/
 │   ├── database/                         # Kết nối pyodbc & nạp SQL Server (run_database.py)
 │   ├── eda/                              # Thống kê văn bản & xu hướng thời gian (run_eda.py)
 │   ├── organization/                     # Tự động tổ chức chuyên mục & xu hướng từ khóa
-│   ├── preprocessing/                    # Chuẩn hóa Unicode NFC & ma trận (run_preprocessing.py)
+│   ├── preprocessing/                    # Chuẩn hóa Unicode NFC & 13 đặc trưng mô tả (preprocess.py)
 │   └── validation/                       # Kiểm tra chất lượng dữ liệu & Audit toàn dự án
 ├── tests/
 │   └── test_pipeline.py                  # 21 bài kiểm thử hồi quy tự động (unittest)
@@ -269,19 +269,19 @@ Mỗi hàm trong mã nguồn được chú thích bằng 1 dòng comment `#` sú
 
 #### 4. Module Tiền xử lý & Làm sạch Dữ liệu (`src/preprocessing/`)
 - [`src/preprocessing/preprocess.py`](src/preprocessing/preprocess.py):
-  - `normalize_unicode(text: str) -> str`: Chuẩn hóa văn bản sang bảng mã Unicode NFC.
-  - `normalize_text(text: str) -> str`: Loại bỏ URL rác, quy chuẩn khoảng trắng và giữ nguyên dấu câu tiếng Việt.
-  - `remove_leading_duplicate_blocks(content, title, description) -> str`: Khử triệt để phần tiêu đề/mô tả lặp lại ở đầu bài viết.
-  - `lexical_features(text: str) -> dict`: Tính các đặc trưng thống kê từ vựng xác định.
-  - `normalize_author(author: str | None) -> str | None`: Chuẩn hóa tên tác giả sang trường phái sinh `author_clean`, không ghi đè trường `author` thô.
-  - `preprocess_record(record, category_map, subcategory_map) -> dict`: Tiền xử lý bài viết, tạo `processed_text`, `processed_metadata` và `features` (13 chỉ số thống kê mô tả cho CSDL).
-  - `build_feature_matrix(rows) -> tuple[list[str], list[list]]`: Tạo ma trận 13 đặc trưng thống kê mô tả phục vụ trực tiếp bảng `dbo.ArticleFeatures`.
-  - `validate(...) -> dict`: Tự động kiểm tra bảo đảm tính bất biến của dữ liệu gốc và xác nhận tính toàn vẹn của kết quả tiền xử lý (không dùng SHA-256).
-  - `run() -> dict`: Điều phối tạo tệp `data/processed/articles_processed.jsonl` và `data/processed/feature_matrix.csv`, lưu manifest vào `outputs/preprocessing/`.
-- [`src/preprocessing/validate_processed.py`](src/preprocessing/validate_processed.py):
-  - `validate() -> dict`: Điểm kiểm định độc lập cho dữ liệu sau tiền xử lý.
-- [`src/preprocessing/run_preprocessing.py`](src/preprocessing/run_preprocessing.py):
-  - Điều phối thực thi và kiểm định toàn bộ pipeline tiền xử lý (Phase T).
+  - Hợp nhất toàn diện quy trình làm sạch văn bản, chuẩn hóa tác giả, trích xuất 13 đặc trưng mô tả và tự động kiểm định:
+    - `normalize_unicode(text: str) -> str`: Chuẩn hóa văn bản sang bảng mã Unicode NFC.
+    - `normalize_text(text: str) -> str`: Loại bỏ URL rác, quy chuẩn khoảng trắng và giữ nguyên dấu câu tiếng Việt.
+    - `remove_leading_duplicate_blocks(content, title, description) -> str`: Khử triệt để phần tiêu đề/mô tả lặp lại ở đầu bài viết.
+    - `lexical_features(text: str) -> dict`: Tính các đặc trưng thống kê từ vựng xác định.
+    - `normalize_author(author: str | None) -> str | None`: Chuẩn hóa tên tác giả sang trường phái sinh `author_clean`, không ghi đè trường `author` thô.
+    - `preprocess_record(record, category_map, subcategory_map) -> dict`: Tiền xử lý bài viết, tạo `processed_text`, `processed_metadata` và `features` (13 chỉ số thống kê mô tả cho CSDL).
+    - `build_feature_matrix(rows) -> tuple[list[str], list[list]]`: Tạo ma trận 13 đặc trưng thống kê mô tả phục vụ trực tiếp bảng `dbo.ArticleFeatures`.
+    - `validate(...) -> dict`: Tự động kiểm tra bảo đảm tính bất biến của dữ liệu gốc và xác nhận tính toàn vẹn của kết quả tiền xử lý (không dùng SHA-256).
+    - `run() -> dict`: Điều phối tạo tệp `data/processed/articles_processed.jsonl` và `data/processed/feature_matrix.csv`, lưu manifest vào `outputs/preprocessing/`.
+    - `main()`: Hỗ trợ chạy dòng lệnh linh hoạt qua CLI:
+      - `python -m src.preprocessing.preprocess`: Chạy toàn bộ biến đổi và tự kiểm định.
+      - `python -m src.preprocessing.preprocess --check`: Chỉ kiểm tra tính toàn vẹn dữ liệu đã qua tiền xử lý.
 
 #### 5. Module Tự động Tổ chức Chuyên mục & Xu hướng Từ khóa (`src/organization/`)
 - [`src/organization/category_organizer.py`](src/organization/category_organizer.py):
@@ -354,8 +354,10 @@ python -m src.validation.validate_raw
 # Bước 3: Phân tích khám phá (EDA) & sinh biểu đồ xu hướng
 python -m src.eda.run_eda
 
-# Bước 4: Tiền xử lý & Chuẩn hóa Unicode NFC
-python -m src.preprocessing.run_preprocessing
+# Bước 4: Tiền xử lý, Chuẩn hóa Unicode NFC & Trích xuất 13 đặc trưng mô tả
+python -m src.preprocessing.preprocess
+# Hoặc chỉ kiểm định nhanh dữ liệu đã xử lý:
+# python -m src.preprocessing.preprocess --check
 
 # Bước 5: Khám phá xu hướng từ khóa & Tự động tổ chức chuyên mục
 python -m src.organization.category_organizer
