@@ -1,0 +1,254 @@
+{
+  "total_articles": 20,
+  "total_categories": 5,
+  "categories": {
+    "Thời sự": {
+      "count": 4,
+      "percentage": 20.0,
+      "average_word_count": 943.2,
+      "subcategories": {
+        "Thời sự": 2,
+        "Đầu tư": 1,
+        "Chính trị": 1
+      },
+      "authors": {
+        "Đắc Thành": 1,
+        "An Bình": 1,
+        "Sơn Hà": 1,
+        "Việt Quốc - Thanh Biên": 1
+      },
+      "top_keywords": [
+        [
+          "dân",
+          43
+        ],
+        [
+          "rừng",
+          36
+        ],
+        [
+          "quả",
+          33
+        ],
+        [
+          "hái",
+          32
+        ],
+        [
+          "cây",
+          29
+        ],
+        [
+          "thực",
+          25
+        ],
+        [
+          "phẩm",
+          25
+        ],
+        [
+          "nước",
+          21
+        ]
+      ]
+    },
+    "Kinh doanh": {
+      "count": 4,
+      "percentage": 20.0,
+      "average_word_count": 560.8,
+      "subcategories": {
+        "Doanh nghiệp": 1,
+        "Chứng khoán": 1,
+        "Quốc tế": 1,
+        "Hàng hóa": 1
+      },
+      "authors": {
+        "Anh Tú": 1,
+        "Tất Đạt": 1,
+        "Hà Thu (theo Reuters)": 1,
+        "Phương Dung": 1
+      },
+      "top_keywords": [
+        [
+          "bán",
+          24
+        ],
+        [
+          "giá",
+          19
+        ],
+        [
+          "hàng",
+          18
+        ],
+        [
+          "đồng",
+          17
+        ],
+        [
+          "tăng",
+          15
+        ],
+        [
+          "livestream",
+          13
+        ],
+        [
+          "công",
+          12
+        ],
+        [
+          "tháng",
+          12
+        ]
+      ]
+    },
+    "Bất động sản": {
+      "count": 4,
+      "percentage": 20.0,
+      "average_word_count": 730.5,
+      "subcategories": {
+        "Ngoại thất": 1,
+        "Chính sách": 3
+      },
+      "authors": {
+        "Bích Phương Nhóm thiết kế: Nguyễn Quang Hiếu, Lê Hoàng Minh Thư, Nguyễn Thị Thanh Bình Kết cấu: Đặng Quốc Bảo Đơn vị thi công: HQN CONS Ảnh: Nam Võ": 1,
+        "Phương Uyên": 1,
+        "Quang Huy": 2
+      },
+      "top_keywords": [
+        [
+          "đất",
+          37
+        ],
+        [
+          "khu",
+          29
+        ],
+        [
+          "nhà",
+          28
+        ],
+        [
+          "gian",
+          27
+        ],
+        [
+          "sáng",
+          24
+        ],
+        [
+          "hợp",
+          23
+        ],
+        [
+          "định",
+          23
+        ],
+        [
+          "dân",
+          20
+        ]
+      ]
+    },
+    "Khoa học công nghệ": {
+      "count": 4,
+      "percentage": 20.0,
+      "average_word_count": 515.8,
+      "subcategories": {
+        "Thế giới tự nhiên": 1,
+        "AI": 2,
+        "Đổi mới sáng tạo": 1
+      },
+      "authors": {
+        "An Khang tổng hợp": 1,
+        "Thu Thảo tổng hợp": 1,
+        "Trọng Đạt": 1,
+        "Huy Đức tổng hợp": 1
+      },
+      "top_keywords": [
+        [
+          "công",
+          20
+        ],
+        [
+          "cứu",
+          15
+        ],
+        [
+          "năm",
+          15
+        ],
+        [
+          "nghiên",
+          14
+        ],
+        [
+          "dãy",
+          14
+        ],
+        [
+          "học",
+          13
+        ],
+        [
+          "hiện",
+          13
+        ],
+        [
+          "lớp",
+          13
+        ]
+      ]
+    },
+    "Sức khỏe": {
+      "count": 4,
+      "percentage": 20.0,
+      "average_word_count": 649.5,
+      "subcategories": {
+        "Các bệnh": 2,
+        "Sống khỏe": 1,
+        "Tin tức": 1
+      },
+      "authors": {
+        "Bảo Bảo ( Tổng hợp )": 2,
+        "Thúy Quỳnh": 1,
+        "Lê Nga": 1
+      },
+      "top_keywords": [
+        [
+          "thể",
+          59
+        ],
+        [
+          "lượng",
+          32
+        ],
+        [
+          "đường",
+          30
+        ],
+        [
+          "động",
+          24
+        ],
+        [
+          "bệnh",
+          22
+        ],
+        [
+          "hóa",
+          20
+        ],
+        [
+          "rượu",
+          20
+        ],
+        [
+          "huyết",
+          20
+        ]
+      ]
+    }
+  }
+}

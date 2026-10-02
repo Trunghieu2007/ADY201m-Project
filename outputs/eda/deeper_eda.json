@@ -1,0 +1,364 @@
+{
+  "dataset": "data\\raw\\articles.jsonl",
+  "records": 20,
+  "category_analysis": {
+    "category_distribution": {
+      "Bất động sản": 4,
+      "Khoa học công nghệ": 4,
+      "Kinh doanh": 4,
+      "Sức khỏe": 4,
+      "Thời sự": 4
+    },
+    "subcategory_distribution": {
+      "AI": 2,
+      "Chính sách": 3,
+      "Chính trị": 1,
+      "Chứng khoán": 1,
+      "Các bệnh": 2,
+      "Doanh nghiệp": 1,
+      "Hàng hóa": 1,
+      "Ngoại thất": 1,
+      "Quốc tế": 1,
+      "Sống khỏe": 1,
+      "Thế giới tự nhiên": 1,
+      "Thời sự": 2,
+      "Tin tức": 1,
+      "Đầu tư": 1,
+      "Đổi mới sáng tạo": 1
+    },
+    "category_to_subcategory": {
+      "Bất động sản": {
+        "Chính sách": 3,
+        "Ngoại thất": 1
+      },
+      "Khoa học công nghệ": {
+        "AI": 2,
+        "Thế giới tự nhiên": 1,
+        "Đổi mới sáng tạo": 1
+      },
+      "Kinh doanh": {
+        "Chứng khoán": 1,
+        "Doanh nghiệp": 1,
+        "Hàng hóa": 1,
+        "Quốc tế": 1
+      },
+      "Sức khỏe": {
+        "Các bệnh": 2,
+        "Sống khỏe": 1,
+        "Tin tức": 1
+      },
+      "Thời sự": {
+        "Chính trị": 1,
+        "Thời sự": 2,
+        "Đầu tư": 1
+      }
+    },
+    "category_subcategory_pairs": {
+      "Bất động sản -> Chính sách": 3,
+      "Bất động sản -> Ngoại thất": 1,
+      "Khoa học công nghệ -> AI": 2,
+      "Khoa học công nghệ -> Thế giới tự nhiên": 1,
+      "Khoa học công nghệ -> Đổi mới sáng tạo": 1,
+      "Kinh doanh -> Chứng khoán": 1,
+      "Kinh doanh -> Doanh nghiệp": 1,
+      "Kinh doanh -> Hàng hóa": 1,
+      "Kinh doanh -> Quốc tế": 1,
+      "Sức khỏe -> Các bệnh": 2,
+      "Sức khỏe -> Sống khỏe": 1,
+      "Sức khỏe -> Tin tức": 1,
+      "Thời sự -> Chính trị": 1,
+      "Thời sự -> Thời sự": 2,
+      "Thời sự -> Đầu tư": 1
+    }
+  },
+  "text_by_category": {
+    "Bất động sản": {
+      "articles": 4,
+      "word_count": {
+        "count": 4,
+        "min": 393,
+        "max": 1674,
+        "mean": 730.5,
+        "median": 427.5,
+        "std": 629.43,
+        "q1": 396.5,
+        "q3": 1367.5
+      },
+      "content_length": {
+        "count": 4,
+        "min": 1792,
+        "max": 7594,
+        "mean": 3296.25,
+        "median": 1899.5,
+        "std": 2866.57,
+        "q1": 1796.25,
+        "q3": 6193.0
+      }
+    },
+    "Khoa học công nghệ": {
+      "articles": 4,
+      "word_count": {
+        "count": 4,
+        "min": 374,
+        "max": 626,
+        "mean": 515.75,
+        "median": 531.5,
+        "std": 111.44,
+        "q1": 401.5,
+        "q3": 614.25
+      },
+      "content_length": {
+        "count": 4,
+        "min": 1747,
+        "max": 2941,
+        "mean": 2431,
+        "median": 2518.0,
+        "std": 532.52,
+        "q1": 1881.75,
+        "q3": 2893.25
+      }
+    },
+    "Kinh doanh": {
+      "articles": 4,
+      "word_count": {
+        "count": 4,
+        "min": 330,
+        "max": 1031,
+        "mean": 560.75,
+        "median": 441.0,
+        "std": 326.59,
+        "q1": 334.75,
+        "q3": 906.5
+      },
+      "content_length": {
+        "count": 4,
+        "min": 1593,
+        "max": 4810,
+        "mean": 2612.5,
+        "median": 2023.5,
+        "std": 1519.62,
+        "q1": 1593.75,
+        "q3": 4220.25
+      }
+    },
+    "Sức khỏe": {
+      "articles": 4,
+      "word_count": {
+        "count": 4,
+        "min": 429,
+        "max": 747,
+        "mean": 649.5,
+        "median": 711.0,
+        "std": 149.16,
+        "q1": 493.75,
+        "q3": 743.75
+      },
+      "content_length": {
+        "count": 4,
+        "min": 1956,
+        "max": 3629,
+        "mean": 3035.5,
+        "median": 3278.5,
+        "std": 744.08,
+        "q1": 2258.5,
+        "q3": 3569.5
+      }
+    },
+    "Thời sự": {
+      "articles": 4,
+      "word_count": {
+        "count": 4,
+        "min": 417,
+        "max": 1834,
+        "mean": 943.25,
+        "median": 761.0,
+        "std": 625.95,
+        "q1": 468.25,
+        "q3": 1600.5
+      },
+      "content_length": {
+        "count": 4,
+        "min": 1985,
+        "max": 8200,
+        "mean": 4264.75,
+        "median": 3437.0,
+        "std": 2759.84,
+        "q1": 2190.25,
+        "q3": 7167.0
+      }
+    }
+  },
+  "temporal_analysis": {
+    "publication_dates": {
+      "2026-09-24": 14,
+      "2026-09-25": 6
+    },
+    "publication_hours": {
+      "0": 4,
+      "1": 2,
+      "8": 1,
+      "9": 1,
+      "14": 1,
+      "15": 2,
+      "16": 2,
+      "18": 1,
+      "19": 2,
+      "20": 4
+    },
+    "publication_to_crawl_gap_minutes": {
+      "count": 20,
+      "min": 9.88,
+      "max": 1006.55,
+      "mean": 365.97,
+      "median": 324.47,
+      "std": 294.05,
+      "q1": 71.64,
+      "q3": 550.7,
+      "values": [
+        71.58,
+        263.36,
+        337.0,
+        401.22,
+        303.0,
+        555.22,
+        586.69,
+        640.83,
+        13.38,
+        271.55,
+        527.5,
+        1006.55,
+        71.8,
+        371.82,
+        537.14,
+        958.14,
+        9.88,
+        11.9,
+        68.92,
+        311.94
+      ],
+      "negative_gap_count": 0,
+      "negative_gap_article_ids": [],
+      "incomparable_timezone_count": 0,
+      "incomparable_timezone_article_ids": []
+    }
+  },
+  "category_temporal_analysis": {
+    "2026-09-24": {
+      "Bất động sản": 3,
+      "Khoa học công nghệ": 3,
+      "Kinh doanh": 4,
+      "Sức khỏe": 1,
+      "Thời sự": 3
+    },
+    "2026-09-25": {
+      "Bất động sản": 1,
+      "Khoa học công nghệ": 1,
+      "Sức khỏe": 3,
+      "Thời sự": 1
+    }
+  },
+  "publication_to_crawl_gap_by_category": {
+    "Bất động sản": {
+      "count": 4,
+      "min": 13.38,
+      "max": 1006.55,
+      "mean": 454.75,
+      "median": 399.52,
+      "std": 423.54,
+      "q1": 77.92,
+      "q3": 886.79
+    },
+    "Khoa học công nghệ": {
+      "count": 4,
+      "min": 71.8,
+      "max": 958.14,
+      "mean": 484.73,
+      "median": 454.48,
+      "std": 369.74,
+      "q1": 146.81,
+      "q3": 852.89
+    },
+    "Kinh doanh": {
+      "count": 4,
+      "min": 303.0,
+      "max": 640.83,
+      "mean": 521.44,
+      "median": 570.96,
+      "std": 149.85,
+      "q1": 366.06,
+      "q3": 627.29
+    },
+    "Sức khỏe": {
+      "count": 4,
+      "min": 9.88,
+      "max": 311.94,
+      "mean": 100.66,
+      "median": 40.41,
+      "std": 143.49,
+      "q1": 10.38,
+      "q3": 251.18
+    },
+    "Thời sự": {
+      "count": 4,
+      "min": 71.58,
+      "max": 401.22,
+      "mean": 268.29,
+      "median": 300.18,
+      "std": 142.72,
+      "q1": 119.53,
+      "q3": 385.16
+    }
+  },
+  "metadata_analysis": {
+    "unique_authors": 18,
+    "author_distribution": {
+      "Quang Huy": 2,
+      "Bảo Bảo ( Tổng hợp )": 2,
+      "Đắc Thành": 1,
+      "An Bình": 1,
+      "Sơn Hà": 1,
+      "Việt Quốc - Thanh Biên": 1,
+      "Anh Tú": 1,
+      "Tất Đạt": 1,
+      "Hà Thu (theo Reuters)": 1,
+      "Phương Dung": 1,
+      "Bích Phương Nhóm thiết kế: Nguyễn Quang Hiếu, Lê Hoàng Minh Thư, Nguyễn Thị Thanh Bình Kết cấu: Đặng Quốc Bảo Đơn vị thi công: HQN CONS Ảnh: Nam Võ": 1,
+      "Phương Uyên": 1,
+      "An Khang tổng hợp": 1,
+      "Thu Thảo tổng hợp": 1,
+      "Trọng Đạt": 1,
+      "Huy Đức tổng hợp": 1,
+      "Thúy Quỳnh": 1,
+      "Lê Nga": 1
+    },
+    "unique_publishers": 1,
+    "publisher_distribution": {
+      "VnExpress": 20
+    },
+    "unique_sources": 1,
+    "source_distribution": {
+      "vnexpress": 20
+    },
+    "unique_article_ids": 20
+  },
+  "findings": [
+    "The current sample is evenly distributed across its sampled categories.",
+    "The 20-article sample contains 15 distinct subcategories.",
+    "Among sampled categories, 'Thời sự' has the highest mean article word count (943.25), while 'Khoa học công nghệ' has the lowest (515.75).",
+    "The sample spans 2 publication date(s); 2026-09-24 has the largest sampled count (14 articles).",
+    "Within this sample, 0:00 is the most frequent publication hour (4 articles).",
+    "The observed publication-to-crawl timestamp gap has a mean of 365.97 minutes and a median of 324.47 minutes.",
+    "The sample contains 18 distinct author value(s).",
+    "All sampled records use the same publisher value: 'VnExpress'.",
+    "All sampled records use the same source value: 'vnexpress'.",
+    "All findings describe only the current 20-article sample and should not be generalized to the full VnExpress corpus."
+  ],
+  "limitations": [
+    "Current dataset contains only 20 articles.",
+    "Statistics are descriptive and apply only to this dataset.",
+    "Results should not be generalized to the entire VnExpress corpus.",
+    "Word counts use simple whitespace tokenization.",
+    "Sentence counts are approximate.",
+    "Publication-to-crawl gap depends on the semantics of the stored timestamps."
+  ]
+}

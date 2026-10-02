@@ -1,0 +1,36 @@
+{
+  "phase": "Phase 6 — Microsoft SQL Server integration",
+  "version": "1.0",
+  "status": "COMPLETE_CODE_READY",
+  "scope": [
+    "SQL Server database bootstrap guidance",
+    "relational schema creation",
+    "initial data import",
+    "parameterized update",
+    "optional update-then-insert synchronization",
+    "SQL analysis queries",
+    "Streamlit isolation to Phase 7/8"
+  ],
+  "input": "data/processed/articles_processed.jsonl",
+  "records_available": 20,
+  "tables": [
+    "dbo.Categories",
+    "dbo.Subcategories",
+    "dbo.Authors",
+    "dbo.Articles",
+    "dbo.ArticleFeatures"
+  ],
+  "feature_policy": "Only non-target-derived numeric Phase 3 features are stored in ArticleFeatures; category_id/subcategory_id remain relational labels, not ML features.",
+  "sql_files": [
+    "sql/create_database.sql",
+    "sql/create_tables.sql",
+    "sql/upsert_article.sql",
+    "sql/queries.sql"
+  ],
+  "python_files": [
+    "src/database/sqlserver.py",
+    "src/database/run_phase6.py"
+  ],
+  "streamlit_status": "DEFERRED_TO_PHASE_7_OR_8",
+  "runtime_boundary": "Actual SQL Server execution requires a user-provided SQL Server instance, credentials or Windows authentication, and an installed ODBC driver. The build environment has no live SQL Server and no pyodbc module, so no fictitious server import is claimed."
+}

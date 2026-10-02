@@ -1,0 +1,44 @@
+{
+  "phase": "Phase 3 — Data Preprocessing & Feature Engineering",
+  "version": "1.0",
+  "raw_input": "data/raw/articles.jsonl",
+  "raw_sha256": "8f86ceb25c2b1ef605b235618ff425870e97aab05a50ca7cd5be0877ef0b5abc",
+  "processed_output": "data/processed/articles_processed.jsonl",
+  "feature_matrix": "data/processed/feature_matrix.csv",
+  "records": 20,
+  "categories": {
+    "Bất động sản": 1,
+    "Khoa học công nghệ": 2,
+    "Kinh doanh": 3,
+    "Sức khỏe": 4,
+    "Thời sự": 5
+  },
+  "subcategories": {
+    "AI": 1,
+    "Chính sách": 2,
+    "Chính trị": 3,
+    "Chứng khoán": 4,
+    "Các bệnh": 5,
+    "Doanh nghiệp": 6,
+    "Hàng hóa": 7,
+    "Ngoại thất": 8,
+    "Quốc tế": 9,
+    "Sống khỏe": 10,
+    "Thế giới tự nhiên": 11,
+    "Thời sự": 12,
+    "Tin tức": 13,
+    "Đầu tư": 14,
+    "Đổi mới sáng tạo": 15
+  },
+  "transformations": [
+    "Unicode NFC normalization",
+    "conservative removal of exact leading title/description duplication",
+    "whitespace normalization",
+    "URL removal from derived text only",
+    "conservative author normalization in author_clean",
+    "deterministic lexical/text features",
+    "integer encoding for category and subcategory",
+    "one-hot encoding for category and subcategory in feature_matrix.csv"
+  ],
+  "raw_immutable": true
+}

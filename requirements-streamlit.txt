@@ -1,0 +1,3 @@
+# Streamlit BI Dashboard requirements for ADY201m
+-r requirements.txt
+streamlit==1.64.0

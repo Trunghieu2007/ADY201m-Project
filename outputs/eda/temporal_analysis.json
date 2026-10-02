@@ -1,0 +1,81 @@
+{
+  "records": 20,
+  "published_at": {
+    "valid": 20,
+    "invalid": 0,
+    "invalid_article_ids": []
+  },
+  "crawled_at": {
+    "valid": 20,
+    "invalid": 0,
+    "invalid_article_ids": []
+  },
+  "publication_date_distribution": {
+    "2026-09-24": 14,
+    "2026-09-25": 6
+  },
+  "publication_hour_distribution": {
+    "0": 4,
+    "1": 2,
+    "8": 1,
+    "9": 1,
+    "14": 1,
+    "15": 2,
+    "16": 2,
+    "18": 1,
+    "19": 2,
+    "20": 4
+  },
+  "publication_by_date_and_category": {
+    "2026-09-24": {
+      "Bất động sản": 3,
+      "Khoa học công nghệ": 3,
+      "Kinh doanh": 4,
+      "Sức khỏe": 1,
+      "Thời sự": 3
+    },
+    "2026-09-25": {
+      "Bất động sản": 1,
+      "Khoa học công nghệ": 1,
+      "Sức khỏe": 3,
+      "Thời sự": 1
+    }
+  },
+  "publication_to_crawl_gap_minutes": {
+    "count": 20,
+    "min": 9.88,
+    "max": 1006.55,
+    "mean": 365.97,
+    "median": 324.47,
+    "std": 294.05,
+    "q1": 71.64,
+    "q3": 550.7,
+    "values": [
+      71.58,
+      263.36,
+      337.0,
+      401.22,
+      303.0,
+      555.22,
+      586.69,
+      640.83,
+      13.38,
+      271.55,
+      527.5,
+      1006.55,
+      71.8,
+      371.82,
+      537.14,
+      958.14,
+      9.88,
+      11.9,
+      68.92,
+      311.94
+    ],
+    "negative_gap_count": 0,
+    "negative_gap_article_ids": [],
+    "incomparable_timezone_count": 0,
+    "incomparable_timezone_article_ids": []
+  },
+  "interpretation_note": "Observed timestamp gap between crawl time and published time."
+}

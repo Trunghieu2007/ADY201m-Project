@@ -1,0 +1,82 @@
+ADY201m - RAW DATASET EDA
+============================================================
+
+Dataset:
+  data/raw/articles.jsonl
+
+Schema:
+  Field count: 12
+  Fields:
+    - url
+    - title
+    - description
+    - content
+    - author
+    - publisher
+    - published_at
+    - category
+    - subcategory
+    - article_id
+    - crawled_at
+    - source
+
+Dataset size:
+  Articles: 20
+  Categories: 5
+  Subcategories: 15
+
+Category distribution:
+  - Thời sự: 4
+  - Kinh doanh: 4
+  - Bất động sản: 4
+  - Khoa học công nghệ: 4
+  - Sức khỏe: 4
+
+Presence of metadata:
+  Authors:         20
+  Publishers:      20
+  Published dates: 20
+  Crawled dates:   20
+  Sources:         20
+  Article IDs:     20
+
+Content length:
+  Minimum: 1593
+  Maximum: 8200
+  Mean:    3128
+  Median:  2600.5
+
+Title length:
+  Minimum: 19
+  Maximum: 67
+  Mean:    46.95
+  Median:  50.0
+
+Description length:
+  Minimum: 113
+  Maximum: 178
+  Mean:    143.5
+  Median:  142.5
+
+Missing fields:
+  - url: 0
+  - title: 0
+  - description: 0
+  - content: 0
+  - author: 0
+  - publisher: 0
+  - published_at: 0
+  - category: 0
+  - subcategory: 0
+  - article_id: 0
+  - crawled_at: 0
+  - source: 0
+
+Duplicate records:
+  Duplicate URLs:       0
+  Duplicate titles:     0
+  Duplicate article IDs:0
+
+IMPORTANT:
+  This EDA reads the raw dataset only.
+  No cleaning or modification was performed.

@@ -1,0 +1,99 @@
+{
+  "manifest_version": "1.0",
+  "dataset": {
+    "name": "ADY201m Raw Dataset v1",
+    "path": "data\\raw\\articles.jsonl",
+    "format": "JSONL",
+    "source": "VnExpress",
+    "records": 20,
+    "file_size_bytes": 95728,
+    "sha256": "8f86ceb25c2b1ef605b235618ff425870e97aab05a50ca7cd5be0877ef0b5abc"
+  },
+  "created_at": "2026-10-01T09:46:36.390620+07:00",
+  "schema": {
+    "expected_fields": [
+      "url",
+      "title",
+      "description",
+      "content",
+      "author",
+      "publisher",
+      "published_at",
+      "category",
+      "subcategory",
+      "article_id",
+      "crawled_at",
+      "source"
+    ],
+    "actual_fields": [
+      "article_id",
+      "author",
+      "category",
+      "content",
+      "crawled_at",
+      "description",
+      "published_at",
+      "publisher",
+      "source",
+      "subcategory",
+      "title",
+      "url"
+    ],
+    "missing_fields": [],
+    "unexpected_fields": [],
+    "records_with_missing_fields": {},
+    "records_with_unexpected_fields": {},
+    "schema_matches_expected": true
+  },
+  "field_completeness": {
+    "url": 20,
+    "title": 20,
+    "description": 20,
+    "content": 20,
+    "author": 20,
+    "publisher": 20,
+    "published_at": 20,
+    "category": 20,
+    "subcategory": 20,
+    "article_id": 20,
+    "crawled_at": 20,
+    "source": 20
+  },
+  "category_distribution": {
+    "Bất động sản": 4,
+    "Khoa học công nghệ": 4,
+    "Kinh doanh": 4,
+    "Sức khỏe": 4,
+    "Thời sự": 4
+  },
+  "subcategory_distribution": {
+    "AI": 2,
+    "Chính sách": 3,
+    "Chính trị": 1,
+    "Chứng khoán": 1,
+    "Các bệnh": 2,
+    "Doanh nghiệp": 1,
+    "Hàng hóa": 1,
+    "Ngoại thất": 1,
+    "Quốc tế": 1,
+    "Sống khỏe": 1,
+    "Thế giới tự nhiên": 1,
+    "Thời sự": 2,
+    "Tin tức": 1,
+    "Đầu tư": 1,
+    "Đổi mới sáng tạo": 1
+  },
+  "duplicates": {
+    "url": 0,
+    "title": 0,
+    "article_id": 0
+  },
+  "validation": {
+    "json_records_valid": true,
+    "schema_valid": true,
+    "all_expected_fields_present": true,
+    "duplicate_urls": 0,
+    "duplicate_titles": 0,
+    "duplicate_article_ids": 0
+  }
+}

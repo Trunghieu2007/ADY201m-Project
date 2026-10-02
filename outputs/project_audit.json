@@ -1,0 +1,115 @@
+{
+  "audit": {
+    "status": "PASS_WITH_REVIEW",
+    "raw_dataset_modified": false,
+    "raw_sha256": "8f86ceb25c2b1ef605b235618ff425870e97aab05a50ca7cd5be0877ef0b5abc",
+    "records": 20
+  },
+  "critical_failures": {
+    "json_errors": 0,
+    "schema_errors": 0,
+    "duplicate_urls": 0,
+    "duplicate_titles": 0,
+    "duplicate_article_ids": 0,
+    "invalid_published_at": 0,
+    "invalid_crawled_at": 0,
+    "invalid_urls": 0
+  },
+  "review_issues": {
+    "content_quality_records_with_issues": 2,
+    "author_review_records": 1
+  },
+  "quality_audit": {
+    "audit_metadata": {
+      "dataset": "data\\raw\\articles.jsonl",
+      "audit_type": "raw_content_quality_and_extraction_integrity",
+      "dataset_modified": false,
+      "detector_version": "3.0"
+    },
+    "dataset_summary": {
+      "records": 20,
+      "json_errors": 0,
+      "records_with_issues": 2,
+      "records_without_issues": 18,
+      "issue_free_rate": 90.0
+    },
+    "content_length_statistics": {
+      "count": 20,
+      "min": 1593,
+      "max": 8200,
+      "mean": 3128,
+      "median": 2600.5
+    },
+    "duplicate_summary": {
+      "duplicate_urls": {},
+      "duplicate_titles": {},
+      "duplicate_contents_count": 0
+    },
+    "json_errors": [],
+    "issues": [
+      {
+        "line_no": 1,
+        "url": "https://vnexpress.net/vao-rung-hai-ot-moi-5124415.html",
+        "title": "Vào rừng hái ớt mọi",
+        "content_length": 8200,
+        "issues": [
+          {
+            "type": "title_or_description_leakage",
+            "matches": [
+              {
+                "field": "title",
+                "occurrences": 2,
+                "evidence": "Vào rừng hái ớt mọi Vào rừng hái ớt mọi Quảng Trị Người Chứt, Bru-Vân Kiều ở xã Dân Hóa vào rừng keo, nương rẫy hái ớt mọi mọc tự nhiên, mang về làm gia vị hoặc"
+              },
+              {
+                "field": "description",
+                "occurrences": 1,
+                "evidence": "Vào rừng hái ớt mọi Vào rừng hái ớt mọi Quảng Trị Người Chứt, Bru-Vân Kiều ở xã Dân Hóa vào rừng keo, nương rẫy hái ớt mọi mọc tự nhiên, mang về làm gia vị hoặc"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "line_no": 9,
+        "url": "https://vnexpress.net/nha-mot-tang-mang-tinh-than-nghi-duong-giua-khu-dan-cu-5124173.html",
+        "title": "Nhà một tầng mang tinh thần nghỉ dưỡng giữa khu dân cư",
+        "content_length": 7594,
+        "issues": [
+          {
+            "type": "title_or_description_leakage",
+            "matches": [
+              {
+                "field": "title",
+                "occurrences": 2,
+                "evidence": "Nhà một tầng mang tinh thần nghỉ dưỡng giữa khu dân cư Nhà một tầng mang tinh thần nghỉ dưỡng giữa khu dân cư Công trình sử dụng cao độ nâng hạ phi đối xứng, gi"
+              },
+              {
+                "field": "description",
+                "occurrences": 1,
+                "evidence": "Nhà một tầng mang tinh thần nghỉ dưỡng giữa khu dân cư Nhà một tầng mang tinh thần nghỉ dưỡng giữa khu dân cư Công trình sử dụng cao độ nâng hạ phi đối xứng, gi"
+              }
+            ]
+          },
+          {
+            "type": "author_contains_production_credits",
+            "markers": [
+              "nhóm thiết kế:",
+              "kết cấu:",
+              "đơn vị thi công:",
+              "ảnh:"
+            ],
+            "severity": "review"
+          }
+        ]
+      }
+    ]
+  },
+  "phase2_smoke": {
+    "text_records": 20,
+    "temporal_records": 20,
+    "deeper_records": 20,
+    "temporal_negative_gaps": 0
+  },
+  "note": "Audit is read-only against data/raw/articles.jsonl. Parser/validator improvements are applied to source code for future crawls; the frozen baseline raw dataset is intentionally not rewritten."
+}

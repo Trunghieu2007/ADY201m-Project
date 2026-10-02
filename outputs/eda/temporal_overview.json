@@ -1,0 +1,71 @@
+{
+  "records": 20,
+  "publication": {
+    "dated_records": 20,
+    "undated_records": 0,
+    "by_date": {
+      "2026-09-24": 14,
+      "2026-09-25": 6
+    }
+  },
+  "text": {
+    "word_count": {
+      "count": 20,
+      "min": 330,
+      "max": 1834,
+      "mean": 679.95,
+      "median": 556.0
+    },
+    "sentence_count": {
+      "count": 20,
+      "min": 10,
+      "max": 103,
+      "mean": 29,
+      "median": 22.0
+    },
+    "unique_word_count": {
+      "count": 20,
+      "min": 206,
+      "max": 465,
+      "mean": 300.1,
+      "median": 302.0
+    }
+  },
+  "word_count_by_category": {
+    "Thời sự": {
+      "count": 4,
+      "min": 417,
+      "max": 1834,
+      "mean": 943.25,
+      "median": 761.0
+    },
+    "Kinh doanh": {
+      "count": 4,
+      "min": 330,
+      "max": 1031,
+      "mean": 560.75,
+      "median": 441.0
+    },
+    "Bất động sản": {
+      "count": 4,
+      "min": 393,
+      "max": 1674,
+      "mean": 730.5,
+      "median": 427.5
+    },
+    "Khoa học công nghệ": {
+      "count": 4,
+      "min": 374,
+      "max": 626,
+      "mean": 515.75,
+      "median": 531.5
+    },
+    "Sức khỏe": {
+      "count": 4,
+      "min": 429,
+      "max": 747,
+      "mean": 649.5,
+      "median": 711.0
+    }
+  }
+}

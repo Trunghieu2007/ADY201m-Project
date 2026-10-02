@@ -1,0 +1,93 @@
+{
+  "dataset": "data/raw/articles.jsonl",
+  "records": 20,
+  "schema": {
+    "fields": [
+      "url",
+      "title",
+      "description",
+      "content",
+      "author",
+      "publisher",
+      "published_at",
+      "category",
+      "subcategory",
+      "article_id",
+      "crawled_at",
+      "source"
+    ],
+    "field_count": 12
+  },
+  "category_count": 5,
+  "categories": {
+    "Thời sự": 4,
+    "Kinh doanh": 4,
+    "Bất động sản": 4,
+    "Khoa học công nghệ": 4,
+    "Sức khỏe": 4
+  },
+  "subcategory_count": 15,
+  "subcategories": {
+    "Thời sự": 2,
+    "Đầu tư": 1,
+    "Chính trị": 1,
+    "Doanh nghiệp": 1,
+    "Chứng khoán": 1,
+    "Quốc tế": 1,
+    "Hàng hóa": 1,
+    "Ngoại thất": 1,
+    "Chính sách": 3,
+    "Thế giới tự nhiên": 1,
+    "AI": 2,
+    "Đổi mới sáng tạo": 1,
+    "Các bệnh": 2,
+    "Sống khỏe": 1,
+    "Tin tức": 1
+  },
+  "authors_present": 20,
+  "publishers_present": 20,
+  "published_dates_present": 20,
+  "crawled_dates_present": 20,
+  "sources_present": 20,
+  "article_ids_present": 20,
+  "missing_fields": {
+    "url": 0,
+    "title": 0,
+    "description": 0,
+    "content": 0,
+    "author": 0,
+    "publisher": 0,
+    "published_at": 0,
+    "category": 0,
+    "subcategory": 0,
+    "article_id": 0,
+    "crawled_at": 0,
+    "source": 0
+  },
+  "duplicates": {
+    "duplicate_urls": 0,
+    "duplicate_titles": 0,
+    "duplicate_article_ids": 0
+  },
+  "content_length": {
+    "count": 20,
+    "min": 1593,
+    "max": 8200,
+    "mean": 3128,
+    "median": 2600.5
+  },
+  "title_length": {
+    "count": 20,
+    "min": 19,
+    "max": 67,
+    "mean": 46.95,
+    "median": 50.0
+  },
+  "description_length": {
+    "count": 20,
+    "min": 113,
+    "max": 178,
+    "mean": 143.5,
+    "median": 142.5
+  }
+}
