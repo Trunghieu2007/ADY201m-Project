@@ -1,4 +1,4 @@
-# ADY201m — Vietnamese News Analytics & Trend Discovery Platform (VnExpress)
+# ADY201m Project
 
 [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://www.python.org/)
 [![Tests](https://img.shields.io/badge/tests-21%2F21%20passing-brightgreen.svg)](tests/test_pipeline.py)
