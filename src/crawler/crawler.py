@@ -14,9 +14,7 @@ from bs4 import BeautifulSoup, Tag
 
 logger = logging.getLogger(__name__)
 
-# ==============================================================================
-# 1. Cấu hình đường dẫn & Nguồn cấp dữ liệu
-# ==============================================================================
+# Paths & Feed Configurations
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 RAW_DATA_DIR = PROJECT_ROOT / "data" / "raw"
 ARTICLE_OUTPUT = RAW_DATA_DIR / "articles.jsonl"
@@ -36,25 +34,20 @@ RSS_FEEDS = {
 }
 CATEGORIES = {k: v[0] for k, v in RSS_FEEDS.items()}
 
-REQUEST_TIMEOUT = 20
-REQUEST_DELAY = 1.0
-MAX_ARTICLES = 20
-USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/154.0.0.0 Safari/537.36 VnExpressDataScienceCrawler/0.1"
-)
-
-CREDIT_REGEX = re.compile(
-    r"\s+(?:nhóm\s+thiết\s+kế|kết\s+cấu|đơn\s+vị\s+thi\s+công|ảnh|photo|photos|thiết\s+kế|\"?biên\s+tập\"?|biên\s+dịch)\s*:",
-    re.IGNORECASE,
-)
+REQUEST_TIMEOUT, REQUEST_DELAY, MAX_ARTICLES = 20, 1.0, 20
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/154.0.0.0 VnExpressDataScienceCrawler/0.1"
+CREDIT_REGEX = re.compile(r"\s+(?:nhóm\s+thiết\s+kế|kết\s+cấu|đơn\s+vị\s+thi\s+công|ảnh|photo|photos|thiết\s+kế|\"?biên\s+tập\"?|biên\s+dịch)\s*:", re.I)
+CATEGORY_PATHS = {
+    "/thoi-su/": "Thời sự",
+    "/kinh-doanh/": "Kinh doanh",
+    "/bat-dong-san/": "Bất động sản",
+    "/suc-khoe/": "Sức khỏe",
+    "/khoa-hoc-cong-nghe/": "Khoa học công nghệ",
+}
 
 
-# ==============================================================================
-# 2. Hàm hỗ trợ tải trang (HTTP Helper)
-# ==============================================================================
 def fetch_url(url: str, retries: int = 3, delay: float = 1.0) -> str:
-    """Tải nội dung văn bản từ URL với cơ chế thử lại (retry) và bắt lỗi toàn diện."""
+    """Tải nội dung HTML/XML với cơ chế retry và xử lý ngoại lệ RequestException."""
     headers = {"User-Agent": USER_AGENT, "Accept-Language": "vi-VN,vi;q=0.9,en;q=0.8"}
     for attempt in range(1, retries + 1):
         try:
@@ -63,60 +56,37 @@ def fetch_url(url: str, retries: int = 3, delay: float = 1.0) -> str:
             return res.text
         except requests.RequestException as exc:
             if attempt == retries:
-                logger.error("Đã hết số lần thử lại (%d/%d) khi tải %s: %s", attempt, retries, url, exc)
+                logger.error("Hết số lần thử (%d/%d) tải %s: %s", attempt, retries, url, exc)
                 raise
-            logger.warning("Lần thử %d/%d tải %s gặp lỗi: %s. Thử lại sau %.1fs...", attempt, retries, url, exc, delay * attempt)
+            logger.warning("Thử lại (%d/%d) tải %s do lỗi: %s. Chờ %.1fs...", attempt, retries, url, exc, delay * attempt)
             time.sleep(delay * attempt)
     return ""
 
 
-# ==============================================================================
-# 3. Trích xuất & Bóc tách Bài viết (Article Parser)
-# ==============================================================================
 class ArticleCrawler:
-    """Bóc tách và thu thập dữ liệu bài viết từ VnExpress."""
-
-    def __init__(self) -> None:
-        pass
+    """Thu thập và bóc tách cấu trúc nội dung bài viết từ VnExpress."""
 
     def fetch(self, url: str) -> str:
         return fetch_url(url)
 
     @staticmethod
     def clean_author(text: str | None) -> str | None:
-        """Làm sạch tên tác giả và loại bỏ các chú thích ảnh/biên dịch."""
         if not text:
             return None
-        text = re.sub(r"\s+", " ", text).strip()
-        text = re.sub(r"^(tác giả|tac gia|theo|by)\s*:\s*", "", text, flags=re.IGNORECASE).strip()
-        match = CREDIT_REGEX.search(text)
-        if match:
-            text = text[:match.start()].strip()
-        if not text or text.lower() in {"vnexpress", "vnexpress.net", "báo vnexpress"}:
-            return None
-        return text
+        text = re.sub(r"^(tác giả|tac gia|theo|by)\s*:\s*", "", re.sub(r"\s+", " ", text).strip(), flags=re.I).strip()
+        m = CREDIT_REGEX.search(text)
+        if m:
+            text = text[:m.start()].strip()
+        return text if (text and text.lower() not in {"vnexpress", "vnexpress.net", "báo vnexpress"}) else None
 
     @staticmethod
     def get_author_element(container: Tag) -> Tag | None:
-        """Tìm thẻ đoạn văn chứa tên tác giả nằm trước thẻ #article-end."""
         end_marker = container.select_one("#article-end")
-        candidates = []
-        if end_marker:
-            for s in end_marker.previous_siblings:
-                if isinstance(s, Tag) and s.name == "p":
-                    candidates.append(s)
-                    if len(candidates) >= 5:
-                        break
-        else:
-            candidates = container.find_all("p")[-5:]
-
-        for p in candidates:
+        cands = [s for s in end_marker.previous_siblings if isinstance(s, Tag) and s.name == "p"][:5] if end_marker else container.find_all("p")[-5:]
+        for p in cands:
             t = p.get_text(" ", strip=True)
-            align = p.get("align", "") or p.get("style", "")
-            is_align_right = "right" in str(align).lower()
-            has_strong = p.find(["strong", "b"]) is not None
-            has_credit = bool(re.search(r"\((?:theo|ảnh|nguồn|tổng hợp)", t, re.I))
-            if is_align_right or has_strong or has_credit:
+            align = str(p.get("align", "") or p.get("style", "")).lower()
+            if "right" in align or p.find(["strong", "b"]) or re.search(r"\((?:theo|ảnh|nguồn|tổng hợp)", t, re.I):
                 cleaned = ArticleCrawler.clean_author(t)
                 if cleaned and len(cleaned) <= 120 and not cleaned.lower().startswith(("ảnh:", "video:", "hotline:", "email:")):
                     return p
@@ -124,60 +94,38 @@ class ArticleCrawler:
 
     @staticmethod
     def extract_author(soup: BeautifulSoup) -> str | None:
-        """Bóc tách tên tác giả bài báo từ container bài viết hoặc selector dự phòng."""
         container = soup.select_one(".fck_detail")
-        if container:
-            author_el = ArticleCrawler.get_author_element(container)
-            if author_el is not None:
-                cleaned = ArticleCrawler.clean_author(author_el.get_text(" ", strip=True))
-                if cleaned:
-                    return cleaned
-
+        if container and (el := ArticleCrawler.get_author_element(container)) is not None:
+            if cleaned := ArticleCrawler.clean_author(el.get_text(" ", strip=True)):
+                return cleaned
         for sel in [".author_name", ".author-name", ".article-author", "p.author"]:
-            el = soup.select_one(sel)
-            if el:
-                cleaned = ArticleCrawler.clean_author(el.get_text(" ", strip=True))
-                if cleaned:
-                    return cleaned
-
-        label_pattern = re.compile(r"^\s*(Tác giả|Tac gia|By)\s*:", flags=re.IGNORECASE)
-        for el in soup.find_all(string=label_pattern):
-            if el.parent is not None:
-                cleaned = ArticleCrawler.clean_author(el.parent.get_text(" ", strip=True))
-                if cleaned:
-                    return cleaned
+            if (el := soup.select_one(sel)) and (cleaned := ArticleCrawler.clean_author(el.get_text(" ", strip=True))):
+                return cleaned
+        for el in soup.find_all(string=re.compile(r"^\s*(Tác giả|Tac gia|By)\s*:", re.I)):
+            if el.parent and (cleaned := ArticleCrawler.clean_author(el.parent.get_text(" ", strip=True))):
+                return cleaned
         return None
 
     @staticmethod
     def extract_article_content(soup: BeautifulSoup) -> str:
-        """Trích xuất nội dung văn bản chính trong .fck_detail, loại trừ quảng cáo và rác."""
         container = soup.select_one(".fck_detail")
         if not container:
             return ""
-        title = soup.select_one("h1.title-detail") or soup.find("h1")
-        desc = soup.select_one("p.description")
+        title, desc = soup.select_one("h1.title-detail") or soup.find("h1"), soup.select_one("p.description")
         excluded = {re.sub(r"\s+", " ", el.get_text(" ", strip=True)).strip() for el in (title, desc) if el}
-
-        author_el = ArticleCrawler.get_author_element(container)
-        author_text = ArticleCrawler.extract_author(soup)
+        author_el, author_text = ArticleCrawler.get_author_element(container), ArticleCrawler.extract_author(soup)
         end_marker = container.select_one("#article-end")
 
-        paragraphs = []
-        prev = None
+        paragraphs, prev = [], None
         for child in container.children:
             if not isinstance(child, Tag):
                 continue
             if end_marker and child is end_marker:
                 break
-            if author_el and child is author_el:
-                continue
-            if child.name in ("script", "style", "iframe", "noscript", "button"):
-                continue
-            if child.name == "h1":
+            if (author_el and child is author_el) or child.name in ("script", "style", "iframe", "noscript", "button", "h1"):
                 continue
             if child.name == "p" and "description" in (child.get("class") or []):
                 continue
-
             text = re.sub(r"\s+", " ", child.get_text(" ", strip=True)).strip()
             if not text or text in excluded or text == prev:
                 continue
@@ -190,24 +138,11 @@ class ArticleCrawler:
     @staticmethod
     def get_meta(soup: BeautifulSoup, **attrs) -> str | None:
         tag = soup.find("meta", attrs=attrs)
-        if tag and tag.get("content"):
-            val = str(tag["content"]).strip()
-            return val if val else None
-        return None
+        return str(tag["content"]).strip() if (tag and tag.get("content")) else None
 
     @staticmethod
     def extract_category_from_url(url: str) -> str | None:
-        category_paths = {
-            "/thoi-su/": "Thời sự",
-            "/kinh-doanh/": "Kinh doanh",
-            "/bat-dong-san/": "Bất động sản",
-            "/suc-khoe/": "Sức khỏe",
-            "/khoa-hoc-cong-nghe/": "Khoa học công nghệ",
-        }
-        for path, cat in category_paths.items():
-            if path in url:
-                return cat
-        return None
+        return next((cat for path, cat in CATEGORY_PATHS.items() if path in url), None)
 
     @staticmethod
     def extract_article_id(soup: BeautifulSoup, url: str) -> str | None:
@@ -219,26 +154,18 @@ class ArticleCrawler:
 
     @staticmethod
     def extract_published_at(soup: BeautifulSoup, rss_metadata: dict | None = None) -> str | None:
-        rss = rss_metadata or {}
         for attrs in [{"name": "pubdate"}, {"itemprop": "datePublished"}, {"property": "article:published_time"}]:
-            tag = soup.find("meta", attrs=attrs)
-            if tag and tag.get("content"):
+            if (tag := soup.find("meta", attrs=attrs)) and tag.get("content"):
                 return str(tag["content"]).strip()
-        return rss.get("published_at")
+        return (rss_metadata or {}).get("published_at")
 
     def parse(self, html: str | None, url: str, rss_metadata: dict | None = None) -> dict:
-        """Phân tích HTML bài viết thành dictionary có cấu trúc."""
-        soup = BeautifulSoup(html or "", "lxml")
-        rss = rss_metadata or {}
-        title_el = soup.select_one("h1.title-detail") or soup.find("h1")
-        title = title_el.get_text(" ", strip=True) if title_el else (self.get_meta(soup, property="og:title") or rss.get("title"))
-        desc_el = soup.select_one("p.description")
-        desc = desc_el.get_text(" ", strip=True) if desc_el else (self.get_meta(soup, property="og:description") or rss.get("description"))
-
+        soup, rss = BeautifulSoup(html or "", "lxml"), rss_metadata or {}
+        t_el, d_el = soup.select_one("h1.title-detail") or soup.find("h1"), soup.select_one("p.description")
         return {
             "url": url,
-            "title": title,
-            "description": desc,
+            "title": t_el.get_text(" ", strip=True) if t_el else (self.get_meta(soup, property="og:title") or rss.get("title")),
+            "description": d_el.get_text(" ", strip=True) if d_el else (self.get_meta(soup, property="og:description") or rss.get("description")),
             "content": self.extract_article_content(soup),
             "author": self.extract_author(soup),
             "publisher": "VnExpress",
@@ -254,14 +181,8 @@ class ArticleCrawler:
         return self.parse(html=self.fetch(url), url=url, rss_metadata=rss_metadata)
 
 
-# ==============================================================================
-# 4. Quét nguồn RSS & Sitemap (Discovery)
-# ==============================================================================
 class RSSCrawler:
-    """Quét và thu thập liên kết bài viết từ RSS feeds."""
-
-    def __init__(self) -> None:
-        pass
+    """Quét và trích xuất danh sách liên kết bài viết từ RSS feeds."""
 
     def fetch_feed(self, url: str) -> str:
         return fetch_url(url)
@@ -275,67 +196,54 @@ class RSSCrawler:
             return []
         articles = []
         for item in root.iter("item"):
-            def get_text(tag: str) -> str | None:
+            def get_t(tag: str) -> str | None:
                 el = item.find(tag)
                 return el.text.strip() if el is not None and el.text else None
 
-            url = get_text("link")
-            if not url:
-                continue
-            articles.append({
-                "url": url,
-                "title": get_text("title"),
-                "description": get_text("description"),
-                "published_at": get_text("pubDate"),
-                "category": category,
-                "categories": [category],
-            })
+            if url := get_t("link"):
+                articles.append({
+                    "url": url,
+                    "title": get_t("title"),
+                    "description": get_t("description"),
+                    "published_at": get_t("pubDate"),
+                    "category": category,
+                    "categories": [category],
+                })
         return articles
 
     def discover(self) -> list[dict]:
         discovered: dict[str, dict] = {}
         for category, feed_url in RSS_FEEDS.values():
             try:
-                xml_text = fetch_url(feed_url)
-                for article in self.parse_feed(xml_text, category):
-                    url = article["url"]
+                for a in self.parse_feed(fetch_url(feed_url), category):
+                    url = a["url"]
                     if "vnexpress.net" in url:
                         if url not in discovered:
-                            discovered[url] = article
-                        else:
-                            cats = discovered[url].setdefault("categories", [])
-                            if category not in cats:
-                                cats.append(category)
+                            discovered[url] = a
+                        elif category not in discovered[url].setdefault("categories", []):
+                            discovered[url]["categories"].append(category)
             except Exception as exc:
-                logger.warning("Failed to process RSS feed %s: %s", feed_url, exc)
+                logger.warning("Không thể xử lý RSS feed %s: %s", feed_url, exc)
         return list(discovered.values())
 
 
 class SitemapCrawler:
-    """Quét và thu thập liên kết bài viết từ Sitemap XML."""
-
-    def __init__(self) -> None:
-        pass
+    """Quét và trích xuất liên kết bài viết từ Sitemap XML."""
 
     def discover(self) -> list[str]:
         discovered: set[str] = set()
         for sitemap_url in SITEMAP_URLS:
             try:
-                xml_text = fetch_url(sitemap_url)
-                root = ET.fromstring(xml_text)
-                for el in root.iter():
-                    if el.tag.endswith("loc") and el.text:
-                        u = el.text.strip()
-                        if "vnexpress.net" in u and u.endswith(".html"):
-                            discovered.add(u)
+                root = ET.fromstring(fetch_url(sitemap_url))
+                discovered.update(
+                    el.text.strip() for el in root.iter()
+                    if el.tag.endswith("loc") and el.text and "vnexpress.net" in el.text and el.text.strip().endswith(".html")
+                )
             except Exception as exc:
-                logger.warning("Failed to process sitemap %s: %s", sitemap_url, exc)
+                logger.warning("Không thể xử lý sitemap %s: %s", sitemap_url, exc)
         return sorted(discovered)
 
 
-# ==============================================================================
-# 5. Lưu trữ & Điều phối Quy trình chính (Orchestrator)
-# ==============================================================================
 def save_jsonl(path: Path, record: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as f:
@@ -345,16 +253,8 @@ def save_jsonl(path: Path, record: dict) -> None:
 def load_crawled_urls(path: Path) -> set[str]:
     if not path.exists():
         return set()
-    urls = set()
     with path.open("r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                try:
-                    urls.add(json.loads(line).get("url"))
-                except Exception:
-                    pass
-    return urls
+        return {u for line in f if line.strip() and (u := json.loads(line).get("url"))}
 
 
 def select_balanced_articles(articles: list[dict], max_articles: int = MAX_ARTICLES, articles_per_category: int = 4) -> list[dict]:
@@ -362,28 +262,21 @@ def select_balanced_articles(articles: list[dict], max_articles: int = MAX_ARTIC
     for a in articles:
         if a.get("category"):
             grouped[a["category"]].append(a)
-    selected = []
-    for cat, _ in RSS_FEEDS.values():
-        selected.extend(grouped.get(cat, [])[:articles_per_category])
-    return selected[:max_articles]
+    return [a for cat, _ in RSS_FEEDS.values() for a in grouped.get(cat, [])[:articles_per_category]][:max_articles]
 
 
 def main() -> None:
     RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
-    rss_crawler = RSSCrawler()
-    article_crawler = ArticleCrawler()
-
-    logger.info("Discovering articles from RSS feeds...")
+    rss_crawler, article_crawler = RSSCrawler(), ArticleCrawler()
     discovered = rss_crawler.discover()
-    crawled_urls = load_crawled_urls(ARTICLE_OUTPUT)
-    pending = [a for a in discovered if a["url"] not in crawled_urls]
+    pending = [a for a in discovered if a["url"] not in load_crawled_urls(ARTICLE_OUTPUT)]
     selected = select_balanced_articles(pending, MAX_ARTICLES, articles_per_category=4)
 
-    logger.info("Found %d pending articles, crawling %d...", len(pending), len(selected))
+    logger.info("Tìm thấy %d bài chờ, tiến hành cào %d bài...", len(pending), len(selected))
     success, failed = 0, 0
     for idx, meta in enumerate(selected, start=1):
         url = meta["url"]
-        logger.info("[%d/%d] Crawling: %s", idx, len(selected), url)
+        logger.info("[%d/%d] Đang cào: %s", idx, len(selected), url)
         try:
             art = article_crawler.crawl(url, rss_metadata=meta)
             save_jsonl(ARTICLE_OUTPUT, art)
@@ -391,10 +284,10 @@ def main() -> None:
             success += 1
         except Exception as exc:
             failed += 1
-            logger.warning("Failed to crawl %s: %s", url, exc)
+            logger.warning("Thất bại khi cào %s: %s", url, exc)
             save_jsonl(CRAWL_LOG_OUTPUT, {"url": url, "status": "failed", "error": str(exc), "timestamp": datetime.now(timezone.utc).isoformat()})
         time.sleep(REQUEST_DELAY)
-    logger.info("Crawl finished: %d success, %d failed", success, failed)
+    logger.info("Hoàn tất: %d thành công, %d thất bại", success, failed)
 
 
 if __name__ == "__main__":
