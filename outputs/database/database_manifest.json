@@ -1,0 +1,27 @@
+{
+  "phase": "Phase L — Microsoft SQL Server 3NF Database Persistence",
+  "database_engine": "Microsoft SQL Server",
+  "database_name": "ADY201m",
+  "status": "PASS",
+  "input": "data/processed/articles_processed.jsonl",
+  "schema_file": "sql/create_tables.sql",
+  "update_query": "sql/upsert_article.sql",
+  "records_available": 20,
+  "operations": {
+    "records_loaded": 20,
+    "schema_batches": 8,
+    "inserted": 0,
+    "updated": 20,
+    "skipped": 0,
+    "validation": {
+      "result": "PASS",
+      "articles_count": 20,
+      "features_count": 20,
+      "categories_count": 5,
+      "subcategories_count": 15,
+      "authors_count": 18,
+      "expected_records": 20,
+      "errors": []
+    }
+  }
+}

@@ -43,7 +43,13 @@ FROM dbo.Articles a
 GROUP BY CAST(a.published_at AS DATE)
 ORDER BY publication_date;
 
--- 6. Explicit update example: change the publisher for one article
+-- 6. Window Function: Bài viết mới nhất theo từng chuyên mục (ROW_NUMBER)
+SELECT c.name AS category, a.title, a.published_at,
+       ROW_NUMBER() OVER (PARTITION BY a.category_id ORDER BY a.published_at DESC) AS rank_in_cat
+FROM dbo.Articles a
+JOIN dbo.Categories c ON c.category_id = a.category_id;
+
+-- 7. Explicit update example: change the publisher for one article
 UPDATE dbo.Articles
 SET publisher = N'VnExpress',
     updated_at = SYSUTCDATETIME()

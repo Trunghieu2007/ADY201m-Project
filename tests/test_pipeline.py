@@ -24,6 +24,7 @@ from src.database.sqlserver import (
     feature_values,
     load_processed_records,
     split_sql_batches,
+    verify_database,
 )
 from src.eda.text_statistics import sentence_count, word_count
 from src.organization.category_organizer import (
@@ -251,6 +252,12 @@ class Phase6Tests(unittest.TestCase):
         sql = Path("sql/upsert_article.sql").read_text(encoding="utf-8")
         self.assertIn("WHERE article_id = ?", sql)
         self.assertNotIn("UPDATE dbo.Articles SET url = '", sql)
+
+    def test_phase6_database_verification_and_queries(self):
+        """Kiểm tra hàm verify_database có thể import và tệp queries.sql chứa đủ truy vấn Window Functions."""
+        self.assertTrue(callable(verify_database))
+        sql = Path("sql/queries.sql").read_text(encoding="utf-8")
+        self.assertIn("ROW_NUMBER() OVER", sql)
 
     def test_phase6_processed_input_is_20_records(self):
         """Kiểm tra dữ liệu nạp CSDL articles_processed.jsonl có đủ 20 bản ghi hợp lệ."""

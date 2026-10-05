@@ -293,16 +293,18 @@ Mỗi hàm trong mã nguồn được chú thích bằng 1 dòng comment `#` sú
 
 #### 6. Module Cơ sở Dữ liệu Microsoft SQL Server (`src/database/`)
 - [`src/database/sqlserver.py`](src/database/sqlserver.py):
-  - `build_connection_string() -> str`: Tạo chuỗi kết nối SQL Server linh hoạt từ biến môi trường.
-  - `get_connection()`: Mở kết nối `pyodbc` với chế độ transaction kiểm soát.
+  - `build_connection_string() -> str`: Tự động nhận diện ODBC Driver (`ODBC Driver 18/17/13`, `SQL Server`) và instance cục bộ (`localhost\SQLEXPRESS`, `localhost`).
+  - `get_connection()`: Mở kết nối `pyodbc` an toàn, tích hợp converter xử lý chuẩn kiểu dữ liệu `DATETIMEOFFSET` (-155) sang chuỗi ISO 8601.
   - `split_sql_batches(sql_text: str) -> list[str]`: Tách các khối lệnh SQL theo từ khóa batch `GO`.
-  - `execute_schema(cursor) -> int`: Thi hành script DDL tạo bảng 3NF và chỉ mục.
+  - `execute_schema(cursor) -> int`: Thi hành script DDL tạo 5 bảng chuẩn 3NF và chỉ mục tối ưu hóa.
   - `ensure_dimension(cursor, table, name, category_id)`: Trả về khóa ID hoặc tự động thêm mới bản ghi bảng chiều (`Categories`, `Subcategories`, `Authors`).
-  - `import_record(cursor, record) -> bool`: Chèn bản ghi bài viết mới kèm 13 đặc trưng.
-  - `update_record(cursor, record) -> bool`: Cập nhật bản ghi bài viết đã tồn tại bằng câu truy vấn tham số hóa an toàn.
-  - `sync_records(connection, records) -> tuple[int, int]`: Thực hiện đồng bộ hàng loạt trong 1 transaction an toàn.
+  - `import_record(cursor, record) -> bool`: Chèn bản ghi bài viết mới kèm 13 đặc trưng mô tả cho bảng `dbo.ArticleFeatures`.
+  - `update_record(cursor, record) -> bool`: Cập nhật bản ghi bài viết và đặc trưng đã tồn tại bằng câu truy vấn tham số hóa an toàn (chống SQL Injection).
+  - `sync_records(connection, records) -> tuple[int, int]`: Thực hiện đồng bộ hàng loạt trong 1 transaction an toàn (`commit`/`rollback`).
+  - `verify_database(connection, records) -> dict`: Tự động đối soát toàn vẹn CSDL (Reconciliation), kiểm tra số lượng bản ghi (20/20), khóa ngoại mồ côi và đặc trưng mô tả.
+  - `main()`: CLI hỗ trợ: `--init-schema`, `--import`, `--update`, `--sync`, `--check`.
 - [`src/database/run_database.py`](src/database/run_database.py):
-  - CLI hỗ trợ các tùy chọn: `--init-schema`, `--import`, `--update`, `--sync`, lưu kết quả vào `outputs/database/`.
+  - Entrypoint khởi chạy nhanh, hỗ trợ đầy đủ các cờ CLI `--sync` và `--check`.
 
 #### 7. Giao diện BI Dashboard Streamlit (`dashboard/`)
 - [`dashboard/app.py`](dashboard/app.py):
