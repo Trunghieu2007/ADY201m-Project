@@ -86,7 +86,7 @@ ADY201m Project/
 │   │   ├── category_summary.json         # Tóm tắt tổ chức chuyên mục & top từ khóa xu hướng
 │   │   └── feature_matrix.csv            # Ma trận 13 đặc trưng thống kê mô tả
 │   └── raw/                              # Dữ liệu cào gốc (Đóng băng)
-│       ├── articles.jsonl                # 20 bản ghi gốc (SHA-256 đóng băng)
+│       ├── articles.jsonl                # 20 bản ghi gốc
 │       └── crawl_log.jsonl               # Nhật ký thu thập dữ liệu
 ├── outputs/                              # Toàn bộ dữ liệu xuất, báo cáo, manifest, biểu đồ
 │   ├── database/                         # Manifest tích hợp CSDL SQL Server
