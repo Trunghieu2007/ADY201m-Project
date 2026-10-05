@@ -36,7 +36,17 @@ Dự án **ADY201m — Vietnamese News Analytics & Trend Discovery Platform** t�
 
 ---
 
-## 2. Luồng Chạy Dữ Liệu (Data Pipeline Flow)
+## 2. Thành viên Thực hiện & Phân công Đề tài
+
+| STT | Mã Sinh viên | Vai trò Cốt lõi | Phân công Nhiệm vụ Chi tiết |
+| :---: | :---: | :--- | :--- |
+| 1 | **HE210442** | **Cào dữ liệu & Làm sạch dữ liệu** | - Xây dựng bộ cào tự động VnExpress qua RSS & Sitemap XML ([`src/crawler/`](src/crawler/)).<br>- Kiểm định chất lượng dữ liệu thô và quản trị mã băm SHA-256 ([`src/validation/validate_raw.py`](src/validation/validate_raw.py)).<br>- Tiền xử lý, chuẩn hóa Unicode NFC và trích xuất 13 đặc trưng mô tả ([`src/preprocessing/preprocess.py`](src/preprocessing/preprocess.py)). |
+| 2 | **HE210543** | **Quản lý Database** | - Thiết kế kiến trúc lược đồ CSDL quan hệ chuẩn hóa 3NF ([`src/database/schema.sql`](src/database/schema.sql)).<br>- Xây dựng pipeline nạp đồng bộ (ETL/Upsert) an toàn, chống SQL Injection ([`src/database/sync.py`](src/database/sync.py)).<br>- Quản trị kết nối ODBC, tối ưu hóa chỉ mục và viết truy vấn phân tích nâng cao với Window Functions ([`sql/queries.sql`](sql/queries.sql)). |
+| 3 | **HE210370** | **Vẽ sơ đồ trực quan & Dashboard** | - Phân tích khám phá dữ liệu (EDA), phân tích xu hướng thời gian & từ vựng ([`src/eda/`](src/eda/)).<br>- Thiết kế và kết xuất 6 biểu đồ trực quan hóa dữ liệu tĩnh ([`outputs/eda/`](outputs/eda/)).<br>- Phát triển giao diện web BI Dashboard Streamlit 5 Tab tương tác ([`dashboard/app.py`](dashboard/app.py)). |
+
+---
+
+## 3. Luồng Chạy Dữ Liệu (Data Pipeline Flow)
 
 Toàn bộ quy trình xử lý dữ liệu từ lúc cào tin tức từ VnExpress đến khi hiển thị trên giao diện Dashboard được thiết kế theo luồng tuần tự, khép kín và bảo toàn nguyên vẹn 100% dữ liệu gốc:
 
@@ -63,7 +73,7 @@ flowchart LR
 
 ---
 
-## 3. Cấu trúc Thư mục Dự án
+## 4. Cấu trúc Thư mục Dự án
 
 ```text
 ADY201m Project/
@@ -109,7 +119,7 @@ ADY201m Project/
 
 ---
 
-## 4. Chi tiết Các Giai đoạn Thực hiện (Phases 1 — 6)
+## 5. Chi tiết Các Giai đoạn Thực hiện (Phases 1 — 6)
 
 ### Phase 1: Thu thập Dữ liệu & Kiểm định Chất lượng
 - **Bộ cào tự động:** [`src/crawler/`](src/crawler/) sử dụng RSS và Sitemap XML để phát hiện bài viết mới và bóc tách HTML chi tiết với `BeautifulSoup(..., 'lxml')`.
@@ -272,11 +282,11 @@ Mỗi hàm trong mã nguồn được chú thích bằng 1 dòng comment `#` sú
 
 ---
 
-## 5. Hướng dẫn Cài đặt & Khởi chạy Nhanh (Setup Guide cho Người Mới)
+## 6. Hướng dẫn Cài đặt & Khởi chạy Nhanh (Setup Guide cho Người Mới)
 
 Phần này hướng dẫn chi tiết từng bước cho người mới bắt đầu thiết lập môi trường và chạy dự án từ đầu đến cuối trên máy tính cá nhân.
 
-### 5.1. Yêu cầu Tiên quyết (Prerequisites)
+### 6.1. Yêu cầu Tiên quyết (Prerequisites)
 Trước khi bắt đầu, hãy đảm bảo máy tính đã cài đặt:
 1. **Python 3.10 trở lên** (Khuyến nghị 3.11, 3.12, 3.13 hoặc 3.14). Tải tại [python.org](https://www.python.org/downloads/).
    *(Khi cài đặt trên Windows, nhớ tích chọn ô **"Add Python to PATH"**)*.
@@ -285,7 +295,7 @@ Trước khi bắt đầu, hãy đảm bảo máy tính đã cài đặt:
 
 ---
 
-### 5.2. Các Bước Cài đặt Môi trường (Environment Setup)
+### 6.2. Các Bước Cài đặt Môi trường (Environment Setup)
 
 #### Bước 1: Tải mã nguồn về máy
 Mở Terminal (hoặc PowerShell trên Windows) và chạy lệnh:
@@ -331,7 +341,7 @@ pip install -r requirements-streamlit.txt
 
 ---
 
-### 5.3. Hướng dẫn Khởi chạy Dự án
+### 6.3. Hướng dẫn Khởi chạy Dự án
 
 Bạn có 2 cách tiếp cận tùy theo nhu cầu:
 
@@ -378,7 +388,7 @@ streamlit run dashboard/app.py
 
 ---
 
-### 5.4. Kiểm thử Hệ thống (Verification & Quality Gates)
+### 6.4. Kiểm thử Hệ thống (Verification & Quality Gates)
 
 Để đảm bảo toàn bộ mã nguồn hoạt động chính xác và không có lỗi:
 ```bash
