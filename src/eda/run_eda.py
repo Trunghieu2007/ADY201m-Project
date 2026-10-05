@@ -1,10 +1,18 @@
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import statistics
+import sys
 from pathlib import Path
 from typing import Any
+
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 from . import deeper_eda, temporal_analysis, text_statistics
 
@@ -310,8 +318,47 @@ def generate_checklist(findings: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+# Kiểm tra đối soát tính toàn vẹn của các tệp báo cáo và 6 biểu đồ trực quan EDA
+def validate_eda_outputs() -> dict[str, Any]:
+    required_files = [
+        TEXT_STATS_FILE,
+        TEMPORAL_FILE,
+        DEEPER_EDA_FILE,
+        FINDINGS_FILE,
+        SUMMARY_FILE,
+        LIMITATIONS_FILE,
+        CHECKLIST_FILE,
+    ]
+    required_charts = [
+        EDA_DIR / "category_subcategory.png",
+        EDA_DIR / "average_words_by_category.png",
+        EDA_DIR / "publication_hour.png",
+        EDA_DIR / "publication_to_crawl_gap_by_category.png",
+        EDA_DIR / "content_length_distribution.png",
+        EDA_DIR / "word_count_distribution.png",
+    ]
+    missing = [str(f.relative_to(PROJECT_ROOT)).replace("\\", "/") for f in required_files + required_charts if not f.exists()]
+    if missing:
+        return {"result": "FAIL", "missing_count": len(missing), "missing_files": missing}
+    return {
+        "result": "PASS",
+        "charts_count": len(required_charts),
+        "reports_count": len(required_files),
+        "status": "Đầy đủ 6 biểu đồ trực quan và báo cáo thống kê mô tả EDA",
+    }
+
+
 # Điều phối toàn bộ quy trình thực thi EDA
-def main() -> None:
+def main() -> int:
+    parser = argparse.ArgumentParser(description="ADY201m — Pipeline khám phá dữ liệu & sinh biểu đồ xu hướng (Phase 2 - EDA)")
+    parser.add_argument("--check", "--verify", dest="do_check", action="store_true", help="Chỉ kiểm định tính hợp lệ của 6 biểu đồ và báo cáo EDA đã sinh")
+    args = parser.parse_args()
+
+    if args.do_check:
+        res = validate_eda_outputs()
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+        return 0 if res.get("result") == "PASS" else 1
+
     print("=" * 70 + "\nADY201m — EDA PIPELINE\n" + "=" * 70)
     EDA_DIR.mkdir(parents=True, exist_ok=True)
     EDA_SUMMARY_DIR.mkdir(parents=True, exist_ok=True)
@@ -333,12 +380,14 @@ def main() -> None:
     LIMITATIONS_FILE.write_text(generate_limitations(len(articles)), encoding="utf-8")
     CHECKLIST_FILE.write_text(generate_checklist(findings), encoding="utf-8")
 
+    val = validate_eda_outputs()
     print("\n" + "=" * 70 + "\nEDA COMPLETE\n" + "=" * 70)
     print(f"Records: {len(articles)}, Categories: {len(findings['category_distribution'])}")
     print(f"Subcategories: {len(findings['subcategory_distribution'])}, Unique authors: {findings['metadata']['unique_authors']}")
-    checklist_text = CHECKLIST_FILE.read_text(encoding="utf-8")
-    print("\nSTATUS: " + ("EDA COMPLETE" if "**EDA — COMPLETE**" in checklist_text else "EDA NEEDS REVIEW"))
+    print(f"Biểu đồ trực quan: {val.get('charts_count', 0)}/6 biểu đồ hoàn tất")
+    print(f"STATUS: {val.get('result', 'PASS')}")
+    return 0 if val.get("result") == "PASS" else 1
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

@@ -256,16 +256,14 @@ Mỗi hàm trong mã nguồn được chú thích bằng 1 dòng comment `#` sú
   - `parse_datetime(value: Any) -> datetime | None`: Phân tích chuỗi ISO thời gian.
   - `publication_to_crawl_gap_minutes(published, crawled) -> float | None`: Đo độ lệch phút giữa lúc xuất bản và lúc crawl.
   - `analyze_articles(articles: list[dict]) -> dict`: Tổng hợp phân bố ngày, giờ xuất bản và lưu vào `outputs/eda/temporal_analysis.json`.
-- [`src/eda/explore_raw.py`](src/eda/explore_raw.py):
-  - `load_jsonl(path: Path) -> list[dict]`: Đọc file raw articles.
-  - `dataset_overview(records: list[dict]) -> dict`: Thống kê tổng quan trường dữ liệu, độ dài nội dung, trùng lặp và thiếu sót.
-  - `create_content_length_chart(records)` & `create_category_chart(records)`: Xuất biểu đồ phân bố nội dung và chuyên mục vào `outputs/eda/`.
 - [`src/eda/deeper_eda.py`](src/eda/deeper_eda.py):
   - `analyze_category_relationships(articles: list[dict]) -> dict`: Phân tích ma trận quan hệ giữa category và subcategory.
   - `analyze_text_by_category(articles: list[dict]) -> dict`: Thống kê độ dài từ vựng phân loại theo từng chuyên mục.
   - `save_outputs(report, articles)`: Lưu báo cáo JSON, tóm tắt văn bản và sinh 6 biểu đồ PNG sắc nét vào `outputs/eda/`.
 - [`src/eda/run_eda.py`](src/eda/run_eda.py):
-  - Điều phối toàn bộ quy trình EDA, tạo checklist kiểm định và tóm tắt markdown `outputs/eda_summary/phase2_summary.md`.
+  - `validate_eda_outputs() -> dict`: Tự kiểm tra đối soát tính toàn vẹn của 6 biểu đồ trực quan PNG và 7 tệp báo cáo thống kê EDA.
+  - `main()`: Điều phối toàn bộ quy trình EDA, xuất checklist kiểm định và tóm tắt markdown `outputs/eda_summary/phase2_summary.md`. Hỗ trợ cờ `--check` để kiểm tra nhanh tính đầy đủ của kết quả mà không cần render lại biểu đồ.
+
 
 #### 4. Module Tiền xử lý & Làm sạch Dữ liệu (`src/preprocessing/`)
 - [`src/preprocessing/preprocess.py`](src/preprocessing/preprocess.py):
