@@ -1,10 +1,19 @@
+"""Module tự động tổ chức chuyên mục, chuẩn hóa phân loại và trích xuất từ khóa xu hướng."""
 from __future__ import annotations
 
+import argparse
 import json
 import re
+import sys
 from collections import Counter
 from pathlib import Path
 from typing import Any
+
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW_PATH = ROOT / "data" / "raw" / "articles.jsonl"
@@ -41,45 +50,55 @@ def extract_category_from_url(url: str) -> str:
 # Phân nhóm bài viết tự động theo tên danh mục chuẩn hóa
 def organize_articles(records: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
     organized: dict[str, list[dict[str, Any]]] = {}
-    for record in records:
-        cat = record.get("category") or extract_category_from_url(record.get("url", ""))
-        organized.setdefault(cat, []).append(record)
+    for r in records:
+        cat = r.get("category") or extract_category_from_url(r.get("url", ""))
+        organized.setdefault(cat, []).append(r)
     return organized
 
 
 # Thống kê top từ khóa xuất hiện nhiều nhất sau khi lọc bỏ stopwords tiếng Việt
 def get_top_keywords(records: list[dict[str, Any]], top_n: int = 10) -> list[tuple[str, int]]:
-    words: list[str] = []
-    for record in records:
-        text = record.get("content", "") or record.get("title", "")
-        clean_words = re.findall(r"\b[A-Za-zÀ-ỹ0-9_]{3,}\b", text.lower())
-        for w in clean_words:
-            if w not in STOPWORDS and not w.isdigit():
-                words.append(w)
+    words = [
+        w
+        for r in records
+        for w in re.findall(r"\b[A-Za-zÀ-ỹ0-9_]{3,}\b", (r.get("content") or r.get("title") or "").lower())
+        if w not in STOPWORDS and not w.isdigit()
+    ]
     return Counter(words).most_common(top_n)
 
 
 # Tổng hợp các chỉ số định lượng và từ khóa đại diện cho từng danh mục
 def compute_category_summary(records: list[dict[str, Any]]) -> dict[str, Any]:
     organized = organize_articles(records)
-    summary: dict[str, Any] = {
-        "total_articles": len(records),
+    total = len(records)
+    return {
+        "total_articles": total,
         "total_categories": len(organized),
-        "categories": {},
+        "categories": {
+            cat: {
+                "count": len(items),
+                "percentage": round((len(items) / total) * 100, 1) if total else 0,
+                "average_word_count": round(sum(wc) / len(wc), 1) if (wc := [len(item.get("content", "").split()) for item in items]) else 0,
+                "subcategories": dict(Counter(item.get("subcategory") or cat for item in items)),
+                "authors": dict(Counter(item.get("author") or "Unknown" for item in items)),
+                "top_keywords": get_top_keywords(items, top_n=8),
+            }
+            for cat, items in organized.items()
+        },
     }
-    for cat_name, items in organized.items():
-        subcategories = Counter([item.get("subcategory") or cat_name for item in items])
-        authors = Counter([item.get("author") or "Unknown" for item in items])
-        word_counts = [len(item.get("content", "").split()) for item in items]
-        summary["categories"][cat_name] = {
-            "count": len(items),
-            "percentage": round((len(items) / len(records)) * 100, 1) if records else 0,
-            "average_word_count": round(sum(word_counts) / len(word_counts), 1) if word_counts else 0,
-            "subcategories": dict(subcategories),
-            "authors": dict(authors),
-            "top_keywords": get_top_keywords(items, top_n=8),
-        }
-    return summary
+
+
+# Tự kiểm định tính toàn vẹn của tệp category_summary.json trên đĩa
+def validate_summary(path: Path = SUMMARY_PATH) -> dict[str, Any]:
+    if not path.exists():
+        return {"result": "FAIL", "error": f"Không tìm thấy tệp {path}"}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if data.get("total_articles") != 20 or data.get("total_categories") < 5:
+            return {"result": "FAIL", "error": "Số lượng bài viết hoặc chuyên mục không đủ chuẩn"}
+        return {"result": "PASS", "articles": data["total_articles"], "categories": data["total_categories"]}
+    except Exception as exc:
+        return {"result": "FAIL", "error": str(exc)}
 
 
 # Thực thi tự động tổ chức danh mục và lưu tệp JSON tổng hợp
@@ -87,18 +106,29 @@ def run_organization() -> dict[str, Any]:
     source_path = PROCESSED_PATH if PROCESSED_PATH.exists() else RAW_PATH
     if not source_path.exists():
         raise FileNotFoundError(f"Input dataset not found at {source_path}")
-    records = []
     with source_path.open("r", encoding="utf-8") as handle:
-        for line in handle:
-            line = line.strip()
-            if line:
-                records.append(json.loads(line))
+        records = [json.loads(line) for line in handle if line.strip()]
     summary = compute_category_summary(records)
     SUMMARY_PATH.parent.mkdir(parents=True, exist_ok=True)
     SUMMARY_PATH.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     return summary
 
 
-if __name__ == "__main__":
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Tự động tổ chức chuyên mục & khám phá từ khóa xu hướng")
+    parser.add_argument("--check", action="store_true", help="Chỉ kiểm định tính hợp lệ của tệp category_summary.json")
+    args = parser.parse_args()
+
+    if args.check:
+        res = validate_summary()
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+        sys.exit(0 if res.get("result") == "PASS" else 1)
+
     res = run_organization()
-    print(f"Successfully organized {res['total_articles']} articles into {res['total_categories']} categories.")
+    val = validate_summary()
+    print(f"Tổ chức danh mục hoàn tất: {val.get('result', 'PASS')} ({res['total_articles']} bài, {res['total_categories']} chuyên mục)")
+    sys.exit(0 if val.get("result") == "PASS" else 1)
+
+
+if __name__ == "__main__":
+    main()

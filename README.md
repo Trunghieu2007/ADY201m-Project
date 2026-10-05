@@ -289,7 +289,8 @@ Mỗi hàm trong mã nguồn được chú thích bằng 1 dòng comment `#` sú
   - `organize_articles(records: list[dict]) -> dict`: Phân nhóm bài viết theo chuyên mục tương ứng.
   - `get_top_keywords(records: list[dict], top_n: int) -> list[tuple]`: Trích xuất top từ khóa xu hướng sau khi lọc bỏ stopwords tiếng Việt.
   - `compute_category_summary(records: list[dict]) -> dict`: Tính toán tỷ lệ phần trăm bài viết, số từ trung bình, tiểu mục và từ khóa đại diện.
-  - `main()`: Lưu cấu trúc chuyên mục vào `data/processed/category_summary.json`.
+  - `validate_summary() -> dict`: Tự động kiểm tra tính hợp lệ của tệp tổng hợp trên đĩa.
+  - `main()`: Lưu cấu trúc chuyên mục vào `data/processed/category_summary.json` và hỗ trợ cờ `--check` tự kiểm định nhanh.
 
 #### 6. Module Cơ sở Dữ liệu Microsoft SQL Server (`src/database/`)
 - [`src/database/sqlserver.py`](src/database/sqlserver.py):
@@ -363,6 +364,8 @@ python -m src.preprocessing.preprocess
 
 # Bước 5: Khám phá xu hướng từ khóa & Tự động tổ chức chuyên mục
 python -m src.organization.category_organizer
+# Hoặc chỉ kiểm định nhanh cấu trúc chuyên mục:
+# python -m src.organization.category_organizer --check
 ```
 
 ### 5.4. Đồng bộ Cơ sở Dữ liệu SQL Server (Tùy chọn)
