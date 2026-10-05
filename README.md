@@ -64,7 +64,7 @@ flowchart LR
 
 | Chặng | Tên giai đoạn | Dữ liệu Đầu vào (Input) | Module xử lý chính | Dữ liệu Đầu ra (Output) | Vai trò trong hệ thống |
 | :---: | :--- | :--- | :--- | :--- | :--- |
-| **1** | **Thu thập (Ingestion)** | RSS Feeds & Sitemap VnExpress | [`src/crawler/`](src/crawler/) | `data/raw/articles.jsonl` | Bóc tách 12 trường cấu trúc dữ liệu thô, đóng băng mã băm SHA-256. |
+| **1** | **Thu thập (Ingestion)** | RSS Feeds & Sitemap VnExpress | [`src/crawler/`](src/crawler/) | `data/raw/articles.jsonl` | Bóc tách 12 trường cấu trúc dữ liệu thô|
 | **2** | **Khám phá (EDA)** | `data/raw/articles.jsonl` | [`src/eda/`](src/eda/) | `outputs/eda/*.png`<br>`outputs/eda_summary/` | Đánh giá phân phối, khung giờ vàng, xuất 6 biểu đồ PNG tĩnh và báo cáo. |
 | **3** | **Tiền xử lý (Cleaning)** | `data/raw/articles.jsonl` | [`src/preprocessing/`](src/preprocessing/) | `data/processed/articles_processed.jsonl`<br>`data/processed/feature_matrix.csv` | Chuẩn hóa Unicode NFC, khử tiêu đề lặp, trích xuất 13 đặc trưng mô tả. |
 | **4** | **Tổ chức (Taxonomy)** | `articles_processed.jsonl` | [`src/organization/`](src/organization/) | `data/processed/category_summary.json` | Lọc stopwords tiếng Việt, gom nhóm chuyên mục, trích xuất top từ khóa nóng. |
@@ -73,7 +73,109 @@ flowchart LR
 
 ---
 
-## 4. Cấu trúc Thư mục Dự án
+## 4. Đặc tả Chi tiết Dữ liệu Đầu vào & Đầu ra (Project Input & Output)
+
+Phần này đặc tả tường minh quy cách dữ liệu đầu vào (Input) từ báo điện tử VnExpress và toàn bộ các dạng dữ liệu, biểu đồ, CSDL và giao diện đầu ra (Output) được tạo ra trong toàn bộ dự án.
+
+### 4.1. Dữ liệu Đầu vào của Dự án (Project Inputs)
+
+Hệ thống tiếp nhận 2 tầng dữ liệu đầu vào chính:
+
+#### 1. Nguồn Dữ liệu Bên ngoài (External Data Ingestion)
+- **Nguồn cấp tin tức trực tuyến:** Báo điện tử **VnExpress** (`https://vnexpress.net`), trang tin tức có lượng người đọc và uy tín hàng đầu tại Việt Nam.
+- **5 Chuyên mục mục tiêu & Giao thức thu thập:**
+  - **Thời sự:** RSS Feed `https://vnexpress.net/rss/thoi-su.rss` & Sitemap XML.
+  - **Kinh doanh:** RSS Feed `https://vnexpress.net/rss/kinh-doanh.rss` & Sitemap XML.
+  - **Bất động sản:** RSS Feed `https://vnexpress.net/rss/bat-dong-san.rss` & Sitemap XML.
+  - **Khoa học công nghệ:** RSS Feed `https://vnexpress.net/rss/khoa-hoc.rss` & Sitemap XML.
+  - **Sức khỏe:** RSS Feed `https://vnexpress.net/rss/suc-khoe.rss` & Sitemap XML.
+- **Tệp cấu hình & Dữ liệu tham chiếu đầu vào:**
+  - Tệp cấu hình môi trường `.env`: Khai báo thông số kết nối CSDL Microsoft SQL Server (`ODBC Driver 18/17/13`, Host, Port, Database, User, Password).
+  - Bộ lọc Stopwords tiếng Việt: Tích hợp sẵn trong [`src/organization/category_organizer.py`](src/organization/category_organizer.py) chứa danh sách các hư từ tiếng Việt thông dụng (được, có, những, các, và, của, cho, ...) để làm sạch khi trích xuất từ khóa.
+
+#### 2. Dữ liệu Thô Thu thập được (Raw Ingestion Dataset - `data/raw/articles.jsonl`)
+- **Quy cách lưu trữ:** Định dạng JSON Lines (`.jsonl`), mỗi dòng là 1 đối tượng JSON đại diện cho 1 bài viết hoàn chỉnh.
+- **Quy mô tập mẫu:** 20 bài báo phân bổ cân bằng chính xác trên 5 chuyên mục mục tiêu (4 bài / chuyên mục).
+- **Tính bất biến (Data Immutability):** Tệp thô được đóng băng toàn vẹn qua mã băm SHA-256 đối soát tự động bởi [`outputs/dataset_manifest.json`](outputs/dataset_manifest.json), đảm bảo không bị biến đổi trong suốt các pha xử lý.
+- **Đặc tả 12 trường cấu trúc của bản ghi thô:**
+
+| STT | Tên trường | Kiểu dữ liệu | Ràng buộc | Ý nghĩa & Mô tả chi tiết |
+| :---: | :--- | :---: | :---: | :--- |
+| 1 | `url` | `string` | Bắt buộc, Unique | Đường dẫn URL chính thức của bài báo trên VnExpress. |
+| 2 | `title` | `string` | Bắt buộc | Tiêu đề chính của bài viết đã lọc bỏ khoảng trắng thừa. |
+| 3 | `description` | `string` | Bắt buộc | Đoạn mô tả tóm tắt (Sapo) mở đầu bài báo. |
+| 4 | `content` | `string` | Bắt buộc | Toàn bộ nội dung thân bài (bóc tách từ HTML sạch sẽ, loại bỏ triệt để quảng cáo, điều hướng UI, tiêu đề lặp). |
+| 5 | `author` | `string` | Nullable | Tên tác giả hoặc ký danh phóng viên (trích xuất từ chữ ký cuối bài, vd: `Hà An`, `Ngọc Điệp`). |
+| 6 | `publisher` | `string` | Bắt buộc | Đơn vị xuất bản báo chí (`"VnExpress"`). |
+| 7 | `published_at` | `string` | Bắt buộc | Thời điểm đăng bài theo chuẩn ISO 8601 có múi giờ (vd: `2026-03-29T10:15:00+07:00`). |
+| 8 | `category` | `string` | Bắt buộc | Tên chuyên mục chính (`Thời sự`, `Kinh doanh`, `Bất động sản`, `Khoa học công nghệ`, `Sức khỏe`). |
+| 9 | `subcategory` | `string` | Nullable | Tên tiểu mục chi tiết bóc tách từ Breadcrumbs hoặc URL (vd: `Chính trị`, `Doanh nghiệp`, `Thị trường`). |
+| 10 | `article_id` | `string` | Nullable | Mã định danh số tự nhiên của bài báo được bóc tách từ URL VnExpress (vd: `4728192`). |
+| 11 | `crawled_at` | `string` | Bắt buộc | Thời điểm hệ thống tiến hành cào dữ liệu theo chuẩn ISO 8601. |
+| 12 | `source` | `string` | Bắt buộc | Phương thức phát hiện URL bài viết (`"rss"` hoặc `"sitemap"`). |
+
+- **Nhật ký cào (`data/raw/crawl_log.jsonl`):** Lưu trữ toàn bộ lịch sử các lần cào, thời gian thực hiện, trạng thái HTTP status code và số lượng bài thu thập.
+
+---
+
+### 4.2. Dữ liệu Đầu ra của Dự án (Project Outputs)
+
+Toàn bộ sản phẩm đầu ra của hệ thống được tổ chức thành 5 nhóm thành phẩm rõ ràng:
+
+#### 1. Dữ liệu Tiền xử lý & Ma trận Đặc trưng Thống kê (`data/processed/`)
+- [`data/processed/articles_processed.jsonl`](data/processed/articles_processed.jsonl):
+  - **Bảo toàn 100% dữ liệu gốc:** Giữ nguyên 12 trường thô ban đầu ở tầng ngoài (Non-destructive).
+  - **Trường làm sạch phái sinh:**
+    - `processed_text`: Văn bản nội dung được chuẩn hóa bảng mã **Unicode NFC**, loại bỏ URL rác, chuẩn hóa khoảng trắng và giữ nguyên cấu trúc ngữ nghĩa tiếng Việt.
+    - `processed_metadata`: Chứa `author_clean` (tên tác giả đã chuẩn hóa, khử dấu đóng ngoặc đơn và ký tự nhiễu).
+  - **Đối tượng đặc trưng `features`:** Chứa đúng **13 đặc trưng thống kê mô tả** (không dùng cho Machine Learning):
+    - *Độ dài & quy mô:* `char_count` (số ký tự), `word_count` (số từ), `sentence_count` (số câu), `unique_words` (số từ độc nhất).
+    - *Phong phú từ vựng:* `lexical_diversity` (tỷ lệ từ độc nhất / tổng số từ), `avg_word_length` (độ dài trung bình ký tự/từ).
+    - *Cấu trúc tiêu đề/mô tả:* `title_word_count`, `desc_word_count`, `title_to_content_word_ratio`, `desc_to_content_word_ratio`, `has_author` (cờ nhị phân 0 hoặc 1).
+    - *Thời gian xuất bản:* `published_hour` (khung giờ đăng 0–23), `published_dayofweek` (thứ trong tuần 0–6).
+- [`data/processed/feature_matrix.csv`](data/processed/feature_matrix.csv): Bảng ma trận 13 đặc trưng dạng số cho toàn bộ 20 bài viết, sẵn sàng mở bằng Excel hoặc nạp trực tiếp vào CSDL.
+- [`data/processed/category_summary.json`](data/processed/category_summary.json): Tệp tổng hợp xu hướng theo chuyên mục:
+  - Tỷ lệ phần trăm và số lượng bài viết của từng chuyên mục.
+  - Số từ trung bình của nội dung bài viết theo từng chuyên mục.
+  - Danh sách các tiểu mục xuất hiện trong chuyên mục.
+  - **Top từ khóa nóng (Trending Keywords):** Bảng xếp hạng các từ khóa có tần suất xuất hiện cao nhất trong từng chuyên mục kèm số lần xuất hiện (đã lọc stopwords tiếng Việt).
+
+#### 2. Bộ Trực quan hóa Khám phá Dữ liệu Tĩnh (`outputs/eda/`)
+Hệ thống tự động xuất 6 biểu đồ phân tích trực quan chất lượng cao (300 DPI) phục vụ nghiên cứu và báo cáo:
+- `category_distribution.png`: Phân bổ số lượng và tỷ lệ bài viết trên 5 chuyên mục mục tiêu.
+- `category_subcategory.png`: Cơ cấu các tiểu mục trong từng chuyên mục chính.
+- `content_length_distribution.png`: Phân phối độ dài nội dung (số từ, số ký tự) bài báo.
+- `average_words_by_category.png`: So sánh dung lượng bài viết trung bình giữa các chuyên mục.
+- `publication_hour.png`: Khám phá "khung giờ vàng" xuất bản tin tức của tòa soạn trong ngày.
+- `publication_to_crawl_gap_by_category.png`: Phân tích độ trễ thu thập tin bài theo từng chuyên mục.
+- **Báo cáo tóm tắt:** Tệp Markdown [`outputs/eda_summary/phase2_summary.md`](outputs/eda_summary/phase2_summary.md) phân tích sâu các insight rút ra từ biểu đồ cùng tệp checklist kiểm định [`outputs/eda_summary/phase2_checklist.json`](outputs/eda_summary/phase2_checklist.json).
+
+#### 3. Cơ sở Dữ liệu Quan hệ Microsoft SQL Server Chuẩn 3NF
+Dữ liệu sạch được nạp vào Microsoft SQL Server thông qua cơ chế Transaction an toàn:
+- **5 Bảng quan hệ chuẩn hóa 3NF:**
+  - `dbo.Categories`: Bảng danh mục gốc (`category_id` [PK], `name` [UQ]).
+  - `dbo.Subcategories`: Bảng tiểu mục (`subcategory_id` [PK], `category_id` [FK], `name`).
+  - `dbo.Authors`: Bảng tác giả (`author_id` [PK], `name` [UQ]).
+  - `dbo.Articles`: Bảng sự kiện bài viết chính (`article_id` [PK], `url` [UQ], các FK trỏ về chuyên mục, tiểu mục, tác giả).
+  - `dbo.ArticleFeatures`: Bảng quan hệ 1:1 mở rộng lưu trữ 13 đặc trưng mô tả (`article_id` [PK, FK]).
+- **Sơ đồ ERD:** Tệp đồ họa trực quan [`outputs/database/erd_diagram.png`](outputs/database/erd_diagram.png) độ phân giải cao 300 DPI.
+- **Biên bản nạp:** Tệp [`outputs/database/import_manifest.json`](outputs/database/import_manifest.json) ghi nhận chi tiết số bản ghi import, update và tỷ lệ toàn vẹn khóa ngoại.
+
+#### 4. Ứng dụng BI Dashboard Tương tác (Streamlit Web UI)
+Giao diện trực quan hóa thông minh phục vụ người dùng cuối tại `http://localhost:8501` gồm 5 Tab:
+- **Tab 1 — Tổng quan (Overview):** KPI thẻ điểm (Total Articles, Categories, Words, Authors), phân bố chuyên mục và trình duyệt tin bài.
+- **Tab 2 — Khám phá Xu hướng (Trend Discovery):** Tương tác với xu hướng khung giờ đăng bài, ngày trong tuần, độ dài nội dung và đám mây từ khóa theo chuyên mục.
+- **Tab 3 — Quản lý Chuyên mục (Taxonomy):** Thống kê phân cấp chuyên mục - tiểu mục và tỷ trọng đóng góp nội dung.
+- **Tab 4 — CSDL SQL Server 3NF:** Tra cứu trạng thái kết nối CSDL, xem cấu trúc bảng và thực thi các truy vấn nâng cao (Window Functions, CTE).
+- **Tab 5 — Kiểm toán & Toàn vẹn (Audit):** Đối soát mã băm SHA-256 dữ liệu thô, kiểm tra tính bất biến của dữ liệu.
+
+#### 5. Báo cáo Kiểm toán Toàn diện Chất lượng Dữ liệu (`outputs/`)
+- [`outputs/dataset_manifest.json`](outputs/dataset_manifest.json): Biên bản đóng băng mã băm SHA-256 xác thực nguồn dữ liệu gốc.
+- [`outputs/project_audit.json`](outputs/project_audit.json): Báo cáo tự động kiểm tra 40 tiêu chí kỹ thuật: không rò rỉ giao diện web (UI noise), không trùng lặp khối văn bản, tính bất biến dữ liệu thô (Trạng thái: `PASS_WITH_REVIEW`).
+
+---
+
+## 5. Cấu trúc Thư mục Dự án
 
 ```text
 ADY201m Project/
@@ -119,7 +221,7 @@ ADY201m Project/
 
 ---
 
-## 5. Chi tiết Các Giai đoạn Thực hiện (Phases 1 — 6)
+## 6. Chi tiết Các Giai đoạn Thực hiện (Phases 1 — 6)
 
 ### Phase 1: Thu thập Dữ liệu & Kiểm định Chất lượng
 - **Bộ cào tự động:** [`src/crawler/`](src/crawler/) sử dụng RSS và Sitemap XML để phát hiện bài viết mới và bóc tách HTML chi tiết với `BeautifulSoup(..., 'lxml')`.
@@ -292,11 +394,11 @@ Mỗi hàm trong mã nguồn được chú thích bằng 1 dòng comment `#` sú
 
 ---
 
-## 6. Hướng dẫn Cài đặt & Khởi chạy Nhanh (Setup Guide cho Người Mới)
+## 7. Hướng dẫn Cài đặt & Khởi chạy Nhanh (Setup Guide cho Người Mới)
 
 Phần này hướng dẫn chi tiết từng bước cho người mới bắt đầu thiết lập môi trường và chạy dự án từ đầu đến cuối trên máy tính cá nhân.
 
-### 6.1. Yêu cầu Tiên quyết (Prerequisites)
+### 7.1. Yêu cầu Tiên quyết (Prerequisites)
 Trước khi bắt đầu, hãy đảm bảo máy tính đã cài đặt:
 1. **Python 3.10 trở lên** (Khuyến nghị 3.11, 3.12, 3.13 hoặc 3.14). Tải tại [python.org](https://www.python.org/downloads/).
    *(Khi cài đặt trên Windows, nhớ tích chọn ô **"Add Python to PATH"**)*.
@@ -305,7 +407,7 @@ Trước khi bắt đầu, hãy đảm bảo máy tính đã cài đặt:
 
 ---
 
-### 6.2. Các Bước Cài đặt Môi trường (Environment Setup)
+### 7.2. Các Bước Cài đặt Môi trường (Environment Setup)
 
 #### Bước 1: Tải mã nguồn về máy
 Mở Terminal (hoặc PowerShell trên Windows) và chạy lệnh:
@@ -351,7 +453,7 @@ pip install -r requirements-streamlit.txt
 
 ---
 
-### 6.3. Hướng dẫn Khởi chạy Dự án
+### 7.3. Hướng dẫn Khởi chạy Dự án
 
 Bạn có 2 cách tiếp cận tùy theo nhu cầu:
 
@@ -398,11 +500,11 @@ streamlit run dashboard/app.py
 
 ---
 
-### 6.4. Kiểm thử Hệ thống (Verification & Quality Gates)
+### 7.4. Kiểm thử Hệ thống (Verification & Quality Gates)
 
 Để đảm bảo toàn bộ mã nguồn hoạt động chính xác và không có lỗi:
 ```bash
-# Chạy bộ unit tests tự động (22/22 tests PASS)
+# Chạy bộ unit tests tự động (23/23 tests PASS)
 python -m unittest discover -s tests -v
 
 # Chạy kiểm toán toàn diện tính toàn vẹn dữ liệu và mã băm SHA-256
