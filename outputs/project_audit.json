@@ -2,8 +2,8 @@
   "audit": {
     "status": "PASS_WITH_REVIEW",
     "raw_dataset_modified": false,
-    "raw_sha256": "8f86ceb25c2b1ef605b235618ff425870e97aab05a50ca7cd5be0877ef0b5abc",
-    "records": 20
+    "raw_sha256": "08a082b19231a0b68b1e11a13e9421f2b7c8cf0837192332cefa9f768b73af9b",
+    "records": 40
   },
   "critical_failures": {
     "json_errors": 0,
@@ -16,7 +16,7 @@
     "invalid_urls": 0
   },
   "review_issues": {
-    "content_quality_records_with_issues": 2,
+    "content_quality_records_with_issues": 5,
     "author_review_records": 1
   },
   "quality_audit": {
@@ -27,18 +27,18 @@
       "detector_version": "3.0"
     },
     "dataset_summary": {
-      "records": 20,
+      "records": 40,
       "json_errors": 0,
-      "records_with_issues": 2,
-      "records_without_issues": 18,
-      "issue_free_rate": 90.0
+      "records_with_issues": 5,
+      "records_without_issues": 35,
+      "issue_free_rate": 87.5
     },
     "content_length_statistics": {
-      "count": 20,
-      "min": 1593,
+      "count": 40,
+      "min": 1432,
       "max": 8200,
-      "mean": 3128,
-      "median": 2600.5
+      "mean": 3446.82,
+      "median": 3039.5
     },
     "duplicate_summary": {
       "duplicate_urls": {},
@@ -102,13 +102,77 @@
             "severity": "review"
           }
         ]
+      },
+      {
+        "line_no": 23,
+        "url": "https://vnexpress.net/159-diem-ngap-thuong-xuyen-tai-tp-hcm-nam-o-dau-5127780.html",
+        "title": "Tra cứu 159 điểm ngập thường xuyên của TP HCM",
+        "content_length": 3912,
+        "issues": [
+          {
+            "type": "title_or_description_leakage",
+            "matches": [
+              {
+                "field": "title",
+                "occurrences": 1,
+                "evidence": "Tra cứu 159 điểm ngập thường xuyên của TP HCM Trong 159 điểm ngập thường xuyên tại TP HCM, những khu vực ngập nặng nhất nằm ở Gò Vấp, Bình Thạnh, Bình Tân, Thủ "
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "line_no": 24,
+        "url": "https://vnexpress.net/9-cay-cau-ket-noi-dong-nai-voi-tp-hcm-5127260.html",
+        "title": "9 cây cầu kết nối Đồng Nai với TP HCM",
+        "content_length": 6921,
+        "issues": [
+          {
+            "type": "title_or_description_leakage",
+            "matches": [
+              {
+                "field": "title",
+                "occurrences": 2,
+                "evidence": "9 cây cầu kết nối Đồng Nai với TP HCM 9 cây cầu kết nối Đồng Nai với TP HCM Với 6 cây cầu hiện hữu cùng 3 dự án đang xây, những công trình bắc qua sông có ý ngh"
+              },
+              {
+                "field": "description",
+                "occurrences": 1,
+                "evidence": "9 cây cầu kết nối Đồng Nai với TP HCM 9 cây cầu kết nối Đồng Nai với TP HCM Với 6 cây cầu hiện hữu cùng 3 dự án đang xây, những công trình bắc qua sông có ý ngh"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "line_no": 30,
+        "url": "https://vnexpress.net/ngoi-nha-tu-tho-nho-cac-khoang-rong-mang-xanh-5128146.html",
+        "title": "Ngôi nhà 'tự thở' nhờ các khoảng rỗng, mảng xanh",
+        "content_length": 4333,
+        "issues": [
+          {
+            "type": "title_or_description_leakage",
+            "matches": [
+              {
+                "field": "title",
+                "occurrences": 2,
+                "evidence": "Ngôi nhà 'tự thở' nhờ các khoảng rỗng, mảng xanh Ngôi nhà 'tự thở' nhờ các khoảng rỗng, mảng xanh Các khoảng đệm ngoài trời, cây xanh được bố trí xen kẽ để cải "
+              },
+              {
+                "field": "description",
+                "occurrences": 1,
+                "evidence": "Ngôi nhà 'tự thở' nhờ các khoảng rỗng, mảng xanh Ngôi nhà 'tự thở' nhờ các khoảng rỗng, mảng xanh Các khoảng đệm ngoài trời, cây xanh được bố trí xen kẽ để cải "
+              }
+            ]
+          }
+        ]
       }
     ]
   },
   "phase2_smoke": {
-    "text_records": 20,
-    "temporal_records": 20,
-    "deeper_records": 20,
+    "text_records": 40,
+    "temporal_records": 40,
+    "deeper_records": 40,
     "temporal_negative_gaps": 0
   },
   "note": "Audit is read-only against data/raw/articles.jsonl. Parser/validator improvements are applied to source code for future crawls; the frozen baseline raw dataset is intentionally not rewritten."

@@ -36,7 +36,34 @@ Dự án **ADY201m — Vietnamese News Analytics & Trend Discovery Platform** t�
 
 ---
 
-## 2. Cấu trúc Thư mục Dự án
+## 2. Luồng Chạy Dữ Liệu (Data Pipeline Flow)
+
+Toàn bộ quy trình xử lý dữ liệu từ lúc cào tin tức từ VnExpress đến khi hiển thị trên giao diện Dashboard được thiết kế theo luồng tuần tự, khép kín và bảo toàn nguyên vẹn 100% dữ liệu gốc:
+
+```mermaid
+flowchart LR
+    A["🌐 VnExpress\n(Web Articles)"] -->|1. Crawler| B[("data/raw/\narticles.jsonl")]
+    B -->|2. EDA| C["outputs/eda/\n(6 Biểu đồ PNG + Report)"]
+    B -->|3. Preprocessing| D[("data/processed/\narticles_processed.jsonl\nfeature_matrix.csv")]
+    D -->|4. Organization| E[("data/processed/\ncategory_summary.json")]
+    D & E -->|5. SQL Sync| F[("MS SQL Server\n(Schema 3NF)")]
+    D & E & F -->|6. Render| G["Streamlit Dashboard\n(5 Tabs BI UI)"]
+```
+
+### Bảng tóm tắt các chặng luân chuyển dữ liệu:
+
+| Chặng | Tên giai đoạn | Dữ liệu Đầu vào (Input) | Module xử lý chính | Dữ liệu Đầu ra (Output) | Vai trò trong hệ thống |
+| :---: | :--- | :--- | :--- | :--- | :--- |
+| **1** | **Thu thập (Ingestion)** | RSS Feeds & Sitemap VnExpress | [`src/crawler/`](src/crawler/) | `data/raw/articles.jsonl` | Bóc tách 12 trường cấu trúc dữ liệu thô, đóng băng mã băm SHA-256. |
+| **2** | **Khám phá (EDA)** | `data/raw/articles.jsonl` | [`src/eda/`](src/eda/) | `outputs/eda/*.png`<br>`outputs/eda_summary/` | Đánh giá phân phối, khung giờ vàng, xuất 6 biểu đồ PNG tĩnh và báo cáo. |
+| **3** | **Tiền xử lý (Cleaning)** | `data/raw/articles.jsonl` | [`src/preprocessing/`](src/preprocessing/) | `data/processed/articles_processed.jsonl`<br>`data/processed/feature_matrix.csv` | Chuẩn hóa Unicode NFC, khử tiêu đề lặp, trích xuất 13 đặc trưng mô tả. |
+| **4** | **Tổ chức (Taxonomy)** | `articles_processed.jsonl` | [`src/organization/`](src/organization/) | `data/processed/category_summary.json` | Lọc stopwords tiếng Việt, gom nhóm chuyên mục, trích xuất top từ khóa nóng. |
+| **5** | **Lưu trữ CSDL (Storage)** | Dữ liệu sạch `data/processed/` | [`src/database/`](src/database/) | CSDL Microsoft SQL Server (3NF) | Tạo 5 bảng chuẩn 3NF, đồng bộ Transaction an toàn, truy vấn Window Functions. |
+| **6** | **Trực quan hóa (BI UI)** | Dữ liệu sạch / CSDL SQL Server | [`dashboard/`](dashboard/) | Web App: `http://localhost:8501` | Trình diễn 5 Tab tương tác: KPI, Khám phá Xu hướng, Quản lý tin, CSDL, Kiểm toán. |
+
+---
+
+## 3. Cấu trúc Thư mục Dự án
 
 ```text
 ADY201m Project/
@@ -82,7 +109,7 @@ ADY201m Project/
 
 ---
 
-## 3. Chi tiết Các Giai đoạn Thực hiện (Phases 1 — 6)
+## 4. Chi tiết Các Giai đoạn Thực hiện (Phases 1 — 6)
 
 ### Phase 1: Thu thập Dữ liệu & Kiểm định Chất lượng
 - **Bộ cào tự động:** [`src/crawler/`](src/crawler/) sử dụng RSS và Sitemap XML để phát hiện bài viết mới và bóc tách HTML chi tiết với `BeautifulSoup(..., 'lxml')`.
@@ -245,11 +272,11 @@ Mỗi hàm trong mã nguồn được chú thích bằng 1 dòng comment `#` sú
 
 ---
 
-## 4. Hướng dẫn Cài đặt & Khởi chạy Nhanh (Setup Guide cho Người Mới)
+## 5. Hướng dẫn Cài đặt & Khởi chạy Nhanh (Setup Guide cho Người Mới)
 
 Phần này hướng dẫn chi tiết từng bước cho người mới bắt đầu thiết lập môi trường và chạy dự án từ đầu đến cuối trên máy tính cá nhân.
 
-### 4.1. Yêu cầu Tiên quyết (Prerequisites)
+### 5.1. Yêu cầu Tiên quyết (Prerequisites)
 Trước khi bắt đầu, hãy đảm bảo máy tính đã cài đặt:
 1. **Python 3.10 trở lên** (Khuyến nghị 3.11, 3.12, 3.13 hoặc 3.14). Tải tại [python.org](https://www.python.org/downloads/).
    *(Khi cài đặt trên Windows, nhớ tích chọn ô **"Add Python to PATH"**)*.
@@ -258,7 +285,7 @@ Trước khi bắt đầu, hãy đảm bảo máy tính đã cài đặt:
 
 ---
 
-### 4.2. Các Bước Cài đặt Môi trường (Environment Setup)
+### 5.2. Các Bước Cài đặt Môi trường (Environment Setup)
 
 #### Bước 1: Tải mã nguồn về máy
 Mở Terminal (hoặc PowerShell trên Windows) và chạy lệnh:
@@ -304,7 +331,7 @@ pip install -r requirements-streamlit.txt
 
 ---
 
-### 4.3. Hướng dẫn Khởi chạy Dự án
+### 5.3. Hướng dẫn Khởi chạy Dự án
 
 Bạn có 2 cách tiếp cận tùy theo nhu cầu:
 
@@ -351,7 +378,7 @@ streamlit run dashboard/app.py
 
 ---
 
-### 4.4. Kiểm thử Hệ thống (Verification & Quality Gates)
+### 5.4. Kiểm thử Hệ thống (Verification & Quality Gates)
 
 Để đảm bảo toàn bộ mã nguồn hoạt động chính xác và không có lỗi:
 ```bash
