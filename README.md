@@ -1,35 +1,8 @@
 # ADY201m Project
 
 [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-21%2F21%20passing-brightgreen.svg)](tests/test_pipeline.py)
-![Audit](https://img.shields.io/badge/audit-PASS__WITH__REVIEW-green.svg)
-[![Database](https://img.shields.io/badge/database-SQL%20Server%203NF-red.svg)](sql/create_tables.sql)
+[![Database](https://img.shields.io/badge/database-SQL%20Server%203NF-red.svg)](src/database/schema.sql)
 [![Dashboard](https://img.shields.io/badge/dashboard-Streamlit%201.64.0-FF4B4B.svg)](dashboard/app.py)
-
-> **Học phần:** ADY201m — Applied Data Science / Khai phá dữ liệu với Python  
-> **Tác giả:** [Trunghieu2007](https://github.com/Trunghieu2007)  
-> **Nguồn dữ liệu:** Báo điện tử [VnExpress](https://vnexpress.net)  
-> **Mục tiêu cốt lõi:** Phân tích Mô tả Dữ liệu (Descriptive Data Analysis) & Khám phá Xu hướng (Trend Discovery)  
-> **Trạng thái kiểm toán:** `PASS_WITH_REVIEW` (21/21 Unit Tests PASS)  
-> **Kiến trúc:** Data Pipeline, Auto-Organization, SQL Server 3NF, Streamlit BI Dashboard  
-
----
-
-## Mục lục
-1. [Giới thiệu Đồ án & Mục tiêu Nghiên cứu](#1-giới-thiệu-đồ-án--mục-tiêu-nghiên-cứu)
-2. [Kiến trúc Hệ thống & Luồng Dữ liệu](#2-kiến-trúc-hệ-thống--luồng-dữ-liệu)
-3. [Cấu trúc Thư mục Dự án](#3-cấu-trúc-thư-mục-dự-án)
-4. [Chi tiết Các Giai đoạn Thực hiện (Phases 1 — 6)](#4-chi-tiết-các-giai-đoạn-thực-hiện)
-   - [Phase 1: Thu thập Dữ liệu & Kiểm định Chất lượng](#phase-1-thu-thập-dữ-liệu--kiểm-định-chất-lượng)
-   - [Phase 2: Phân tích Dữ liệu Khám phá (EDA) & Xu hướng Cơ bản](#phase-2-phân-tích-dữ-liệu-khám-phá-eda--xu-hướng-cơ-bản)
-   - [Phase 3: Tiền xử lý Dữ liệu & Chuẩn hóa Unicode NFC](#phase-3-tiền-xử-lý-dữ-liệu--chuẩn-hóa-unicode-nfc)
-   - [Phase 4: Khám phá Xu hướng Từ khóa & Tự động Tổ chức Chuyên mục](#phase-4-khám-phá-xu-hướng-từ-khóa--tự-động-tổ-chức-chuyên-mục)
-   - [Phase 5: Tích hợp CSDL Microsoft SQL Server Chuẩn 3NF](#phase-5-tích-hợp-csdl-microsoft-sql-server-chuẩn-3nf)
-   - [Phase 6: Giao diện BI Dashboard Khám phá Xu hướng (Streamlit)](#phase-6-giao-diện-bi-dashboard-khám-phá-xu-hướng-streamlit)
-   - [Danh mục Kỹ thuật Các Module & Hàm Chi tiết](#danh-mục-kỹ-thuật-các-module--hàm-chi-tiết)
-5. [Hướng dẫn Cài đặt & Khởi chạy Nhanh](#5-hướng-dẫn-cài-đặt--khởi-chạy-nhanh)
-6. [Thống kê & Trực quan hóa Xu hướng Chuyên mục](#6-thống-kê--trực-quan-hóa-xu-hướng-chuyên-mục)
-7. [Bảo toàn Tính Toàn vẹn Dữ liệu & Giới hạn Nghiên cứu](#7-bảo-toàn-tính-toàn-vẹn-dữ-liệu--giới-hạn-nghiên-cứu)
 
 ---
 
@@ -63,64 +36,21 @@ Dự án **ADY201m — Vietnamese News Analytics & Trend Discovery Platform** t�
 
 ---
 
-## 2. Kiến trúc Hệ thống & Luồng Dữ liệu
-
-```mermaid
-flowchart TD
-    subgraph Phase1["1. Thu thập & Kiểm định (Phase 1)"]
-        RSS["VnExpress RSS & Sitemap"] --> Crawler["ArticleCrawler (BeautifulSoup)"]
-        Crawler --> RawJSONL[("data/raw/articles.jsonl\n(20 records baseline)")]
-        RawJSONL --> ValRaw["validate_raw.py\ncreate_manifest.py"]
-    end
-
-    subgraph Phase2["2. Phân tích Khám phá & Xu hướng (Phase 2)"]
-        RawJSONL --> EDA["text_statistics.py\ntemporal_analysis.py\ndeeper_eda.py"]
-        EDA --> EDAReports["outputs/eda/ (6 Biểu đồ Xu hướng PNG)\noutputs/eda_summary/"]
-    end
-
-    subgraph Phase3["3. Tiền xử lý & Chuẩn hóa NFC (Phase 3)"]
-        RawJSONL --> Preprocess["preprocess.py (Unicode NFC & Cleaning)"]
-        Preprocess --> ProcessedJSONL[("data/processed/articles_processed.jsonl")]
-        Preprocess --> FeatCSV[("data/processed/feature_matrix.csv")]
-        Preprocess --> PrepReports["outputs/preprocessing/"]
-    end
-
-    subgraph Phase4["4. Khám phá Xu hướng Từ khóa (Phase 4)"]
-        ProcessedJSONL --> Organizer["category_organizer.py"]
-        Organizer --> TaxonomyJSON[("data/processed/category_summary.json\n(Top Keywords & Metrics)")]
-    end
-
-    subgraph Phase5["5. Lưu trữ CSDL SQL Server 3NF (Phase 5)"]
-        ProcessedJSONL --> SQLServer["src/database/sqlserver.py"]
-        TaxonomyJSON --> SQLServer
-        SQLServer --> DBTables[("MS SQL Server (ADY201m)\nCategories | Subcategories\nAuthors | Articles | ArticleFeatures")]
-        SQLServer --> DBReports["outputs/database/"]
-    end
-
-    subgraph Phase6["6. Giao diện BI Dashboard Streamlit (Phase 6)"]
-        ProcessedJSONL -.-> Streamlit["dashboard/app.py"]
-        TaxonomyJSON -.-> Streamlit
-        DBTables -.-> Streamlit
-        EDAReports -.-> Streamlit
-    end
-```
-
----
-
-## 3. Cấu trúc Thư mục Dự án
+## 2. Cấu trúc Thư mục Dự án
 
 ```text
 ADY201m Project/
 ├── dashboard/                            # Ứng dụng BI Dashboard Streamlit
-│   └── app.py                            # Streamlit BI Dashboard trực quan hóa xu hướng
+│   ├── app.py                            # Streamlit BI Dashboard trực quan hóa xu hướng
+│   └── run_dashboard.py                  # Entrypoint khởi chạy nhanh Streamlit
 ├── data/
 │   ├── processed/                        # Dữ liệu sạch sau tiền xử lý
-│   │   ├── articles_processed.jsonl      # Dữ liệu JSONL kèm trường phái sinh
+│   │   ├── articles_processed.jsonl      # Dữ liệu JSONL kèm trường phái sinh & 13 đặc trưng
 │   │   ├── category_summary.json         # Tóm tắt tổ chức chuyên mục & top từ khóa xu hướng
-│   │   └── feature_matrix.csv            # Ma trận đặc trưng số văn bản
+│   │   └── feature_matrix.csv            # Ma trận 13 đặc trưng thống kê mô tả
 │   └── raw/                              # Dữ liệu cào gốc (Đóng băng)
 │       ├── articles.jsonl                # 20 bản ghi gốc (SHA-256 đóng băng)
-│       └── crawl_log.jsonl               # Nhật ký crawl
+│       └── crawl_log.jsonl               # Nhật ký thu thập dữ liệu
 ├── outputs/                              # Toàn bộ dữ liệu xuất, báo cáo, manifest, biểu đồ
 │   ├── database/                         # Manifest tích hợp CSDL SQL Server
 │   ├── eda/                              # 6 biểu đồ phân tích EDA (.png) & JSON kết quả
@@ -134,34 +64,34 @@ ADY201m Project/
 │   ├── upsert_article.sql                # Hợp đồng tham số hóa UPDATE/INSERT
 │   └── queries.sql                       # 6 truy vấn phân tích nghiệp vụ & Window Functions
 ├── src/                                  # Mã nguồn chính của dự án
-│   ├── crawler/                          # Bóc tách RSS, Sitemap, Bài báo VnExpress
-│   ├── database/                         # Kết nối pyodbc & nạp SQL Server (run_database.py)
+│   ├── crawler/                          # Bóc tách RSS, Sitemap, Bài báo VnExpress & validate
+│   ├── database/                         # Kết nối pyodbc & nạp SQL Server 3NF (run_database.py)
 │   ├── eda/                              # Thống kê văn bản & xu hướng thời gian (run_eda.py)
-│   ├── organization/                     # Tự động tổ chức chuyên mục & xu hướng từ khóa
-│   ├── preprocessing/                    # Chuẩn hóa Unicode NFC & 13 đặc trưng mô tả (preprocess.py)
+│   ├── organization/                     # Tự động tổ chức chuyên mục & xu hướng từ khóa (category_organizer.py)
+│   ├── preprocessing/                    # Chuẩn hóa Unicode NFC & trích xuất đặc trưng (preprocess.py)
 │   └── validation/                       # Kiểm tra chất lượng dữ liệu & Audit toàn dự án
 ├── tests/
-│   └── test_pipeline.py                  # 21 bài kiểm thử hồi quy tự động (unittest)
+│   └── test_pipeline.py                  # Bộ kiểm thử hồi quy tự động (unittest)
 ├── .env.example                          # Mẫu biến môi trường kết nối SQL Server
 ├── .gitignore                            # Cấu hình bỏ qua file nhị phân & môi trường ảo
 ├── Knowledge.md                          # Cơ sở tri thức chuẩn môn học ADY201m
 ├── requirements.txt                      # Thư viện pipeline chính (Data + SQL)
 ├── requirements-streamlit.txt            # Thư viện cho Dashboard Streamlit
-└── README.md                             # Tài liệu tổng kết dự án
+└── README.md                             # Tài liệu hướng dẫn dự án
 ```
 
 ---
 
-## 4. Chi tiết Các Giai đoạn Thực hiện
+## 3. Chi tiết Các Giai đoạn Thực hiện (Phases 1 — 6)
 
 ### Phase 1: Thu thập Dữ liệu & Kiểm định Chất lượng
-- **Bộ cào tự động:** [`src/crawler/`](src/crawler/) sử dụng RSS để phát hiện bài viết mới và bóc tách HTML chi tiết với `BeautifulSoup(..., 'lxml')`.
-- **Cơ chế thu thập:** Lấy mẫu cân bằng chính xác 20 bài (4 bài x 5 chuyên mục).
+- **Bộ cào tự động:** [`src/crawler/`](src/crawler/) sử dụng RSS và Sitemap XML để phát hiện bài viết mới và bóc tách HTML chi tiết với `BeautifulSoup(..., 'lxml')`.
+- **Cơ chế thu thập:** Lấy mẫu cân bằng chính xác 20 bài (4 bài x 5 chuyên mục mục tiêu).
 - **Bộ lọc thông minh:**
   - Ngăn chặn triệt để việc rò rỉ tiêu đề và mô tả lặp lại ở đầu bài viết.
   - Tách tác giả dựa trên cấu trúc thẻ căn phải (`align="right"` trước `#article-end`), loại bỏ thông tin hậu kỳ (`Nhóm thiết kế:`, `Kết cấu:`, `Ảnh:`).
   - Cơ chế retry 3 lần với exponential backoff cho lỗi mạng tạm thời.
-- **Kiểm định dữ liệu:** [`src/validation/validate_raw.py`](src/validation/validate_raw.py) và [`src/validation/create_manifest.py`](src/validation/create_manifest.py) xác thực 12 trường cấu trúc, đảm bảo không có bản ghi lỗi hay trùng lặp.
+- **Kiểm định dữ liệu:** [`src/crawler/validate_raw.py`](src/crawler/validate_raw.py) và [`src/validation/create_manifest.py`](src/validation/create_manifest.py) xác thực 12 trường cấu trúc, đảm bảo không có bản ghi lỗi hay trùng lặp.
 
 ### Phase 2: Phân tích Dữ liệu Khám phá (EDA) & Xu hướng Cơ bản
 - **Thống kê từ vựng:** Tính toán số ký tự, số từ, số câu, số từ độc nhất và độ dài trung bình của từ cho nội dung, tiêu đề và mô tả.
@@ -227,9 +157,9 @@ Mỗi hàm trong mã nguồn được chú thích bằng 1 dòng comment `#` sú
   - `RSSCrawler`: Bóc tách và quét danh sách tin bài từ luồng RSS của 5 chuyên mục mục tiêu.
   - `SitemapCrawler`: Bóc tách danh sách URL bài báo từ XML sitemap của VnExpress.
   - `main()`: Điều phối cào cân bằng 5 chuyên mục mục tiêu và lưu vào `data/raw/articles.jsonl`.
-
-#### 2. Module Kiểm định Chất lượng (`src/validation/`)
-- [`src/validation/validate_raw.py`](src/validation/validate_raw.py):
+- [`src/crawler/article.py`](src/crawler/article.py):
+  - `ArticleParser`: Bóc tách chi tiết cấu trúc HTML5 từng bài báo (tiêu đề `h1.title-detail`, mô tả, nội dung `article.fck_detail`, tác giả, thời gian xuất bản).
+- [`src/crawler/validate_raw.py`](src/crawler/validate_raw.py):
   - `load_jsonl(path: Path) -> tuple[list[dict], list[str]]`: Tải các dòng dữ liệu JSONL và bắt lỗi cú pháp.
   - `count_empty_fields(records: list[dict]) -> Counter[str]`: Đếm số lượng trường bắt buộc bị rỗng hoặc thiếu.
   - `find_duplicate_urls(records: list[dict]) -> list[str]`: Tìm kiếm các URL bài viết xuất hiện nhiều hơn 1 lần.
@@ -237,6 +167,8 @@ Mỗi hàm trong mã nguồn được chú thích bằng 1 dòng comment `#` sú
   - `timestamp_issues(records: list[dict], field: str) -> list[dict]`: Kiểm tra định dạng thời gian ISO 8601 hợp lệ.
   - `invalid_urls(records: list[dict]) -> list[dict]`: Xác thực các URL phải thuộc tên miền VnExpress.
   - `calculate_content_statistics(lengths: list[int]) -> dict`: Tính các chỉ số thống kê độ dài nội dung.
+
+#### 2. Module Kiểm định Chất lượng (`src/validation/`)
 - [`src/validation/create_manifest.py`](src/validation/create_manifest.py):
   - `calculate_sha256(path: Path) -> str`: Tính toán mã băm SHA-256 của toàn bộ tệp dữ liệu thô.
   - `load_records(path: Path) -> list[dict]`: Đọc danh sách bản ghi JSONL mà không thay đổi tệp gốc.
@@ -251,6 +183,7 @@ Mỗi hàm trong mã nguồn được chú thích bằng 1 dòng comment `#` sú
   - `word_count(text: str) -> int`: Đếm số từ theo phân tách khoảng trắng.
   - `sentence_count(text: str) -> int`: Đếm số câu dựa trên dấu chấm, hỏi, cảm thán.
   - `unique_word_count(text: str) -> int`: Đếm số từ độc nhất sau chuẩn hóa.
+  - `average_word_length(text: str) -> float`: Tính độ dài ký tự trung bình của từ.
   - `analyze_articles(articles: list[dict]) -> dict`: Tổng hợp chỉ số thống kê từ vựng toàn tập bài viết và lưu vào `outputs/eda/text_statistics.json`.
 - [`src/eda/temporal_analysis.py`](src/eda/temporal_analysis.py):
   - `parse_datetime(value: Any) -> datetime | None`: Phân tích chuỗi ISO thời gian.
@@ -263,7 +196,6 @@ Mỗi hàm trong mã nguồn được chú thích bằng 1 dòng comment `#` sú
 - [`src/eda/run_eda.py`](src/eda/run_eda.py):
   - `validate_eda_outputs() -> dict`: Tự kiểm tra đối soát tính toàn vẹn của 6 biểu đồ trực quan PNG và 7 tệp báo cáo thống kê EDA.
   - `main()`: Điều phối toàn bộ quy trình EDA, xuất checklist kiểm định và tóm tắt markdown `outputs/eda_summary/phase2_summary.md`. Hỗ trợ cờ `--check` để kiểm tra nhanh tính đầy đủ của kết quả mà không cần render lại biểu đồ.
-
 
 #### 4. Module Tiền xử lý & Làm sạch Dữ liệu (`src/preprocessing/`)
 - [`src/preprocessing/preprocess.py`](src/preprocessing/preprocess.py):
@@ -308,109 +240,124 @@ Mỗi hàm trong mã nguồn được chú thích bằng 1 dòng comment `#` sú
 #### 7. Giao diện BI Dashboard Streamlit (`dashboard/`)
 - [`dashboard/app.py`](dashboard/app.py):
   - Ứng dụng Streamlit hiển thị 5 tab tương tác: Tổng quan, Khám phá Xu hướng & EDA, Quản lý & Phân loại Chuyên mục, CSDL SQL Server 3NF, Kiểm toán Tính toàn vẹn.
+- [`dashboard/run_dashboard.py`](dashboard/run_dashboard.py):
+  - Script khởi chạy nhanh tiện lợi: `python -m dashboard.run_dashboard`.
 
 ---
 
-## 5. Hướng dẫn Cài đặt & Khởi chạy Nhanh
+## 4. Hướng dẫn Cài đặt & Khởi chạy Nhanh (Setup Guide cho Người Mới)
 
-### 5.1. Cài đặt Môi trường
+Phần này hướng dẫn chi tiết từng bước cho người mới bắt đầu thiết lập môi trường và chạy dự án từ đầu đến cuối trên máy tính cá nhân.
 
+### 4.1. Yêu cầu Tiên quyết (Prerequisites)
+Trước khi bắt đầu, hãy đảm bảo máy tính đã cài đặt:
+1. **Python 3.10 trở lên** (Khuyến nghị 3.11, 3.12, 3.13 hoặc 3.14). Tải tại [python.org](https://www.python.org/downloads/).
+   *(Khi cài đặt trên Windows, nhớ tích chọn ô **"Add Python to PATH"**)*.
+2. **Git** để quản lý mã nguồn. Tải tại [git-scm.com](https://git-scm.com/).
+3. *(Tùy chọn)* **Microsoft SQL Server** (bản Developer hoặc Express) và **ODBC Driver 18 for SQL Server** nếu bạn muốn nạp dữ liệu vào CSDL quan hệ. Nếu chưa có SQL Server, bạn vẫn có thể chạy toàn bộ pipeline và Dashboard bình thường vì hệ thống tự động đọc dữ liệu từ tệp cục bộ.
+
+---
+
+### 4.2. Các Bước Cài đặt Môi trường (Environment Setup)
+
+#### Bước 1: Tải mã nguồn về máy
+Mở Terminal (hoặc PowerShell trên Windows) và chạy lệnh:
 ```bash
-# 1. Clone repository
 git clone https://github.com/Trunghieu2007/ADY201m-Project.git
 cd ADY201m-Project
+```
 
-# 2. Khởi tạo & kích hoạt môi trường ảo Python
+#### Bước 2: Khởi tạo và Kích hoạt Môi trường ảo (Virtual Environment)
+Tạo môi trường ảo `.venv` độc lập để tránh xung đột thư viện:
+```bash
+# Tạo môi trường ảo
 python -m venv .venv
-# Trên Windows:
-.venv\Scripts\activate
-# Trên Linux / macOS:
-# source .venv/bin/activate
+```
 
-# 3. Cài đặt các thư viện phụ thuộc
+Kích hoạt môi trường ảo:
+- **Trên Windows (PowerShell):**
+  ```powershell
+  .venv\Scripts\Activate.ps1
+  ```
+  > 💡 *Mẹo xử lý lỗi trên Windows PowerShell:* Nếu gặp thông báo lỗi `cannot be loaded because running scripts is disabled on this system`, hãy chạy lệnh sau một lần để cấp quyền:
+  > ```powershell
+  > Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+  > .venv\Scripts\Activate.ps1
+  > ```
+- **Trên Windows (Command Prompt - cmd):**
+  ```cmd
+  .venv\Scripts\activate.bat
+  ```
+- **Trên macOS / Linux:**
+  ```bash
+  source .venv/bin/activate
+  ```
+*(Khi kích hoạt thành công, bạn sẽ thấy tiền tố `(.venv)` xuất hiện ở đầu dòng lệnh).*
+
+#### Bước 3: Cài đặt các Thư viện Phụ thuộc (Dependencies)
+Nâng cấp `pip` và cài đặt đầy đủ các gói thư viện cần thiết:
+```bash
+pip install --upgrade pip
 pip install -r requirements.txt
 pip install -r requirements-streamlit.txt
 ```
 
-### 5.2. Chạy Kiểm định Tự động (Regression Tests & Audit)
+---
 
+### 4.3. Hướng dẫn Khởi chạy Dự án
+
+Bạn có 2 cách tiếp cận tùy theo nhu cầu:
+
+#### Cách 1: Xem ngay Giao diện Dashboard (Khởi chạy Nhanh)
+Dự án đã có sẵn tập dữ liệu mẫu chuẩn hóa trong thư mục `data/`. Bạn có thể mở ngay Dashboard để xem trực quan hóa mà không cần chạy lại pipeline:
 ```bash
-# Chạy bộ 21 bài unit tests tự động (100% PASS)
-python -m unittest discover -s tests -v
-
-# Chạy kiểm toán toàn diện tính toàn vẹn dự án
-python -m src.validation.project_audit
+streamlit run dashboard/app.py
 ```
+*(Hoặc dùng lệnh tiện ích: `python -m dashboard.run_dashboard`)*
 
-### 5.3. Chạy Pipeline Xử lý & Phân tích Xu hướng
+Trình duyệt web sẽ tự động mở tại địa chỉ: **`http://localhost:8501`**.
+
+---
+
+#### Cách 2: Tự chạy Lại Toàn bộ Quy trình từ A đến Z (End-to-End Pipeline)
+
+Nếu bạn muốn trải nghiệm toàn bộ quy trình từ lúc cào tin tức đến khi hiển thị:
 
 ```bash
-# Bước 1: Crawl dữ liệu (nếu cần cào mới)
+# 1. Thu thập tin tức mới từ VnExpress (20 bài / 5 chuyên mục)
 python -m src.crawler.crawler
 
-# Bước 2: Kiểm định dữ liệu thô & tạo manifest
-python -m src.validation.create_manifest
+# 2. Kiểm định kỹ thuật dữ liệu vừa cào
 python -m src.validation.validate_raw
 
-# Bước 3: Phân tích khám phá (EDA) & sinh biểu đồ xu hướng
+# 3. Phân tích Khám phá Dữ liệu (EDA) & sinh 6 biểu đồ PNG
 python -m src.eda.run_eda
 
-# Bước 4: Tiền xử lý, Chuẩn hóa Unicode NFC & Trích xuất 13 đặc trưng mô tả
+# 4. Tiền xử lý, chuẩn hóa Unicode NFC & trích xuất 13 đặc trưng mô tả
 python -m src.preprocessing.preprocess
-# Hoặc chỉ kiểm định nhanh dữ liệu đã xử lý:
-# python -m src.preprocessing.preprocess --check
 
-# Bước 5: Khám phá xu hướng từ khóa & Tự động tổ chức chuyên mục
+# 5. Tự động nhóm chuyên mục & trích xuất Top từ khóa nóng
 python -m src.organization.category_organizer
-# Hoặc chỉ kiểm định nhanh cấu trúc chuyên mục:
-# python -m src.organization.category_organizer --check
-```
 
-### 5.4. Đồng bộ Cơ sở Dữ liệu SQL Server (Tùy chọn)
-
-```powershell
-# Cấu hình kết nối SQL Server (Ví dụ dùng Windows Authentication)
-$env:ADY_SQLSERVER_SERVER = "localhost"
-$env:ADY_SQLSERVER_DATABASE = "ADY201m"
-$env:ADY_SQLSERVER_DRIVER = "ODBC Driver 18 for SQL Server"
-$env:ADY_SQLSERVER_TRUSTED_CONNECTION = "yes"
-$env:ADY_SQLSERVER_TRUST_SERVER_CERTIFICATE = "yes"
-
-# Khởi tạo bảng và đồng bộ dữ liệu vào SQL Server
+# 6. (Tùy chọn) Nạp và đồng bộ vào CSDL Microsoft SQL Server 3NF
+# Cấu hình biến môi trường kết nối (nếu dùng SQL Server cục bộ):
+# $env:ADY_SQLSERVER_SERVER = "localhost"
+# $env:ADY_SQLSERVER_DATABASE = "ADY201m"
 python -m src.database.run_database --sync
-```
 
-### 5.5. Khởi chạy Giao diện Streamlit BI Dashboard
-
-```bash
-# Khởi chạy trực tiếp từ thư mục gốc
+# 7. Khởi chạy Giao diện Streamlit BI Dashboard
 streamlit run dashboard/app.py
 ```
 
 ---
 
-## 6. Thống kê & Trực quan hóa Xu hướng Chuyên mục
+### 4.4. Kiểm thử Hệ thống (Verification & Quality Gates)
 
-| Chuyên mục | Số bài viết | Tỷ lệ (%) | Số từ trung bình | Tiểu mục tiêu biểu | Top Từ khóa Xu hướng |
-| :--- | :---: | :---: | :---: | :--- | :--- |
-| **Thời sự** | 4 | 20.0% | 943.2 | Thời sự, Đầu tư, Chính trị | `dân`, `rừng`, `quả`, `hái`, `cây` |
-| **Kinh doanh** | 4 | 20.0% | 560.8 | Doanh nghiệp, Quốc tế, Vĩ mô | `doanh`, `nghiệp`, `giá`, `vốn`, `thị` |
-| **Bất động sản** | 4 | 20.0% | 612.5 | Dự án, Thị trường, Pháp lý | `bất`, `động`, `sản`, `dự`, `án`, `căn` |
-| **Khoa học công nghệ** | 4 | 20.0% | 724.0 | Công nghệ, Đổi mới, AI | `công`, `nghệ`, `nghiên`, `cứu`, `dữ` |
-| **Sức khỏe** | 4 | 20.0% | 589.3 | Các bệnh, Y tế, Dinh dưỡng | `bệnh`, `viện`, `sức`, `khỏe`, `bác` |
+Để đảm bảo toàn bộ mã nguồn hoạt động chính xác và không có lỗi:
+```bash
+# Chạy bộ unit tests tự động (22/22 tests PASS)
+python -m unittest discover -s tests -v
 
----
-
-## 7. Bảo toàn Tính Toàn vẹn Dữ liệu & Giới hạn Nghiên cứu
-
-### Nguyên tắc Đóng băng Dữ liệu Gốc (Frozen Baseline Rule)
-- Tệp dữ liệu thô [`data/raw/articles.jsonl`](data/raw/articles.jsonl) có mã băm SHA-256 chuẩn:
-  ```
-  8f86ceb25c2b1ef605b235618ff425870e97aab05a50ca7cd5be0877ef0b5abc
-  ```
-- Dữ liệu thô tuyệt đối không bị sửa đổi thủ công để phục vụ việc kiểm toán tính nguyên bản (Auditability). Mọi biến đổi làm sạch được thực hiện và lưu trữ độc lập tại thư mục `data/processed/`.
-
-### Giới hạn Học thuật (Limitations)
-1. **Quy mô tập dữ liệu:** Tập dữ liệu chuẩn gồm 20 bài báo (4 bài/chuyên mục) đóng vai trò làm mẫu kiểm thử luồng hoạt động (Proof-of-Concept). Cấu trúc hệ thống được thiết kế mở, sẵn sàng mở rộng cào hàng chục nghìn bài mà không cần thay đổi kiến trúc schema.
-2. **Kỹ thuật bóc tách:** Thuật toán bóc tách HTML tự động phát hiện khối tác giả và loại bỏ các thẻ quảng cáo, liên kết liên quan theo cấu trúc HTML5 của VnExpress.
-3. **Độ trễ thu thập (`publication_to_crawl_gap_minutes`):** Đo lường khoảng cách giữa thời điểm xuất bản bài báo và thời điểm cào dữ liệu, phản ánh tính chất thời sự của tin bài tại thời điểm thu thập.
+# Chạy kiểm toán toàn diện tính toàn vẹn dữ liệu và mã băm SHA-256
+python -m src.validation.project_audit
+```
