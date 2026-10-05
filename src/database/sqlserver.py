@@ -32,6 +32,7 @@ FEATURE_COLUMNS = (
 )
 
 
+# Tự động nhận diện ODBC Driver cho SQL Server khả dụng trên hệ thống
 def resolve_default_driver() -> str:
     """Tự động nhận diện ODBC Driver cho SQL Server khả dụng trên hệ thống."""
     explicit = os.getenv("ADY_SQLSERVER_DRIVER")
@@ -54,6 +55,7 @@ def resolve_default_driver() -> str:
     return "ODBC Driver 17 for SQL Server"
 
 
+# Tự động kiểm tra instance SQL Server cục bộ (SQLEXPRESS hoặc default localhost)
 def resolve_default_server(driver: str) -> str:
     """Tự động kiểm tra instance SQL Server cục bộ (SQLEXPRESS hoặc default localhost)."""
     explicit = os.getenv("ADY_SQLSERVER_SERVER")
@@ -109,6 +111,7 @@ def get_connection():
     try:
         import struct
 
+        # Chuyển đổi nhị phân DATETIMEOFFSET của SQL Server sang chuỗi thời gian ISO 8601
         def handle_datetimeoffset(dto_value: bytes) -> str:
             tup = struct.unpack("=6hI2h", dto_value)
             tz_sign = "+" if tup[7] >= 0 else "-"
@@ -365,6 +368,7 @@ def verify_database(connection: Any, records: list[dict[str, Any]] | None = None
     }
 
 
+# Điểm khởi chạy chính CLI thực thi các tác vụ CSDL (init-schema, import, update, sync, check)
 def main() -> int:
     parser = argparse.ArgumentParser(description="ADY201m — Microsoft SQL Server Database Runner (Phase L - Load)")
     parser.add_argument("--init-schema", action="store_true", help="Tạo cấu trúc 5 bảng chuẩn 3NF và chỉ mục")

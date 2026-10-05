@@ -11,8 +11,8 @@ INPUT = PROJECT_ROOT / "data" / "raw" / "articles.jsonl"
 OUTPUT = PROJECT_ROOT / "outputs" / "eda" / "text_statistics.json"
 
 
+# Tải danh sách các bài báo từ tệp JSONL
 def load_articles(path: Path = INPUT) -> list[dict[str, Any]]:
-    # Tải danh sách các bài báo từ tệp JSONL
     if not path.exists():
         raise FileNotFoundError(f"Dataset not found: {path}")
     articles: list[dict[str, Any]] = []
@@ -31,52 +31,52 @@ def load_articles(path: Path = INPUT) -> list[dict[str, Any]]:
     return articles
 
 
+# Lấy văn bản từ bản ghi hoặc chuỗi rỗng nếu không tồn tại
 def get_text(record: dict[str, Any], field: str) -> str:
-    # Lấy văn bản từ bản ghi hoặc chuỗi rỗng nếu không tồn tại
     val = record.get(field)
     return "" if val is None else str(val).strip()
 
 
+# Tách từ theo khoảng trắng phục vụ thống kê mô tả
 def tokenize(text: str) -> list[str]:
-    # Tách từ theo khoảng trắng phục vụ thống kê mô tả
     return re.findall(r"\S+", str(text)) if text else []
 
 
+# Trích xuất các từ chuẩn hóa chữ thường để đếm từ vựng độc nhất
 def normalized_words(text: str) -> list[str]:
-    # Trích xuất các từ chuẩn hóa chữ thường để đếm từ vựng độc nhất
     return re.findall(r"[^\W_]+", str(text).casefold(), flags=re.UNICODE) if text else []
 
 
+# Đếm số lượng từ trong văn bản
 def word_count(text: str) -> int:
-    # Đếm số lượng từ trong văn bản
     return len(tokenize(text))
 
 
+# Đếm tổng số ký tự trong chuỗi văn bản
 def character_count(text: str) -> int:
-    # Đếm tổng số ký tự trong chuỗi văn bản
     return len(text or "")
 
 
+# Ước lượng số câu dựa trên các dấu chấm câu kết thúc
 def sentence_count(text: str) -> int:
-    # Ước lượng số câu dựa trên các dấu chấm câu kết thúc
     if not text:
         return 0
     return sum(1 for part in re.split(r"[.!?…]+", str(text)) if part.strip())
 
 
+# Đếm số lượng từ vựng độc nhất đã được chuẩn hóa
 def unique_word_count(text: str) -> int:
-    # Đếm số lượng từ vựng độc nhất đã được chuẩn hóa
     return len(set(normalized_words(text)))
 
 
+# Tính độ dài ký tự trung bình của các từ
 def average_word_length(text: str) -> float:
-    # Tính độ dài ký tự trung bình của các từ
     words = normalized_words(text)
     return sum(len(w) for w in words) / len(words) if words else 0.0
 
 
+# Tính toán các chỉ số thống kê mô tả tóm tắt (min, max, mean, median, std, q1, q3)
 def describe(values: list[int | float]) -> dict[str, Any]:
-    # Tính toán các chỉ số thống kê mô tả tóm tắt (min, max, mean, median, std, q1, q3)
     clean = sorted([v for v in values if v is not None and not isinstance(v, bool)])
     if not clean:
         return {"count": 0, "min": None, "max": None, "mean": None, "median": None, "std": None, "q1": None, "q3": None}
@@ -93,8 +93,8 @@ def describe(values: list[int | float]) -> dict[str, Any]:
     }
 
 
+# Phân tích tổng thể các chỉ số văn bản cho tập hợp các bài báo
 def analyze_articles(articles: list[dict[str, Any]]) -> dict[str, Any]:
-    # Phân tích tổng thể các chỉ số văn bản cho tập hợp các bài báo
     records_detail: list[dict[str, Any]] = []
     for art in articles:
         content = get_text(art, "content")
@@ -128,14 +128,14 @@ def analyze_articles(articles: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+# Ghi kết quả phân tích thống kê văn bản ra tệp JSON
 def save_result(result: dict[str, Any], path: Path = OUTPUT) -> None:
-    # Ghi kết quả phân tích thống kê văn bản ra tệp JSON
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+# Điểm thực thi chính phân tích văn bản
 def main() -> dict[str, Any]:
-    # Điểm thực thi chính phân tích văn bản
     articles = load_articles()
     result = analyze_articles(articles)
     save_result(result)

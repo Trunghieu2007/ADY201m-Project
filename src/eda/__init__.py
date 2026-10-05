@@ -20,6 +20,7 @@ __all__ = [
 ]
 
 
+# Nạp động các hàm main và validate_eda_outputs từ run_eda khi được truy xuất
 def __getattr__(name: str):
     if name in ("main", "validate_eda_outputs"):
         from .run_eda import main, validate_eda_outputs

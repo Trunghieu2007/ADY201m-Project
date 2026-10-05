@@ -107,6 +107,7 @@ def analyze_text_by_category(articles: list[dict[str, Any]]) -> dict[str, Any]:
 
 # Thống kê phân phối các trường metadata (tác giả, nguồn, tòa soạn)
 def analyze_metadata(articles: list[dict[str, Any]]) -> dict[str, Any]:
+    # Đếm tần suất xuất hiện của một trường cụ thể
     def count_field(field: str) -> Counter[str]:
         return Counter(val for val in (get_text(a, field) for a in articles) if val)
 

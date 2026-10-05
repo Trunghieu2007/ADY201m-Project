@@ -46,6 +46,7 @@ CATEGORY_PATHS = {
 }
 
 
+# Tải nội dung HTML/XML với cơ chế retry và xử lý ngoại lệ RequestException
 def fetch_url(url: str, retries: int = 3, delay: float = 1.0) -> str:
     """Tải nội dung HTML/XML với cơ chế retry và xử lý ngoại lệ RequestException."""
     headers = {"User-Agent": USER_AGENT, "Accept-Language": "vi-VN,vi;q=0.9,en;q=0.8"}
@@ -63,12 +64,15 @@ def fetch_url(url: str, retries: int = 3, delay: float = 1.0) -> str:
     return ""
 
 
+# Thu thập và bóc tách cấu trúc nội dung bài viết từ VnExpress
 class ArticleCrawler:
     """Thu thập và bóc tách cấu trúc nội dung bài viết từ VnExpress."""
 
+    # Tải nội dung mã nguồn HTML của bài viết qua URL
     def fetch(self, url: str) -> str:
         return fetch_url(url)
 
+    # Chuẩn hóa chuỗi tên tác giả, loại bỏ tiền tố và thông tin hậu kỳ
     @staticmethod
     def clean_author(text: str | None) -> str | None:
         if not text:
@@ -79,6 +83,7 @@ class ArticleCrawler:
             text = text[:m.start()].strip()
         return text if (text and text.lower() not in {"vnexpress", "vnexpress.net", "báo vnexpress"}) else None
 
+    # Xác định thẻ HTML chứa tên tác giả nằm gần cuối bài viết
     @staticmethod
     def get_author_element(container: Tag) -> Tag | None:
         end_marker = container.select_one("#article-end")
@@ -92,6 +97,7 @@ class ArticleCrawler:
                     return p
         return None
 
+    # Bóc tách tên tác giả từ cấu trúc DOM bài viết
     @staticmethod
     def extract_author(soup: BeautifulSoup) -> str | None:
         container = soup.select_one(".fck_detail")
@@ -106,6 +112,7 @@ class ArticleCrawler:
                 return cleaned
         return None
 
+    # Bóc tách nội dung chính bài báo, loại bỏ tiêu đề lặp và quảng cáo
     @staticmethod
     def extract_article_content(soup: BeautifulSoup) -> str:
         container = soup.select_one(".fck_detail")
@@ -135,15 +142,18 @@ class ArticleCrawler:
             prev = text
         return "\n".join(paragraphs)
 
+    # Lấy giá trị thuộc tính content từ thẻ meta tương ứng
     @staticmethod
     def get_meta(soup: BeautifulSoup, **attrs) -> str | None:
         tag = soup.find("meta", attrs=attrs)
         return str(tag["content"]).strip() if (tag and tag.get("content")) else None
 
+    # Nhận diện chuyên mục chuẩn hóa từ đường dẫn URL bài viết
     @staticmethod
     def extract_category_from_url(url: str) -> str | None:
         return next((cat for path, cat in CATEGORY_PATHS.items() if path in url), None)
 
+    # Trích xuất ID số tự nhiên của bài viết từ thẻ meta hoặc URL
     @staticmethod
     def extract_article_id(soup: BeautifulSoup, url: str) -> str | None:
         tag = soup.find("meta", attrs={"name": "tt_article_id"})
@@ -152,6 +162,7 @@ class ArticleCrawler:
         m = re.search(r"/(\d+)\.html(?:$|\?)", url)
         return m.group(1) if m else None
 
+    # Trích xuất thời điểm xuất bản bài báo theo định dạng chuẩn thời gian
     @staticmethod
     def extract_published_at(soup: BeautifulSoup, rss_metadata: dict | None = None) -> str | None:
         for attrs in [{"name": "pubdate"}, {"itemprop": "datePublished"}, {"property": "article:published_time"}]:
@@ -159,6 +170,7 @@ class ArticleCrawler:
                 return str(tag["content"]).strip()
         return (rss_metadata or {}).get("published_at")
 
+    # Phân tích toàn bộ dữ liệu HTML và ánh xạ thành từ điển 12 trường cấu trúc
     def parse(self, html: str | None, url: str, rss_metadata: dict | None = None) -> dict:
         soup, rss = BeautifulSoup(html or "", "lxml"), rss_metadata or {}
         t_el, d_el = soup.select_one("h1.title-detail") or soup.find("h1"), soup.select_one("p.description")
@@ -177,16 +189,20 @@ class ArticleCrawler:
             "source": "vnexpress",
         }
 
+    # Thực hiện tải và bóc tách trọn vẹn một bài viết từ URL
     def crawl(self, url: str, rss_metadata: dict | None = None) -> dict:
         return self.parse(html=self.fetch(url), url=url, rss_metadata=rss_metadata)
 
 
+# Quét và trích xuất danh sách liên kết bài viết từ RSS feeds
 class RSSCrawler:
     """Quét và trích xuất danh sách liên kết bài viết từ RSS feeds."""
 
+    # Tải nội dung tệp RSS XML từ địa chỉ nguồn
     def fetch_feed(self, url: str) -> str:
         return fetch_url(url)
 
+    # Phân tích cú pháp RSS XML để trích xuất danh sách bài viết
     @staticmethod
     def parse_feed(xml_text: str, category: str) -> list[dict]:
         try:
@@ -196,6 +212,7 @@ class RSSCrawler:
             return []
         articles = []
         for item in root.iter("item"):
+            # Lấy văn bản từ thẻ XML con nếu tồn tại
             def get_t(tag: str) -> str | None:
                 el = item.find(tag)
                 return el.text.strip() if el is not None and el.text else None
@@ -211,6 +228,7 @@ class RSSCrawler:
                 })
         return articles
 
+    # Quét toàn bộ các luồng RSS của 5 chuyên mục mục tiêu
     def discover(self) -> list[dict]:
         discovered: dict[str, dict] = {}
         for category, feed_url in RSS_FEEDS.values():
@@ -227,9 +245,11 @@ class RSSCrawler:
         return list(discovered.values())
 
 
+# Quét và trích xuất liên kết bài viết từ Sitemap XML
 class SitemapCrawler:
     """Quét và trích xuất liên kết bài viết từ Sitemap XML."""
 
+    # Quét và tổng hợp các URL bài viết hợp lệ từ Sitemap XML
     def discover(self) -> list[str]:
         discovered: set[str] = set()
         for sitemap_url in SITEMAP_URLS:
@@ -244,12 +264,14 @@ class SitemapCrawler:
         return sorted(discovered)
 
 
+# Ghi một bản ghi đối tượng từ điển vào tệp định dạng JSON Lines
 def save_jsonl(path: Path, record: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
+# Tải tập hợp các URL bài viết đã được cào từ tệp JSON Lines
 def load_crawled_urls(path: Path) -> set[str]:
     if not path.exists():
         return set()
@@ -257,6 +279,7 @@ def load_crawled_urls(path: Path) -> set[str]:
         return {u for line in f if line.strip() and (u := json.loads(line).get("url"))}
 
 
+# Lấy mẫu cân bằng số lượng bài viết đều nhau giữa các chuyên mục
 def select_balanced_articles(articles: list[dict], max_articles: int = MAX_ARTICLES, articles_per_category: int = 4) -> list[dict]:
     grouped = defaultdict(list)
     for a in articles:
@@ -265,6 +288,7 @@ def select_balanced_articles(articles: list[dict], max_articles: int = MAX_ARTIC
     return [a for cat, _ in RSS_FEEDS.values() for a in grouped.get(cat, [])[:articles_per_category]][:max_articles]
 
 
+# Điểm khởi chạy chính điều phối tiến trình cào dữ liệu và kiểm định
 def main() -> None:
     RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
     rss_crawler, article_crawler = RSSCrawler(), ArticleCrawler()

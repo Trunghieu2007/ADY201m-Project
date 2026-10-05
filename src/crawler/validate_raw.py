@@ -33,6 +33,7 @@ TARGET_CATEGORIES = [
 SUSPICIOUS_AUTHORS = {"VnExpress", "VnExpress.net", "vnexpress"}
 
 
+# Tải dữ liệu từ tệp JSONL và bắt lỗi cú pháp nếu có
 def load_jsonl(path: Path) -> tuple[list[dict], list[str]]:
     """Tải dữ liệu từ tệp JSONL và bắt lỗi cú pháp nếu có."""
     records, errors = [], []
@@ -55,6 +56,7 @@ def load_jsonl(path: Path) -> tuple[list[dict], list[str]]:
     return records, errors
 
 
+# Đếm số lượng trường bắt buộc bị rỗng hoặc thiếu
 def count_empty_fields(records: list[dict]) -> Counter[str]:
     """Đếm số lượng trường bắt buộc bị rỗng hoặc thiếu."""
     empty_counts: Counter[str] = Counter()
@@ -66,12 +68,14 @@ def count_empty_fields(records: list[dict]) -> Counter[str]:
     return empty_counts
 
 
+# Tìm kiếm các URL bài viết xuất hiện nhiều hơn 1 lần
 def find_duplicate_urls(records: list[dict]) -> list[str]:
     """Tìm kiếm các URL bài viết xuất hiện nhiều hơn 1 lần."""
     counter = Counter(r.get("url") for r in records if r.get("url"))
     return [url for url, count in counter.items() if count > 1]
 
 
+# Kiểm tra tính khớp nối của các trường so với schema mong đợi
 def schema_issues(records: list[dict]) -> list[dict]:
     """Kiểm tra tính khớp nối của các trường so với schema mong đợi."""
     issues = []
@@ -84,6 +88,7 @@ def schema_issues(records: list[dict]) -> list[dict]:
     return issues
 
 
+# Đếm số lượng giá trị trùng lặp của một trường cụ thể
 def find_duplicate_values(records: list[dict], field: str) -> dict[str, int]:
     """Đếm số lượng giá trị trùng lặp của một trường cụ thể."""
     counter = Counter()
@@ -94,6 +99,7 @@ def find_duplicate_values(records: list[dict], field: str) -> dict[str, int]:
     return {val: count for val, count in counter.items() if count > 1}
 
 
+# Kiểm tra định dạng thời gian ISO 8601 hợp lệ
 def timestamp_issues(records: list[dict], field: str) -> list[dict]:
     """Kiểm tra định dạng thời gian ISO 8601 hợp lệ."""
     issues = []
@@ -108,6 +114,7 @@ def timestamp_issues(records: list[dict], field: str) -> list[dict]:
     return issues
 
 
+# Xác thực các URL phải thuộc tên miền VnExpress
 def invalid_urls(records: list[dict]) -> list[dict]:
     """Xác thực các URL phải thuộc tên miền VnExpress."""
     issues = []
@@ -120,16 +127,19 @@ def invalid_urls(records: list[dict]) -> list[dict]:
     return issues
 
 
+# Thống kê phân bố bài viết theo chuyên mục
 def get_category_distribution(records: list[dict]) -> Counter[str]:
     """Thống kê phân bố bài viết theo chuyên mục."""
     return Counter(r.get("category", "UNKNOWN") for r in records)
 
 
+# Lấy độ dài số ký tự phần thân của toàn bộ bài viết
 def get_content_lengths(records: list[dict]) -> list[int]:
     """Lấy độ dài số ký tự phần thân của toàn bộ bài viết."""
     return [len(r.get("content")) for r in records if isinstance(r.get("content"), str)]
 
 
+# Tính các chỉ số thống kê độ dài nội dung (min, max, mean, median)
 def calculate_content_statistics(lengths: list[int]) -> dict[str, float | int | None]:
     """Tính các chỉ số thống kê độ dài nội dung (min, max, mean, median)."""
     if not lengths:
@@ -142,6 +152,7 @@ def calculate_content_statistics(lengths: list[int]) -> dict[str, float | int | 
     }
 
 
+# Phát hiện các giá trị tác giả nghi vấn mang tên tòa soạn
 def find_suspicious_authors(records: list[dict]) -> Counter[str]:
     """Phát hiện các giá trị tác giả nghi vấn mang tên tòa soạn."""
     suspicious: Counter[str] = Counter()
@@ -152,6 +163,7 @@ def find_suspicious_authors(records: list[dict]) -> Counter[str]:
     return suspicious
 
 
+# Phát hiện nội dung bài viết quá ngắn hoặc rỗng
 def find_suspicious_content(records: list[dict]) -> list[dict]:
     """Phát hiện nội dung bài viết quá ngắn hoặc rỗng."""
     suspicious: list[dict] = []
@@ -164,6 +176,7 @@ def find_suspicious_content(records: list[dict]) -> list[dict]:
     return suspicious
 
 
+# In báo cáo tổng hợp kiểm định chất lượng dữ liệu thô và trả về trạng thái PASS/FAIL
 def print_report(records: list[dict], json_errors: list[str]) -> bool:
     """In báo cáo tổng hợp kiểm định chất lượng dữ liệu thô và trả về trạng thái PASS/FAIL."""
     print("\n" + "=" * 70 + "\nKIỂM ĐỊNH DỮ LIỆU THÔ (RAW DATA VALIDATION - PHASE E)\n" + "=" * 70)
@@ -196,6 +209,7 @@ def print_report(records: list[dict], json_errors: list[str]) -> bool:
     return passed
 
 
+# Điểm thực thi chính kiểm định dữ liệu thô
 def main() -> bool:
     """Điểm thực thi chính kiểm định dữ liệu thô."""
     records, json_errors = load_jsonl(ARTICLE_OUTPUT)

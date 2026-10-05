@@ -13,6 +13,7 @@ __all__ = [
 ]
 
 
+# Nạp động các hàm và biến từ module category_organizer khi được truy xuất
 def __getattr__(name: str):
     from . import category_organizer
     if hasattr(category_organizer, name):

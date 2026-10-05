@@ -17,6 +17,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 OUTPUT_IMAGE = PROJECT_ROOT / "outputs" / "database" / "erd_diagram.png"
 
 
+# Tự động kết xuất sơ đồ quan hệ thực thể (ERD) 5 bảng chuẩn 3NF sang tệp ảnh PNG 300 DPI
 def draw_erd() -> Path:
     # Kích thước canvas
     fig, ax = plt.subplots(figsize=(19, 13), dpi=300)

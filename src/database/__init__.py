@@ -17,6 +17,7 @@ __all__ = [
 ]
 
 
+# Nạp động các thuộc tính và hàm từ module sqlserver khi được truy xuất
 def __getattr__(name: str):
     from . import sqlserver
     if hasattr(sqlserver, name):

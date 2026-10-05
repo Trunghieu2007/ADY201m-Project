@@ -42,28 +42,33 @@ CORE_RAW_FIELDS = (
 
 
 # 1. Text & Author Cleaning
+# Chuẩn hóa văn bản tiếng Việt sang dạng Unicode chuẩn NFC
 def normalize_unicode(text: str | None) -> str:
     """Chuẩn hóa văn bản tiếng Việt sang dạng Unicode chuẩn NFC."""
     return unicodedata.normalize("NFC", str(text)) if text else ""
 
 
+# Loại bỏ URL rác, chuẩn hóa khoảng trắng thừa và ký tự không ngắt
 def normalize_text(text: str | None) -> str:
     """Loại bỏ URL rác, chuẩn hóa khoảng trắng thừa và ký tự không ngắt \u00a0."""
     cleaned = _URL_RE.sub(" ", normalize_unicode(text)).replace("\u00a0", " ")
     return _WHITESPACE_RE.sub(" ", cleaned).strip()
 
 
+# Tách từ cơ bản dựa trên khoảng trắng
 def tokenize(text: str | None) -> list[str]:
     """Tách từ cơ bản dựa trên khoảng trắng."""
     return normalize_text(text).split() if text else []
 
 
+# Đếm số câu dựa trên các dấu kết thúc câu (.!?…)
 def sentence_count(text: str | None) -> int:
     """Đếm số câu dựa trên các dấu kết thúc câu (.!?…)."""
     t = normalize_text(text)
     return sum(bool(p.strip()) for p in re.split(r"(?<=[.!?…])\s+", t)) if t else 0
 
 
+# Loại bỏ đoạn mở đầu trùng lặp với tiêu đề hoặc mô tả do bóc tách HTML
 def remove_leading_duplicate_blocks(content: str | None, title: str | None = None, description: str | None = None) -> str:
     """Loại bỏ đoạn mở đầu trùng lặp với tiêu đề hoặc mô tả do bóc tách HTML."""
     val, t_n, d_n = normalize_text(content), normalize_text(title), normalize_text(description)
@@ -77,6 +82,7 @@ def remove_leading_duplicate_blocks(content: str | None, title: str | None = Non
     return val
 
 
+# Tính toán 6 chỉ số đặc trưng từ vựng cơ bản của chuỗi văn bản
 def lexical_features(text: str | None) -> dict[str, float | int]:
     """Tính toán 6 chỉ số đặc trưng từ vựng cơ bản của chuỗi văn bản."""
     cleaned = normalize_text(text)
@@ -94,6 +100,7 @@ def lexical_features(text: str | None) -> dict[str, float | int]:
     }
 
 
+# Chuẩn hóa tên tác giả sang trường phái sinh author_clean, bảo toàn dữ liệu gốc
 def normalize_author(author: str | None) -> str | None:
     """Chuẩn hóa tên tác giả sang trường phái sinh author_clean, bảo toàn dữ liệu gốc."""
     if author is None:
@@ -103,6 +110,7 @@ def normalize_author(author: str | None) -> str | None:
     return val or None
 
 
+# Phân tích chuỗi ISO datetime sang datetime object
 def parse_dt(value: str | None) -> datetime | None:
     """Phân tích chuỗi ISO datetime sang datetime object."""
     if not value:
@@ -114,6 +122,7 @@ def parse_dt(value: str | None) -> datetime | None:
 
 
 # 2. Preprocessing & Feature Extraction
+# Tiền xử lý văn bản, trích xuất 13 đặc trưng mô tả cho SQL Server, bảo toàn dữ liệu gốc
 def preprocess_record(record: dict, category_map: dict[str, int], subcategory_map: dict[str, int]) -> dict:
     """Tiền xử lý văn bản, trích xuất 13 đặc trưng mô tả cho SQL Server, bảo toàn dữ liệu gốc."""
     title, desc = normalize_text(record.get("title")), normalize_text(record.get("description"))
@@ -155,6 +164,7 @@ def preprocess_record(record: dict, category_map: dict[str, int], subcategory_ma
     }
 
 
+# Xây dựng ma trận 13 đặc trưng mô tả kèm khóa ID chuẩn bị cho nạp CSDL
 def build_feature_matrix(rows: list[dict]) -> tuple[list[str], list[list[float | int]]]:
     """Xây dựng ma trận 13 đặc trưng mô tả kèm khóa ID chuẩn bị cho nạp CSDL."""
     header = ["article_id", "category_id", "subcategory_id", *DESCRIPTIVE_FEATURES]
@@ -162,11 +172,13 @@ def build_feature_matrix(rows: list[dict]) -> tuple[list[str], list[list[float |
     return header, matrix
 
 
+# Đọc danh sách các đối tượng từ tệp JSON Lines
 def load_jsonl(path: Path) -> list[dict]:
     with path.open("r", encoding="utf-8") as f:
         return [json.loads(line) for line in f if line.strip()]
 
 
+# Ghi tiêu đề và các hàng dữ liệu ra tệp CSV
 def write_csv(path: Path, header: list[str], rows: list[list]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as f:
@@ -176,6 +188,7 @@ def write_csv(path: Path, header: list[str], rows: list[list]) -> None:
 
 
 # 3. Self-Validation (No SHA-256)
+# Kiểm tra tính toàn vẹn, bảo toàn dữ liệu gốc và tính hợp lệ của dữ liệu tiền xử lý
 def validate(raw_path: Path = RAW, processed_path: Path = PROCESSED_OUTPUT, feature_path: Path = FEATURE_MATRIX_OUTPUT) -> dict:
     """Kiểm tra tính toàn vẹn, bảo toàn dữ liệu gốc và tính hợp lệ của dữ liệu tiền xử lý."""
     raw, processed = load_jsonl(raw_path), load_jsonl(processed_path)
@@ -204,6 +217,7 @@ def validate(raw_path: Path = RAW, processed_path: Path = PROCESSED_OUTPUT, feat
 
 
 # 4. Pipeline Runner
+# Điều phối toàn bộ quy trình Transform: làm sạch, trích xuất đặc trưng và tự kiểm định
 def run(raw_path: Path = RAW) -> dict:
     """Điều phối toàn bộ quy trình Transform: làm sạch, trích xuất đặc trưng và tự kiểm định."""
     OUT.mkdir(parents=True, exist_ok=True)
@@ -240,6 +254,7 @@ def run(raw_path: Path = RAW) -> dict:
     return manifest
 
 
+# Điểm khởi chạy chính CLI cho Phase T — Transform
 def main() -> None:
     """Entrypoint dòng lệnh cho Phase T — Transform.
     Hỗ trợ chạy toàn bộ pipeline biến đổi hoặc chỉ kiểm định nhanh với cờ --check.

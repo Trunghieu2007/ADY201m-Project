@@ -110,6 +110,7 @@ def distribution(articles: list[dict[str, Any]], field: str) -> dict[str, int]:
 
 # Phân tích các trường metadata chính của bài viết
 def metadata_analysis(articles: list[dict[str, Any]]) -> dict[str, Any]:
+    # Đếm và sắp xếp giảm dần các giá trị metadata
     def _cnt(f: str) -> dict[str, int]:
         c: dict[str, int] = {}
         for a in articles:

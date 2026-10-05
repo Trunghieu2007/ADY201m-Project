@@ -11,8 +11,8 @@ INPUT = PROJECT_ROOT / "data" / "raw" / "articles.jsonl"
 OUTPUT = PROJECT_ROOT / "outputs" / "eda" / "temporal_analysis.json"
 
 
+# Tải danh sách bài báo từ tệp JSONL
 def load_articles(path: Path = INPUT) -> list[dict[str, Any]]:
-    # Tải danh sách bài báo từ tệp JSONL
     if not path.exists():
         raise FileNotFoundError(f"Dataset not found: {path}")
     articles: list[dict[str, Any]] = []
@@ -31,8 +31,8 @@ def load_articles(path: Path = INPUT) -> list[dict[str, Any]]:
     return articles
 
 
+# Chuyển đổi chuỗi thời gian nhiều định dạng sang đối tượng datetime
 def parse_datetime(value: Any) -> datetime | None:
-    # Chuyển đổi chuỗi thời gian nhiều định dạng sang đối tượng datetime
     if value is None:
         return None
     text = str(value).strip()
@@ -52,15 +52,15 @@ def parse_datetime(value: Any) -> datetime | None:
     return None
 
 
+# Tính chênh lệch thời gian giữa thời điểm cào và xuất bản (đơn vị phút)
 def comparable_gap_minutes(published: datetime, crawled: datetime) -> float | None:
-    # Tính chênh lệch thời gian giữa thời điểm cào và xuất bản (đơn vị phút)
     if (published.tzinfo is None) != (crawled.tzinfo is None):
         return None
     return (crawled - published).total_seconds() / 60.0
 
 
+# Thống kê phân bố chuỗi số (min, max, mean, median, std, q1, q3)
 def describe(values: list[float]) -> dict[str, Any]:
-    # Thống kê phân bố chuỗi số (min, max, mean, median, std, q1, q3)
     if not values:
         return {"count": 0, "min": None, "max": None, "mean": None, "median": None, "std": None, "q1": None, "q3": None}
     vals = sorted(values)
@@ -77,8 +77,8 @@ def describe(values: list[float]) -> dict[str, Any]:
     }
 
 
+# Phân tích chuỗi thời gian xuất bản và độ trễ thu thập dữ liệu
 def analyze_articles(articles: list[dict[str, Any]]) -> dict[str, Any]:
-    # Phân tích chuỗi thời gian xuất bản và độ trễ thu thập dữ liệu
     date_dist: dict[str, int] = {}
     hour_dist: dict[str, int] = {}
     pub_cat: dict[str, dict[str, int]] = {}
@@ -136,14 +136,14 @@ def analyze_articles(articles: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+# Ghi kết quả phân tích thời gian ra tệp JSON
 def save_result(result: dict[str, Any], path: Path = OUTPUT) -> None:
-    # Ghi kết quả phân tích thời gian ra tệp JSON
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+# Điểm thực thi chính phân tích thời gian
 def main() -> dict[str, Any]:
-    # Điểm thực thi chính phân tích thời gian
     articles = load_articles()
     result = analyze_articles(articles)
     save_result(result)

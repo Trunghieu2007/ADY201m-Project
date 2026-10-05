@@ -20,6 +20,7 @@ __all__ = [
 ]
 
 
+# Nạp động các hàm và hằng số từ module preprocess khi được truy xuất
 def __getattr__(name: str):
     from . import preprocess
     if hasattr(preprocess, name):

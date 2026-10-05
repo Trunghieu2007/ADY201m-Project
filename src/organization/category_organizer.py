@@ -114,6 +114,7 @@ def run_organization() -> dict[str, Any]:
     return summary
 
 
+# Điểm khởi chạy chính CLI thực thi tổ chức chuyên mục và tự kiểm định
 def main() -> None:
     parser = argparse.ArgumentParser(description="Tự động tổ chức chuyên mục & khám phá từ khóa xu hướng")
     parser.add_argument("--check", action="store_true", help="Chỉ kiểm định tính hợp lệ của tệp category_summary.json")

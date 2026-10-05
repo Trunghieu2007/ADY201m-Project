@@ -18,8 +18,8 @@ EXPECTED_SCHEMA = [
 ]
 
 
+# Tính mã băm SHA-256 của toàn bộ tệp dữ liệu thô
 def calculate_sha256(path: Path) -> str:
-    # Tính mã băm SHA-256 của toàn bộ tệp dữ liệu thô
     sha256 = hashlib.sha256()
     with path.open("rb") as file:
         while chunk := file.read(1024 * 1024):
@@ -27,8 +27,8 @@ def calculate_sha256(path: Path) -> str:
     return sha256.hexdigest()
 
 
+# Đọc danh sách bản ghi JSONL mà không làm thay đổi tệp gốc
 def load_records(path: Path) -> list[dict[str, Any]]:
-    # Đọc danh sách bản ghi JSONL mà không làm thay đổi tệp gốc
     records: list[dict[str, Any]] = []
     with path.open("r", encoding="utf-8") as file:
         for line_no, line in enumerate(file, start=1):
@@ -45,8 +45,8 @@ def load_records(path: Path) -> list[dict[str, Any]]:
     return records
 
 
+# Xác thực cấu trúc schema chuẩn trên từng bản ghi
 def inspect_schema(records: list[dict[str, Any]]) -> dict[str, Any]:
-    # Xác thực cấu trúc schema chuẩn trên từng bản ghi
     expected_fields = set(EXPECTED_SCHEMA)
     actual_union: set[str] = set()
     records_with_missing_fields: dict[str, list[str]] = {}
@@ -74,32 +74,32 @@ def inspect_schema(records: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+# Đếm số lượng bài báo theo chuyên mục
 def category_distribution(records: list[dict[str, Any]]) -> dict[str, int]:
-    # Đếm số lượng bài báo theo chuyên mục
     return dict(sorted(Counter(str(r.get("category", "")).strip() for r in records).items()))
 
 
+# Đếm số lượng bài báo theo tiểu mục
 def subcategory_distribution(records: list[dict[str, Any]]) -> dict[str, int]:
-    # Đếm số lượng bài báo theo tiểu mục
     return dict(sorted(Counter(str(r.get("subcategory", "")).strip() for r in records).items()))
 
 
+# Đếm số giá trị bị trùng lặp của một trường dữ liệu
 def duplicate_count(records: list[dict[str, Any]], field: str) -> int:
-    # Đếm số giá trị bị trùng lặp của một trường dữ liệu
     values = [str(r.get(field, "")).strip() for r in records if str(r.get(field, "")).strip()]
     return len(values) - len(set(values))
 
 
+# Đếm số bản ghi có dữ liệu hợp lệ cho từng trường
 def field_completeness(records: list[dict[str, Any]]) -> dict[str, int]:
-    # Đếm số bản ghi có dữ liệu hợp lệ cho từng trường
     res: dict[str, int] = {}
     for f in EXPECTED_SCHEMA:
         res[f] = sum(1 for r in records if r.get(f) is not None and (not isinstance(r.get(f), str) or bool(str(r.get(f)).strip())))
     return res
 
 
+# Tạo đối tượng manifest đầy đủ cho tập dữ liệu thô
 def build_manifest(records: list[dict[str, Any]]) -> dict[str, Any]:
-    # Tạo đối tượng manifest đầy đủ cho tập dữ liệu thô
     schema = inspect_schema(records)
     completeness = field_completeness(records)
     return {
@@ -134,8 +134,8 @@ def build_manifest(records: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+# Điểm thực thi chính tạo tập tin manifest
 def main() -> None:
-    # Điểm thực thi chính tạo tập tin manifest
     if not RAW_FILE.exists():
         raise FileNotFoundError(f"Dataset not found: {RAW_FILE}")
     records = load_records(RAW_FILE)
