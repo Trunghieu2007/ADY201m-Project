@@ -269,6 +269,14 @@ class Phase6Tests(unittest.TestCase):
             self.assertTrue(bool(r.get("title")))
             self.assertIn("features", r)
 
+    def test_phase6_erd_diagram_and_draw_module(self):
+        """Kiểm tra module vẽ ERD và tệp ảnh sơ đồ quan hệ thực thể tồn tại hợp lệ."""
+        from src.database.draw_erd import draw_erd
+        self.assertTrue(callable(draw_erd))
+        erd_path = Path("outputs/database/erd_diagram.png")
+        self.assertTrue(erd_path.exists(), "Tệp sơ đồ ERD outputs/database/erd_diagram.png không tồn tại")
+        self.assertGreater(erd_path.stat().st_size, 10000, "Tệp sơ đồ ERD quá nhỏ hoặc rỗng")
+
 
 if __name__ == "__main__":
     unittest.main()

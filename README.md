@@ -89,7 +89,7 @@ ADY201m Project/
 │       ├── articles.jsonl                # 20 bản ghi gốc
 │       └── crawl_log.jsonl               # Nhật ký thu thập dữ liệu
 ├── outputs/                              # Toàn bộ dữ liệu xuất, báo cáo, manifest, biểu đồ
-│   ├── database/                         # Manifest tích hợp CSDL SQL Server
+│   ├── database/                         # Manifest tích hợp CSDL SQL Server & Sơ đồ ERD (erd_diagram.png)
 │   ├── eda/                              # 6 biểu đồ phân tích EDA (.png) & JSON kết quả
 │   ├── eda_summary/                      # Tóm tắt & checklist EDA (Markdown & JSON)
 │   ├── preprocessing/                    # Manifest tiền xử lý & Feature summary
@@ -102,7 +102,7 @@ ADY201m Project/
 │   └── queries.sql                       # 6 truy vấn phân tích nghiệp vụ & Window Functions
 ├── src/                                  # Mã nguồn chính của dự án
 │   ├── crawler/                          # Bóc tách RSS, Sitemap, Bài báo VnExpress & validate
-│   ├── database/                         # Kết nối pyodbc & nạp SQL Server 3NF (run_database.py)
+│   ├── database/                         # Kết nối pyodbc & nạp SQL Server 3NF (run_database.py), vẽ ERD (draw_erd.py)
 │   ├── eda/                              # Thống kê văn bản & xu hướng thời gian (run_eda.py)
 │   ├── organization/                     # Tự động tổ chức chuyên mục & xu hướng từ khóa (category_organizer.py)
 │   ├── preprocessing/                    # Chuẩn hóa Unicode NFC & trích xuất đặc trưng (preprocess.py)
@@ -159,15 +159,22 @@ ADY201m Project/
 
 ### Phase 5: Tích hợp CSDL Microsoft SQL Server Chuẩn 3NF
 - **Lược đồ quan hệ chuẩn hóa 3NF:**
-  - `dbo.Categories`: Bảng danh mục gốc (`category_id`, `category_code`, `category_name`, `description`).
-  - `dbo.Subcategories`: Bảng tiểu mục (ràng buộc khóa ngoại về `Categories`).
-  - `dbo.Authors`: Bảng tác giả (`author_id`, `author_name`, `author_code`).
-  - `dbo.Articles`: Bảng lưu trữ bài viết với khóa chính `article_id` tự nhiên, khóa ngoại trỏ về chuyên mục, tiểu mục và tác giả.
-  - `dbo.ArticleFeatures`: Bảng lưu 13 đặc trưng từ vựng và thời gian được tính toán từ Phase 3.
+  - `dbo.Categories`: Bảng danh mục gốc (`category_id` [PK], `name` [UQ]).
+  - `dbo.Subcategories`: Bảng tiểu mục (`subcategory_id` [PK], `category_id` [FK trỏ về Categories], `name`).
+  - `dbo.Authors`: Bảng tác giả (`author_id` [PK], `name` [UQ]).
+  - `dbo.Articles`: Bảng lưu trữ bài viết với khóa chính tự nhiên `article_id` [PK], URL duy nhất `url` [UQ], và các khóa ngoại `author_id` [FK], `category_id` [FK], `subcategory_id` [FK].
+  - `dbo.ArticleFeatures`: Bảng mở rộng 1 : 1 lưu 13 đặc trưng từ vựng và thời gian (`article_id` [PK, FK trỏ về Articles]).
+
+#### Sơ đồ Quan hệ Thực thể (Entity-Relationship Diagram - ERD):
+<p align="center">
+  <img src="outputs/database/erd_diagram.png" alt="Sơ đồ ERD CSDL Microsoft SQL Server 3NF" width="100%" />
+</p>
+
 - **Tính toàn vẹn & Truy vấn Báo cáo Xu hướng:**
   - Sử dụng câu lệnh tham số hóa (Parameterized SQL) chống tấn công SQL Injection.
   - Hỗ trợ các truy vấn phân tích xu hướng với Window Functions (`ROW_NUMBER() OVER (PARTITION BY category_id ORDER BY published_at DESC)`).
   - Cơ chế đồng bộ an toàn: Kiểm tra bài viết đã tồn tại thì thực hiện `UPDATE`, nếu chưa có thì `INSERT` trong cùng Transaction.
+
 
 ### Phase 6: Giao diện BI Dashboard Khám phá Xu hướng (Streamlit)
 - Nền tảng Dashboard tương tác gồm 5 tab chức năng:
@@ -273,6 +280,9 @@ Mỗi hàm trong mã nguồn được chú thích bằng 1 dòng comment `#` sú
   - `main()`: CLI hỗ trợ: `--init-schema`, `--import`, `--update`, `--sync`, `--check`.
 - [`src/database/run_database.py`](src/database/run_database.py):
   - Entrypoint khởi chạy nhanh, hỗ trợ đầy đủ các cờ CLI `--sync` và `--check`.
+- [`src/database/draw_erd.py`](src/database/draw_erd.py):
+  - `draw_erd(output_path: Path | None = None) -> Path`: Tự động kết xuất sơ đồ quan hệ thực thể (ERD) trực quan của 5 bảng CSDL chuẩn 3NF sang tệp ảnh PNG chất lượng cao 300 DPI với nhãn quan hệ 1:N và 1:1 rõ ràng.
+  - `main()`: Entrypoint dòng lệnh CLI để tái tạo sơ đồ bất cứ lúc nào (`python -m src.database.draw_erd`).
 
 #### 7. Giao diện BI Dashboard Streamlit (`dashboard/`)
 - [`dashboard/app.py`](dashboard/app.py):

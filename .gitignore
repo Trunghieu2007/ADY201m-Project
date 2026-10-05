@@ -20,6 +20,7 @@ __pycache__/
 .idea/
 *.sublime-project
 *.sublime-workspace
+.agents/
 
 # OS files
 Thumbs.db
