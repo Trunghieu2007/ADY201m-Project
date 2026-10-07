@@ -1,3 +1,6 @@
+"""Module tiền xử lý (Preprocessing), chuẩn hóa Unicode NFC và trích xuất 13 đặc trưng mô tả.
+Bảo toàn 100% dữ liệu gốc (Non-destructive Transformation) tuân thủ Knowledge.md.
+"""
 from __future__ import annotations
 
 import csv
@@ -9,66 +12,57 @@ import unicodedata
 from datetime import datetime
 from pathlib import Path
 
-if sys.stdout and hasattr(sys.stdout, "reconfigure"):
-    try:
-        sys.stdout.reconfigure(encoding="utf-8")
-    except Exception:
-        pass
+from src.utils import (
+    EXPECTED_FIELDS,
+    FEATURE_COLUMNS,
+    FEATURE_MATRIX_PATH,
+    OUTPUTS_DIR,
+    PROCESSED_DATA_PATH,
+    RAW_DATA_PATH,
+    load_jsonl,
+    save_json,
+    save_jsonl,
+)
 
 logger = logging.getLogger(__name__)
 
-# Paths & Constants
-ROOT = Path(__file__).resolve().parents[2]
-RAW = ROOT / "data" / "raw" / "articles.jsonl"
-OUT = ROOT / "data" / "processed"
-REPORTS = ROOT / "outputs" / "preprocessing"
-PROCESSED_OUTPUT = OUT / "articles_processed.jsonl"
-FEATURE_MATRIX_OUTPUT = OUT / "feature_matrix.csv"
+ROOT = RAW_DATA_PATH.parents[2]
+RAW = RAW_DATA_PATH
+OUT = PROCESSED_DATA_PATH.parent
+REPORTS = OUTPUTS_DIR / "preprocessing"
+PROCESSED_OUTPUT = PROCESSED_DATA_PATH
+FEATURE_MATRIX_OUTPUT = FEATURE_MATRIX_PATH
 MANIFEST_OUTPUT = REPORTS / "phase3_manifest.json"
 
 _WHITESPACE_RE = re.compile(r"\s+")
 _URL_RE = re.compile(r"https?://\S+|www\.\S+", re.I)
 
-DESCRIPTIVE_FEATURES = [
-    "char_count", "word_count", "sentence_count", "unique_word_count",
-    "lexical_diversity", "avg_word_length", "title_char_count", "title_word_count",
-    "description_char_count", "description_word_count", "title_to_content_word_ratio",
-    "publication_hour", "publication_weekday",
-]
-CORE_RAW_FIELDS = (
-    "url", "title", "description", "content", "author", "publisher",
-    "published_at", "category", "subcategory", "article_id", "crawled_at", "source",
-)
+DESCRIPTIVE_FEATURES = list(FEATURE_COLUMNS)
+CORE_RAW_FIELDS = tuple(EXPECTED_FIELDS)
 
 
-# 1. Text & Author Cleaning
-# Chuẩn hóa văn bản tiếng Việt sang dạng Unicode chuẩn NFC
 def normalize_unicode(text: str | None) -> str:
-    """Chuẩn hóa văn bản tiếng Việt sang dạng Unicode chuẩn NFC."""
+    """Chuẩn hóa văn bản tiếng Việt sang bảng mã Unicode dựng sẵn (NFC)."""
     return unicodedata.normalize("NFC", str(text)) if text else ""
 
 
-# Loại bỏ URL rác, chuẩn hóa khoảng trắng thừa và ký tự không ngắt
 def normalize_text(text: str | None) -> str:
-    """Loại bỏ URL rác, chuẩn hóa khoảng trắng thừa và ký tự không ngắt \u00a0."""
+    """Loại bỏ URL rác, chuẩn hóa khoảng trắng thừa và ký tự không ngắt."""
     cleaned = _URL_RE.sub(" ", normalize_unicode(text)).replace("\u00a0", " ")
     return _WHITESPACE_RE.sub(" ", cleaned).strip()
 
 
-# Tách từ cơ bản dựa trên khoảng trắng
 def tokenize(text: str | None) -> list[str]:
-    """Tách từ cơ bản dựa trên khoảng trắng."""
+    """Tách từ cơ bản dựa trên phân tách khoảng trắng."""
     return normalize_text(text).split() if text else []
 
 
-# Đếm số câu dựa trên các dấu kết thúc câu (.!?…)
 def sentence_count(text: str | None) -> int:
-    """Đếm số câu dựa trên các dấu kết thúc câu (.!?…)."""
+    """Đếm số câu dựa trên các dấu kết thúc câu (. ! ? …)."""
     t = normalize_text(text)
     return sum(bool(p.strip()) for p in re.split(r"(?<=[.!?…])\s+", t)) if t else 0
 
 
-# Loại bỏ đoạn mở đầu trùng lặp với tiêu đề hoặc mô tả do bóc tách HTML
 def remove_leading_duplicate_blocks(content: str | None, title: str | None = None, description: str | None = None) -> str:
     """Loại bỏ đoạn mở đầu trùng lặp với tiêu đề hoặc mô tả do bóc tách HTML."""
     val, t_n, d_n = normalize_text(content), normalize_text(title), normalize_text(description)
@@ -82,7 +76,6 @@ def remove_leading_duplicate_blocks(content: str | None, title: str | None = Non
     return val
 
 
-# Tính toán 6 chỉ số đặc trưng từ vựng cơ bản của chuỗi văn bản
 def lexical_features(text: str | None) -> dict[str, float | int]:
     """Tính toán 6 chỉ số đặc trưng từ vựng cơ bản của chuỗi văn bản."""
     cleaned = normalize_text(text)
@@ -100,7 +93,6 @@ def lexical_features(text: str | None) -> dict[str, float | int]:
     }
 
 
-# Chuẩn hóa tên tác giả sang trường phái sinh author_clean, bảo toàn dữ liệu gốc
 def normalize_author(author: str | None) -> str | None:
     """Chuẩn hóa tên tác giả sang trường phái sinh author_clean, bảo toàn dữ liệu gốc."""
     if author is None:
@@ -110,7 +102,6 @@ def normalize_author(author: str | None) -> str | None:
     return val or None
 
 
-# Phân tích chuỗi ISO datetime sang datetime object
 def parse_dt(value: str | None) -> datetime | None:
     """Phân tích chuỗi ISO datetime sang datetime object."""
     if not value:
@@ -121,8 +112,6 @@ def parse_dt(value: str | None) -> datetime | None:
         return None
 
 
-# 2. Preprocessing & Feature Extraction
-# Tiền xử lý văn bản, trích xuất 13 đặc trưng mô tả cho SQL Server, bảo toàn dữ liệu gốc
 def preprocess_record(record: dict, category_map: dict[str, int], subcategory_map: dict[str, int]) -> dict:
     """Tiền xử lý văn bản, trích xuất 13 đặc trưng mô tả cho SQL Server, bảo toàn dữ liệu gốc."""
     title, desc = normalize_text(record.get("title")), normalize_text(record.get("description"))
@@ -164,7 +153,6 @@ def preprocess_record(record: dict, category_map: dict[str, int], subcategory_ma
     }
 
 
-# Xây dựng ma trận 13 đặc trưng mô tả kèm khóa ID chuẩn bị cho nạp CSDL
 def build_feature_matrix(rows: list[dict]) -> tuple[list[str], list[list[float | int]]]:
     """Xây dựng ma trận 13 đặc trưng mô tả kèm khóa ID chuẩn bị cho nạp CSDL."""
     header = ["article_id", "category_id", "subcategory_id", *DESCRIPTIVE_FEATURES]
@@ -172,14 +160,8 @@ def build_feature_matrix(rows: list[dict]) -> tuple[list[str], list[list[float |
     return header, matrix
 
 
-# Đọc danh sách các đối tượng từ tệp JSON Lines
-def load_jsonl(path: Path) -> list[dict]:
-    with path.open("r", encoding="utf-8") as f:
-        return [json.loads(line) for line in f if line.strip()]
-
-
-# Ghi tiêu đề và các hàng dữ liệu ra tệp CSV
 def write_csv(path: Path, header: list[str], rows: list[list]) -> None:
+    """Ghi tiêu đề và các hàng dữ liệu ra tệp CSV."""
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
@@ -187,8 +169,6 @@ def write_csv(path: Path, header: list[str], rows: list[list]) -> None:
         w.writerows(rows)
 
 
-# 3. Self-Validation (No SHA-256)
-# Kiểm tra tính toàn vẹn, bảo toàn dữ liệu gốc và tính hợp lệ của dữ liệu tiền xử lý
 def validate(raw_path: Path = RAW, processed_path: Path = PROCESSED_OUTPUT, feature_path: Path = FEATURE_MATRIX_OUTPUT) -> dict:
     """Kiểm tra tính toàn vẹn, bảo toàn dữ liệu gốc và tính hợp lệ của dữ liệu tiền xử lý."""
     raw, processed = load_jsonl(raw_path), load_jsonl(processed_path)
@@ -216,8 +196,6 @@ def validate(raw_path: Path = RAW, processed_path: Path = PROCESSED_OUTPUT, feat
     return {"result": "PASS" if not errors else "FAIL", "records": len(processed), "errors": errors, "features_count": len(DESCRIPTIVE_FEATURES)}
 
 
-# 4. Pipeline Runner
-# Điều phối toàn bộ quy trình Transform: làm sạch, trích xuất đặc trưng và tự kiểm định
 def run(raw_path: Path = RAW) -> dict:
     """Điều phối toàn bộ quy trình Transform: làm sạch, trích xuất đặc trưng và tự kiểm định."""
     OUT.mkdir(parents=True, exist_ok=True)
@@ -230,10 +208,7 @@ def run(raw_path: Path = RAW) -> dict:
     subcategory_map = {v: i + 1 for i, v in enumerate(subcategories)}
 
     processed_rows = [preprocess_record(r, category_map, subcategory_map) for r in raw_rows]
-
-    with PROCESSED_OUTPUT.open("w", encoding="utf-8") as f:
-        for r in processed_rows:
-            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    save_jsonl(PROCESSED_OUTPUT, processed_rows)
 
     header, matrix = build_feature_matrix(processed_rows)
     write_csv(FEATURE_MATRIX_OUTPUT, header, matrix)
@@ -249,30 +224,17 @@ def run(raw_path: Path = RAW) -> dict:
         "descriptive_features": DESCRIPTIVE_FEATURES,
         "raw_immutable": True,
     }
-    MANIFEST_OUTPUT.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    save_json(MANIFEST_OUTPUT, manifest)
     manifest["validation"] = validate(raw_path, PROCESSED_OUTPUT, FEATURE_MATRIX_OUTPUT)
     return manifest
 
 
-# Điểm khởi chạy chính CLI cho Phase T — Transform
 def main() -> None:
-    """Entrypoint dòng lệnh cho Phase T — Transform.
-    Hỗ trợ chạy toàn bộ pipeline biến đổi hoặc chỉ kiểm định nhanh với cờ --check.
-    """
+    """Entrypoint dòng lệnh cho Phase T — Transform."""
     import argparse
-
-    parser = argparse.ArgumentParser(
-        description="Pipeline tiền xử lý dữ liệu và trích xuất đặc trưng mô tả (Phase T - Transform)"
-    )
-    parser.add_argument(
-        "--check",
-        "--validate-only",
-        action="store_true",
-        help="Chỉ kiểm định tính toàn vẹn dữ liệu đã tiền xử lý mà không chạy lại pipeline",
-    )
+    parser = argparse.ArgumentParser(description="Pipeline tiền xử lý dữ liệu và trích xuất đặc trưng mô tả")
+    parser.add_argument("--check", "--validate-only", action="store_true", help="Chỉ kiểm định tính toàn vẹn dữ liệu đã tiền xử lý")
     args = parser.parse_args()
-
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 
     if args.check:
         res = validate()
@@ -282,14 +244,9 @@ def main() -> None:
     manifest = run()
     val = manifest.get("validation", {})
     status = val.get("result", "UNKNOWN")
-    print(
-        f"Tiền xử lý hoàn tất: {status} "
-        f"({manifest.get('records', 0)} bản ghi, {len(DESCRIPTIVE_FEATURES)} đặc trưng mô tả)"
-    )
-    print(json.dumps(manifest, ensure_ascii=False, indent=2))
+    print(f"Tiền xử lý hoàn tất: {status} ({manifest.get('records', 0)} bản ghi, {len(DESCRIPTIVE_FEATURES)} đặc trưng mô tả)")
     sys.exit(0 if status == "PASS" else 1)
 
 
 if __name__ == "__main__":
     main()
-

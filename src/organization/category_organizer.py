@@ -1,4 +1,6 @@
-"""Module tự động tổ chức chuyên mục, chuẩn hóa phân loại và trích xuất từ khóa xu hướng."""
+"""Module tự động tổ chức chuyên mục, chuẩn hóa phân loại và trích xuất từ khóa xu hướng.
+Áp dụng kỹ thuật thống kê tần suất từ vựng và bộ lọc stopwords tiếng Việt (Knowledge.md).
+"""
 from __future__ import annotations
 
 import argparse
@@ -9,37 +11,25 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-if sys.stdout and hasattr(sys.stdout, "reconfigure"):
-    try:
-        sys.stdout.reconfigure(encoding="utf-8")
-    except Exception:
-        pass
+from src.utils import (
+    CANONICAL_CATEGORIES,
+    CATEGORY_SUMMARY_PATH,
+    PROCESSED_DATA_PATH,
+    RAW_DATA_PATH,
+    STOPWORDS,
+    load_json,
+    load_jsonl,
+    save_json,
+)
 
-ROOT = Path(__file__).resolve().parents[2]
-RAW_PATH = ROOT / "data" / "raw" / "articles.jsonl"
-PROCESSED_PATH = ROOT / "data" / "processed" / "articles_processed.jsonl"
-SUMMARY_PATH = ROOT / "data" / "processed" / "category_summary.json"
-
-CANONICAL_CATEGORIES = {
-    "thoi-su": "Thời sự",
-    "kinh-doanh": "Kinh doanh",
-    "bat-dong-san": "Bất động sản",
-    "khoa-hoc": "Khoa học công nghệ",
-    "khoa-hoc-cong-nghe": "Khoa học công nghệ",
-    "suc-khoe": "Sức khỏe",
-}
-
-STOPWORDS = {
-    "và", "của", "là", "có", "cho", "trong", "được", "các", "với", "những",
-    "đã", "khi", "người", "đến", "ở", "này", "về", "một", "để", "ra",
-    "sau", "từ", "theo", "nhiều", "hơn", "không", "sẽ", "như", "lại", "vào",
-    "cũng", "đang", "tại", "biết", "lên", "trên", "phải", "ngày", "bị", "rồi",
-    "rất", "nói", "hay", "còn", "thì", "làm", "nhưng", "qua", "do", "gần",
-}
+ROOT = RAW_DATA_PATH.parents[2]
+RAW_PATH = RAW_DATA_PATH
+PROCESSED_PATH = PROCESSED_DATA_PATH
+SUMMARY_PATH = CATEGORY_SUMMARY_PATH
 
 
-# Trích xuất tên danh mục chuẩn từ slug đường dẫn URL của bài viết VnExpress
 def extract_category_from_url(url: str) -> str:
+    """Trích xuất tên danh mục chuẩn từ slug đường dẫn URL của bài viết VnExpress."""
     match = re.search(r"vnexpress\.net/([^/]+)", url)
     if match:
         slug = match.group(1).lower()
@@ -47,8 +37,8 @@ def extract_category_from_url(url: str) -> str:
     return "Thời sự"
 
 
-# Phân nhóm bài viết tự động theo tên danh mục chuẩn hóa
 def organize_articles(records: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    """Phân nhóm bài viết tự động theo tên danh mục chuẩn hóa."""
     organized: dict[str, list[dict[str, Any]]] = {}
     for r in records:
         cat = r.get("category") or extract_category_from_url(r.get("url", ""))
@@ -56,8 +46,8 @@ def organize_articles(records: list[dict[str, Any]]) -> dict[str, list[dict[str,
     return organized
 
 
-# Thống kê top từ khóa xuất hiện nhiều nhất sau khi lọc bỏ stopwords tiếng Việt
 def get_top_keywords(records: list[dict[str, Any]], top_n: int = 10) -> list[tuple[str, int]]:
+    """Thống kê top từ khóa xuất hiện nhiều nhất sau khi lọc bỏ stopwords tiếng Việt."""
     words = [
         w
         for r in records
@@ -67,8 +57,8 @@ def get_top_keywords(records: list[dict[str, Any]], top_n: int = 10) -> list[tup
     return Counter(words).most_common(top_n)
 
 
-# Tổng hợp các chỉ số định lượng và từ khóa đại diện cho từng danh mục
 def compute_category_summary(records: list[dict[str, Any]]) -> dict[str, Any]:
+    """Tổng hợp các chỉ số định lượng và từ khóa đại diện cho từng danh mục."""
     organized = organize_articles(records)
     total = len(records)
     return {
@@ -88,34 +78,32 @@ def compute_category_summary(records: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-# Tự kiểm định tính toàn vẹn của tệp category_summary.json trên đĩa
 def validate_summary(path: Path = SUMMARY_PATH) -> dict[str, Any]:
+    """Tự kiểm định tính toàn vẹn của tệp category_summary.json trên đĩa."""
     if not path.exists():
         return {"result": "FAIL", "error": f"Không tìm thấy tệp {path}"}
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-        if data.get("total_articles") != 20 or data.get("total_categories") < 5:
-            return {"result": "FAIL", "error": "Số lượng bài viết hoặc chuyên mục không đủ chuẩn"}
+        data = load_json(path)
+        if data.get("total_articles", 0) < 20 or data.get("total_categories", 0) < 5:
+            return {"result": "FAIL", "error": "Số lượng bài viết hoặc chuyên mục không đủ chuẩn (yêu cầu >= 20 bài, 5 chuyên mục)"}
         return {"result": "PASS", "articles": data["total_articles"], "categories": data["total_categories"]}
     except Exception as exc:
         return {"result": "FAIL", "error": str(exc)}
 
 
-# Thực thi tự động tổ chức danh mục và lưu tệp JSON tổng hợp
 def run_organization() -> dict[str, Any]:
+    """Thực thi tự động tổ chức danh mục và lưu tệp JSON tổng hợp."""
     source_path = PROCESSED_PATH if PROCESSED_PATH.exists() else RAW_PATH
     if not source_path.exists():
         raise FileNotFoundError(f"Input dataset not found at {source_path}")
-    with source_path.open("r", encoding="utf-8") as handle:
-        records = [json.loads(line) for line in handle if line.strip()]
+    records = load_jsonl(source_path)
     summary = compute_category_summary(records)
-    SUMMARY_PATH.parent.mkdir(parents=True, exist_ok=True)
-    SUMMARY_PATH.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    save_json(SUMMARY_PATH, summary)
     return summary
 
 
-# Điểm khởi chạy chính CLI thực thi tổ chức chuyên mục và tự kiểm định
 def main() -> None:
+    """Entrypoint dòng lệnh thực thi tổ chức chuyên mục và tự kiểm định."""
     parser = argparse.ArgumentParser(description="Tự động tổ chức chuyên mục & khám phá từ khóa xu hướng")
     parser.add_argument("--check", action="store_true", help="Chỉ kiểm định tính hợp lệ của tệp category_summary.json")
     args = parser.parse_args()

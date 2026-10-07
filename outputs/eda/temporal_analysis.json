@@ -1,24 +1,28 @@
 {
-  "records": 20,
+  "records": 40,
   "published_at": {
-    "valid": 20,
+    "valid": 40,
     "invalid": 0,
     "invalid_article_ids": []
   },
   "crawled_at": {
-    "valid": 20,
+    "valid": 40,
     "invalid": 0,
     "invalid_article_ids": []
   },
   "publication_date_distribution": {
     "2026-09-24": 14,
-    "2026-09-25": 6
+    "2026-09-25": 6,
+    "2026-10-05": 20
   },
   "publication_hour_distribution": {
-    "0": 4,
+    "0": 7,
     "1": 2,
-    "8": 1,
-    "9": 1,
+    "5": 5,
+    "6": 4,
+    "7": 2,
+    "8": 2,
+    "9": 6,
     "14": 1,
     "15": 2,
     "16": 2,
@@ -39,17 +43,24 @@
       "Khoa học công nghệ": 1,
       "Sức khỏe": 3,
       "Thời sự": 1
+    },
+    "2026-10-05": {
+      "Bất động sản": 4,
+      "Khoa học công nghệ": 4,
+      "Kinh doanh": 4,
+      "Sức khỏe": 4,
+      "Thời sự": 4
     }
   },
   "publication_to_crawl_gap_minutes": {
-    "count": 20,
+    "count": 40,
     "min": 9.88,
     "max": 1006.55,
-    "mean": 365.97,
-    "median": 324.47,
-    "std": 294.05,
-    "q1": 71.64,
-    "q3": 550.7,
+    "mean": 318.11,
+    "median": 282.62,
+    "std": 245.95,
+    "q1": 87.63,
+    "q3": 495.93,
     "values": [
       71.58,
       263.36,
@@ -70,7 +81,27 @@
       9.88,
       11.9,
       68.92,
-      311.94
+      311.94,
+      73.6,
+      267.32,
+      327.34,
+      327.36,
+      51.62,
+      267.4,
+      327.44,
+      627.52,
+      623.65,
+      627.61,
+      87.63,
+      87.65,
+      207.67,
+      249.44,
+      327.72,
+      293.69,
+      56.49,
+      144.53,
+      161.56,
+      267.82
     ],
     "negative_gap_count": 0,
     "negative_gap_article_ids": [],

@@ -1,38 +1,34 @@
+"""Module phân tích xu hướng thời gian (Temporal Trends & Crawl Latency).
+Phân tích khung giờ xuất bản (Publication Hour), ngày trong tuần, và độ trễ thu thập
+(publication_to_crawl_gap_minutes) theo giáo trình ADY201m.
+"""
 from __future__ import annotations
 
-import json
-import statistics
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-INPUT = PROJECT_ROOT / "data" / "raw" / "articles.jsonl"
-OUTPUT = PROJECT_ROOT / "outputs" / "eda" / "temporal_analysis.json"
+from src.utils import (
+    OUTPUTS_DIR,
+    RAW_DATA_PATH,
+    describe_numeric,
+    load_jsonl,
+    save_json,
+)
+
+INPUT = RAW_DATA_PATH
+OUTPUT = OUTPUTS_DIR / "eda" / "temporal_analysis.json"
 
 
-# Tải danh sách bài báo từ tệp JSONL
 def load_articles(path: Path = INPUT) -> list[dict[str, Any]]:
+    """Tải danh sách bài báo từ tệp JSONL."""
     if not path.exists():
         raise FileNotFoundError(f"Dataset not found: {path}")
-    articles: list[dict[str, Any]] = []
-    with path.open("r", encoding="utf-8") as f:
-        for line_number, line in enumerate(f, start=1):
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                record = json.loads(line)
-            except json.JSONDecodeError as exc:
-                raise ValueError(f"Invalid JSON at line {line_number}: {exc}") from exc
-            if not isinstance(record, dict):
-                raise ValueError(f"Line {line_number} is not a JSON object.")
-            articles.append(record)
-    return articles
+    return load_jsonl(path)
 
 
-# Chuyển đổi chuỗi thời gian nhiều định dạng sang đối tượng datetime
 def parse_datetime(value: Any) -> datetime | None:
+    """Chuyển đổi chuỗi thời gian nhiều định dạng sang đối tượng datetime có/không có múi giờ."""
     if value is None:
         return None
     text = str(value).strip()
@@ -52,33 +48,20 @@ def parse_datetime(value: Any) -> datetime | None:
     return None
 
 
-# Tính chênh lệch thời gian giữa thời điểm cào và xuất bản (đơn vị phút)
 def comparable_gap_minutes(published: datetime, crawled: datetime) -> float | None:
+    """Tính chênh lệch thời gian giữa thời điểm cào và xuất bản (đơn vị: phút)."""
     if (published.tzinfo is None) != (crawled.tzinfo is None):
         return None
     return (crawled - published).total_seconds() / 60.0
 
 
-# Thống kê phân bố chuỗi số (min, max, mean, median, std, q1, q3)
 def describe(values: list[float]) -> dict[str, Any]:
-    if not values:
-        return {"count": 0, "min": None, "max": None, "mean": None, "median": None, "std": None, "q1": None, "q3": None}
-    vals = sorted(values)
-    if len(vals) >= 2:
-        q1, _, q3 = statistics.quantiles(vals, n=4)
-        std = statistics.stdev(vals)
-    else:
-        q1 = q3 = vals[0]
-        std = 0.0
-    return {
-        "count": len(vals), "min": round(min(vals), 2), "max": round(max(vals), 2),
-        "mean": round(statistics.mean(vals), 2), "median": round(statistics.median(vals), 2),
-        "std": round(std, 2), "q1": round(q1, 2), "q3": round(q3, 2),
-    }
+    """Thống kê mô tả phân bố chuỗi số (min, max, mean, median, std, q1, q3)."""
+    return describe_numeric(values)
 
 
-# Phân tích chuỗi thời gian xuất bản và độ trễ thu thập dữ liệu
 def analyze_articles(articles: list[dict[str, Any]]) -> dict[str, Any]:
+    """Phân tích chuỗi thời gian xuất bản và độ trễ thu thập dữ liệu."""
     date_dist: dict[str, int] = {}
     hour_dist: dict[str, int] = {}
     pub_cat: dict[str, dict[str, int]] = {}
@@ -136,14 +119,14 @@ def analyze_articles(articles: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-# Ghi kết quả phân tích thời gian ra tệp JSON
 def save_result(result: dict[str, Any], path: Path = OUTPUT) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    """Ghi kết quả phân tích thời gian ra tệp JSON."""
+    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    save_json(path, result)
 
 
-# Điểm thực thi chính phân tích thời gian
 def main() -> dict[str, Any]:
+    """Điểm thực thi chính phân tích thời gian."""
     articles = load_articles()
     result = analyze_articles(articles)
     save_result(result)

@@ -7,22 +7,17 @@ from pathlib import Path
 import streamlit as st
 
 
-# Tìm kiếm đường dẫn gốc của thư mục dự án
-def find_project_root() -> Path:
-    current = Path(__file__).resolve()
-    for parent in current.parents:
-        if (parent / "data" / "raw" / "articles.jsonl").exists():
-            return parent
-    return current.parent.parent
+from src.utils import (
+    CATEGORY_SUMMARY_PATH,
+    OUTPUTS_DIR,
+    PROCESSED_DATA_PATH as PROCESSED_PATH,
+    RAW_DATA_PATH as RAW_PATH,
+    SQL_DIR,
+)
 
-
-ROOT = find_project_root()
-RAW_PATH = ROOT / "data" / "raw" / "articles.jsonl"
-PROCESSED_PATH = ROOT / "data" / "processed" / "articles_processed.jsonl"
-CATEGORY_SUMMARY_PATH = ROOT / "data" / "processed" / "category_summary.json"
-SQL_TABLES_PATH = ROOT / "sql" / "create_tables.sql"
-SQL_QUERIES_PATH = ROOT / "sql" / "queries.sql"
-AUDIT_JSON_PATH = ROOT / "outputs" / "project_audit.json"
+SQL_TABLES_PATH = SQL_DIR / "create_tables.sql"
+SQL_QUERIES_PATH = SQL_DIR / "queries.sql"
+AUDIT_JSON_PATH = OUTPUTS_DIR / "project_audit.json"
 
 
 

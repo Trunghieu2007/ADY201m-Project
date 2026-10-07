@@ -1,25 +1,27 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import statistics
 import sys
 from pathlib import Path
 from typing import Any
 
-if sys.stdout and hasattr(sys.stdout, "reconfigure"):
-    try:
-        sys.stdout.reconfigure(encoding="utf-8")
-    except Exception:
-        pass
-
+from src.utils import (
+    EXPECTED_FIELDS,
+    OUTPUTS_DIR,
+    RAW_DATA_PATH,
+    calculate_sha256,
+    describe_numeric,
+    load_jsonl,
+    save_json,
+)
 from . import deeper_eda, temporal_analysis, text_statistics
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-RAW_DATA = PROJECT_ROOT / "data" / "raw" / "articles.jsonl"
-EDA_DIR = PROJECT_ROOT / "outputs" / "eda"
-EDA_SUMMARY_DIR = PROJECT_ROOT / "outputs" / "eda_summary"
+PROJECT_ROOT = RAW_DATA_PATH.parents[2]
+RAW_DATA = RAW_DATA_PATH
+EDA_DIR = OUTPUTS_DIR / "eda"
+EDA_SUMMARY_DIR = OUTPUTS_DIR / "eda_summary"
 
 TEXT_STATS_FILE = EDA_DIR / "text_statistics.json"
 TEMPORAL_FILE = EDA_DIR / "temporal_analysis.json"
@@ -30,40 +32,21 @@ SUMMARY_FILE = EDA_SUMMARY_DIR / "phase2_summary.md"
 LIMITATIONS_FILE = EDA_SUMMARY_DIR / "phase2_limitations.md"
 CHECKLIST_FILE = EDA_SUMMARY_DIR / "phase2_checklist.md"
 
-EXPECTED_FIELDS = [
-    "url", "title", "description", "content", "author", "publisher",
-    "published_at", "category", "subcategory", "article_id", "crawled_at", "source",
-]
 UNIQUE_FIELDS = ["url", "title", "article_id"]
 
 
 # Đọc danh sách bản ghi thô từ file JSONL
 def load_raw(path: Path = RAW_DATA) -> list[dict[str, Any]]:
+    """Tải toàn bộ bản ghi dữ liệu thô từ tệp JSONL."""
     if not path.exists():
         raise FileNotFoundError(f"Raw dataset not found: {path}")
-    articles: list[dict[str, Any]] = []
-    with path.open("r", encoding="utf-8") as f:
-        for line_no, line in enumerate(f, start=1):
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                record = json.loads(line)
-            except json.JSONDecodeError as exc:
-                raise ValueError(f"Invalid JSON at line {line_no}: {exc}") from exc
-            if not isinstance(record, dict):
-                raise ValueError(f"Line {line_no} is not a JSON object.")
-            articles.append(record)
-    return articles
+    return load_jsonl(path)
 
 
 # Tính mã băm SHA-256 của file dữ liệu để đảm bảo tính bất biến
 def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+    """Tính mã băm SHA-256 của tệp dữ liệu."""
+    return calculate_sha256(path)
 
 
 # Kiểm tra tính toàn vẹn cấu trúc và trường thông tin so với schema mong đợi

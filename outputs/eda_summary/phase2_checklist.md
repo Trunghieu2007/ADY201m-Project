@@ -2,10 +2,10 @@
 
 ## Verification
 - [x] Raw dataset unchanged
-- [x] 20 records loaded
+- [ ] 20 records loaded
 - [x] All records match exact 12-field schema
 - [x] Missingness analyzed
-- [x] No missing values in expected fields
+- [ ] No missing values in expected fields
 - [x] Duplicate analysis completed
 - [x] No duplicate URL/title/article_id
 - [x] Category distribution
@@ -32,4 +32,8 @@
 
 ## Final status
 
-**EDA — COMPLETE**
+**EDA — NEEDS REVIEW**
+
+Failed checks:
+- 20 records loaded
+- No missing values in expected fields

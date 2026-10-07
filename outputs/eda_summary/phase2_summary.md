@@ -7,8 +7,8 @@ Phân tích tập trung vào mô tả và khám phá dataset thông qua EDA. Kh�
 ## 2. Dataset
 
 - Raw dataset: `data\raw\articles.jsonl`
-- Số records: 20
-- SHA-256 hiện tại: `8f86ceb25c2b1ef605b235618ff425870e97aab05a50ca7cd5be0877ef0b5abc`
+- Số records: 40
+- SHA-256 hiện tại: `08a082b19231a0b68b1e11a13e9421f2b7c8cf0837192332cefa9f768b73af9b`
 - Raw dataset không được chỉnh sửa trong EDA.
 
 ## 3. Schema
@@ -42,167 +42,156 @@ Phân tích tập trung vào mô tả và khám phá dataset thông qua EDA. Kh�
 - `title`: 0 missing
 - `description`: 0 missing
 - `content`: 0 missing
-- `author`: 0 missing
+- `author`: 1 missing
 - `publisher`: 0 missing
 - `published_at`: 0 missing
 - `category`: 0 missing
-- `subcategory`: 0 missing
+- `subcategory`: 1 missing
 - `article_id`: 0 missing
 - `crawled_at`: 0 missing
 - `source`: 0 missing
 
 ## 6. Category distribution
 
-- Bất động sản: 4
-- Khoa học công nghệ: 4
-- Kinh doanh: 4
-- Sức khỏe: 4
-- Thời sự: 4
+- Bất động sản: 8
+- Khoa học công nghệ: 8
+- Kinh doanh: 8
+- Sức khỏe: 8
+- Thời sự: 8
 
 ## 7. Subcategory distribution
 
-- Chính sách: 3
-- AI: 2
-- Các bệnh: 2
-- Thời sự: 2
-- Chính trị: 1
-- Chứng khoán: 1
-- Doanh nghiệp: 1
+- Chính sách: 4
+- Tin tức: 4
+- AI: 3
+- Các bệnh: 3
+- Thời sự: 3
+- Chính trị: 2
+- Chứng khoán: 2
+- Doanh nghiệp: 2
+- Quốc tế: 2
+- (missing): 1
+- Bất động sản: 1
+- Chuyển đổi số: 1
+- Giao thông: 1
 - Hàng hóa: 1
 - Ngoại thất: 1
-- Quốc tế: 1
+- Nhịp sống số: 1
+- Nội thất: 1
 - Sống khỏe: 1
+- Thiết bị: 1
 - Thế giới tự nhiên: 1
-- Tin tức: 1
+- Thị trường: 1
+- Vĩ mô: 1
 - Đầu tư: 1
 - Đổi mới sáng tạo: 1
 
 ## 8. Text statistics
 
-### character_count
-- Count: 20
-- Min: 1593
+### content_char_count
+- Count: 40
+- Min: 1432
 - Max: 8200
-- Mean: 3128
-- Median: 2600.5
-- Standard deviation: 1853.36
-- Q1: 1845.75
-- Q3: 3569.5
+- Mean: 3446.82
+- Median: 3039.5
+- Standard deviation: 1750.65
+- Q1: 1986.25
+- Q3: 4060.5
 
-### word_count
-- Count: 20
-- Min: 330
+### content_word_count
+- Count: 40
+- Min: 300
 - Max: 1834
-- Mean: 679.95
-- Median: 556.0
-- Standard deviation: 413.2
-- Q1: 409.5
-- Q3: 743.75
+- Mean: 753.1
+- Median: 657.0
+- Standard deviation: 393.04
+- Q1: 435.25
+- Q3: 896.25
 
-### sentence_count
-- Count: 20
+### content_sentence_count
+- Count: 40
 - Min: 10
 - Max: 104
-- Mean: 29.1
-- Median: 22.0
-- Standard deviation: 22.98
-- Q1: 16.75
-- Q3: 30.75
+- Mean: 30.95
+- Median: 25.5
+- Standard deviation: 19.39
+- Q1: 19.0
+- Q3: 35.75
 
-### unique_word_count
-- Count: 20
-- Min: 195
-- Max: 413
-- Mean: 272.95
-- Median: 272.0
-- Standard deviation: 56.42
-- Q1: 231.75
-- Q3: 315.5
+### content_unique_word_count
+- Count: 40
+- Min: 192
+- Max: 533
+- Mean: 302.38
+- Median: 285.0
+- Standard deviation: 80.12
+- Q1: 245.25
+- Q3: 341.0
 
-### average_word_length
-- Count: 20
-- Min: 3.28
+### content_avg_word_length
+- Count: 40
+- Min: 3.11
 - Max: 3.71
-- Mean: 3.46
-- Median: 3.44
+- Mean: 3.45
+- Median: 3.43
 - Standard deviation: 0.13
-- Q1: 3.35
-- Q3: 3.57
-
-### title_character_count
-- Count: 20
-- Min: 19
-- Max: 67
-- Mean: 46.95
-- Median: 50.0
-- Standard deviation: 12.79
-- Q1: 36.75
-- Q3: 54.75
+- Q1: 3.37
+- Q3: 3.53
 
 ### title_word_count
-- Count: 20
+- Count: 40
 - Min: 5
-- Max: 15
-- Mean: 10.45
-- Median: 11.0
-- Standard deviation: 2.93
-- Q1: 8.0
-- Q3: 13.0
-
-### description_character_count
-- Count: 20
-- Min: 113
-- Max: 178
-- Mean: 143.5
-- Median: 142.5
-- Standard deviation: 18.82
-- Q1: 127.25
-- Q3: 162.5
+- Max: 16
+- Mean: 11.25
+- Median: 11.5
+- Standard deviation: 2.91
+- Q1: 9.0
+- Q3: 13.75
 
 ### description_word_count
-- Count: 20
-- Min: 23
-- Max: 40
-- Mean: 31.45
-- Median: 31.5
-- Standard deviation: 4.85
-- Q1: 27.0
-- Q3: 35.0
+- Count: 40
+- Min: 22
+- Max: 58
+- Mean: 32.17
+- Median: 31.0
+- Standard deviation: 6.63
+- Q1: 29.0
+- Q3: 35.75
 
 ## 9. Category × text statistics
 
 ### Bất động sản
-- Articles: 4
-- Mean word count: 730.5
-- Median word count: 427.5
+- Articles: 8
+- Mean word count: 836.25
+- Median word count: 624.5
 - Min word count: 393
 - Max word count: 1674
 
 ### Khoa học công nghệ
-- Articles: 4
-- Mean word count: 515.75
-- Median word count: 531.5
+- Articles: 8
+- Mean word count: 560.25
+- Median word count: 521.5
 - Min word count: 374
-- Max word count: 626
+- Max word count: 987
 
 ### Kinh doanh
-- Articles: 4
-- Mean word count: 560.75
-- Median word count: 441.0
-- Min word count: 330
-- Max word count: 1031
+- Articles: 8
+- Mean word count: 660.75
+- Median word count: 614.0
+- Min word count: 300
+- Max word count: 1180
 
 ### Sức khỏe
-- Articles: 4
-- Mean word count: 649.5
+- Articles: 8
+- Mean word count: 749.5
 - Median word count: 711.0
 - Min word count: 429
-- Max word count: 747
+- Max word count: 1294
 
 ### Thời sự
-- Articles: 4
-- Mean word count: 943.25
-- Median word count: 761.0
+- Articles: 8
+- Mean word count: 958.75
+- Median word count: 840.5
 - Min word count: 417
 - Max word count: 1834
 
@@ -211,12 +200,16 @@ Phân tích tập trung vào mô tả và khám phá dataset thông qua EDA. Kh�
 ### Publication date
 - 2026-09-24: 14
 - 2026-09-25: 6
+- 2026-10-05: 20
 
 ### Publication hour
-- 00:00: 4
+- 00:00: 7
 - 01:00: 2
-- 08:00: 1
-- 09:00: 1
+- 05:00: 5
+- 06:00: 4
+- 07:00: 2
+- 08:00: 2
+- 09:00: 6
 - 14:00: 1
 - 15:00: 2
 - 16:00: 2
@@ -226,18 +219,18 @@ Phân tích tập trung vào mô tả và khám phá dataset thông qua EDA. Kh�
 
 ### Publication-to-crawl timestamp gap
 - Min: 9.88 minutes
-- Mean: 365.97 minutes
-- Median: 324.47 minutes
+- Mean: 318.11 minutes
+- Median: 282.62 minutes
 - Max: 1006.55 minutes
 - Negative gaps: 0
 > This is `crawled_at - published_at`; it is not a direct benchmark of crawler execution latency.
 
 ## 11. Metadata
 
-- Unique authors: 18
+- Unique authors: 32
 - Unique publishers: 1
 - Unique sources: 1
-- Unique article IDs: 20
+- Unique article IDs: 40
 
 ## 12. Visualizations
 
@@ -250,7 +243,7 @@ Phân tích tập trung vào mô tả và khám phá dataset thông qua EDA. Kh�
 
 ## 13. Interpretation limitation
 
-All descriptive findings apply only to the 20-record dataset analyzed in this project. They must not be generalized to the entire VnExpress website or population of articles.
+All descriptive findings apply only to the 40-record dataset analyzed in this project. They must not be generalized to the entire VnExpress website or population of articles.
 
 ## 14. Status
 

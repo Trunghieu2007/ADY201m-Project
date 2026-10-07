@@ -95,7 +95,7 @@ Hệ thống tiếp nhận 2 tầng dữ liệu đầu vào chính:
 
 #### 2. Dữ liệu Thô Thu thập được (Raw Ingestion Dataset - `data/raw/articles.jsonl`)
 - **Quy cách lưu trữ:** Định dạng JSON Lines (`.jsonl`), mỗi dòng là 1 đối tượng JSON đại diện cho 1 bài viết hoàn chỉnh.
-- **Quy mô tập mẫu:** 20 bài báo phân bổ cân bằng chính xác trên 5 chuyên mục mục tiêu (4 bài / chuyên mục).
+- **Quy mô tập mẫu:** 40 bài báo phân bổ cân bằng chính xác trên 5 chuyên mục mục tiêu (8 bài / chuyên mục).
 - **Tính bất biến (Data Immutability):** Tệp thô được đóng băng toàn vẹn qua mã băm SHA-256 đối soát tự động bởi [`outputs/dataset_manifest.json`](outputs/dataset_manifest.json), đảm bảo không bị biến đổi trong suốt các pha xử lý.
 - **Đặc tả 12 trường cấu trúc của bản ghi thô:**
 
@@ -175,48 +175,49 @@ Giao diện trực quan hóa thông minh phục vụ người dùng cuối tại
 
 ---
 
-## 5. Cấu trúc Thư mục Dự án
+## 5. Cấu trúc Thư mục Dự án Đã Tinh gọn
 
 ```text
 ADY201m Project/
+├── run_pipeline.py                       # 🚀 Trình điều phối đường ống dữ liệu 1-Click (All, EDA, Preprocess, Audit, Dashboard)
 ├── dashboard/                            # Ứng dụng BI Dashboard Streamlit
-│   ├── app.py                            # Streamlit BI Dashboard trực quan hóa xu hướng
-│   └── run_dashboard.py                  # Entrypoint khởi chạy nhanh Streamlit
+│   └── app.py                            # Giao diện BI Dashboard 5 Tab trực quan hóa xu hướng
 ├── data/
 │   ├── processed/                        # Dữ liệu sạch sau tiền xử lý
-│   │   ├── articles_processed.jsonl      # Dữ liệu JSONL kèm trường phái sinh & 13 đặc trưng
+│   │   ├── articles_processed.jsonl      # 40 bản ghi JSONL kèm trường phái sinh & 13 đặc trưng
 │   │   ├── category_summary.json         # Tóm tắt tổ chức chuyên mục & top từ khóa xu hướng
-│   │   └── feature_matrix.csv            # Ma trận 13 đặc trưng thống kê mô tả
-│   └── raw/                              # Dữ liệu cào gốc (Đóng băng)
-│       ├── articles.jsonl                # 20 bản ghi gốc
+│   │   └── feature_matrix.csv            # Ma trận 13 đặc trưng thống kê mô tả (40 dòng)
+│   └── raw/                              # Dữ liệu cào gốc (Đóng băng toàn vẹn SHA-256)
+│       ├── articles.jsonl                # 40 bản ghi gốc cân bằng (8 bài x 5 chuyên mục)
 │       └── crawl_log.jsonl               # Nhật ký thu thập dữ liệu
-├── outputs/                              # Toàn bộ dữ liệu xuất, báo cáo, manifest, biểu đồ
-│   ├── database/                         # Manifest tích hợp CSDL SQL Server & Sơ đồ ERD (erd_diagram.png)
-│   ├── eda/                              # 6 biểu đồ phân tích EDA (.png) & JSON kết quả
+├── outputs/                              # Toàn bộ sản phẩm xuất, báo cáo, manifest, biểu đồ
+│   ├── database/                         # Manifest CSDL SQL Server 3NF & Sơ đồ ERD (erd_diagram.png)
+│   ├── eda/                              # 6 biểu đồ phân tích EDA (.png chuẩn 150/300 DPI) & JSON kết quả
 │   ├── eda_summary/                      # Tóm tắt & checklist EDA (Markdown & JSON)
-│   ├── preprocessing/                    # Manifest tiền xử lý & Feature summary
-│   ├── dataset_manifest.json             # Manifest SHA-256 dữ liệu thô
-│   └── project_audit.json                # Báo cáo kiểm toán chất lượng toàn diện
-├── sql/                                  # Kịch bản DDL/DML Microsoft SQL Server
+│   ├── preprocessing/                    # Manifest tiền xử lý (phase3_manifest.json)
+│   ├── dataset_manifest.json             # Manifest SHA-256 đóng băng dữ liệu thô
+│   └── project_audit.json                # Báo cáo kiểm toán chất lượng 40 tiêu chí
+├── sql/                                  # Kịch bản DDL/DML Microsoft SQL Server chuẩn 3NF
 │   ├── create_database.sql               # Tạo CSDL ADY201m
-│   ├── create_tables.sql                 # Tạo 5 bảng chuẩn 3NF & chỉ mục
-│   ├── upsert_article.sql                # Hợp đồng tham số hóa UPDATE/INSERT
+│   ├── create_tables.sql                 # Tạo 5 bảng chuẩn 3NF & chỉ mục tối ưu
+│   ├── upsert_article.sql                # Hợp đồng tham số hóa UPDATE/INSERT an toàn chống SQL Injection
 │   └── queries.sql                       # 6 truy vấn phân tích nghiệp vụ & Window Functions
-├── src/                                  # Mã nguồn chính của dự án
-│   ├── crawler/                          # Bóc tách RSS, Sitemap, Bài báo VnExpress & validate
-│   ├── database/                         # Kết nối pyodbc & nạp SQL Server 3NF (run_database.py), vẽ ERD (draw_erd.py)
-│   ├── eda/                              # Thống kê văn bản & xu hướng thời gian (run_eda.py)
-│   ├── organization/                     # Tự động tổ chức chuyên mục & xu hướng từ khóa (category_organizer.py)
-│   ├── preprocessing/                    # Chuẩn hóa Unicode NFC & trích xuất đặc trưng (preprocess.py)
-│   └── validation/                       # Kiểm tra chất lượng dữ liệu & Audit toàn dự án
+├── src/                                  # Mã nguồn nghiệp vụ tinh gọn & tối ưu
+│   ├── utils.py                          # Tiện ích cốt lõi dùng chung (I/O, SHA-256, hằng số, thống kê mô tả)
+│   ├── crawler/                          # Bóc tách RSS, Sitemap, Bài báo VnExpress (crawler.py)
+│   ├── database/                         # Kết nối pyodbc & nạp SQL Server 3NF (sqlserver.py), vẽ ERD (draw_erd.py)
+│   ├── eda/                              # Thống kê từ vựng, xu hướng thời gian & xuất 6 biểu đồ (run_eda.py)
+│   ├── organization/                     # Tự động tổ chức chuyên mục & lọc stopwords từ khóa (category_organizer.py)
+│   ├── preprocessing/                    # Chuẩn hóa Unicode NFC & trích xuất 13 đặc trưng (preprocess.py)
+│   └── validation/                       # Kiểm định dữ liệu thô (validate_raw.py), Audit toàn dự án (project_audit.py)
 ├── tests/
-│   └── test_pipeline.py                  # Bộ kiểm thử hồi quy tự động (unittest)
+│   └── test_pipeline.py                  # Bộ kiểm thử hồi quy tự động 23/23 tests (unittest)
 ├── .env.example                          # Mẫu biến môi trường kết nối SQL Server
 ├── .gitignore                            # Cấu hình bỏ qua file nhị phân & môi trường ảo
-├── Knowledge.md                          # Cơ sở tri thức chuẩn môn học ADY201m
-├── requirements.txt                      # Thư viện pipeline chính (Data + SQL)
-├── requirements-streamlit.txt            # Thư viện cho Dashboard Streamlit
-└── README.md                             # Tài liệu hướng dẫn dự án
+├── Knowledge.md                          # Cơ sở tri thức chuẩn môn học ADY201m, PFP191, DBI202
+├── requirements.txt                      # Thư viện pipeline chính (Data + SQL + Streamlit)
+├── requirements-streamlit.txt            # Thư viện tương thích cho Dashboard Streamlit
+└── README.md                             # Tài liệu hướng dẫn dự án chi tiết
 ```
 
 ---
@@ -455,48 +456,23 @@ pip install -r requirements-streamlit.txt
 
 ### 7.3. Hướng dẫn Khởi chạy Dự án
 
-Bạn có 2 cách tiếp cận tùy theo nhu cầu:
+Bạn có thể lựa chọn 2 phương thức vận hành:
 
-#### Cách 1: Xem ngay Giao diện Dashboard (Khởi chạy Nhanh)
-Dự án đã có sẵn tập dữ liệu mẫu chuẩn hóa trong thư mục `data/`. Bạn có thể mở ngay Dashboard để xem trực quan hóa mà không cần chạy lại pipeline:
+#### Cách 1: Khởi chạy 1-Click Toàn bộ Pipeline (Khuyến nghị)
+Chạy toàn bộ quy trình từ kiểm định dữ liệu thô, EDA sinh 6 biểu đồ, tiền xử lý, tổ chức chuyên mục đến kiểm toán chất lượng:
 ```bash
-streamlit run dashboard/app.py
+python run_pipeline.py
 ```
-*(Hoặc dùng lệnh tiện ích: `python -m dashboard.run_dashboard`)*
+*(Hoặc chạy riêng từng chặng nếu cần: `python run_pipeline.py --stage eda`, `python run_pipeline.py --stage preprocess`, `python run_pipeline.py --stage audit`)*.
+
+#### Cách 2: Xem ngay Giao diện BI Dashboard
+Dự án đã có sẵn tập dữ liệu 40 bài chuẩn hóa và biểu đồ EDA sẵn sàng. Bạn có thể mở ngay Dashboard:
+```bash
+python run_pipeline.py --dashboard
+```
+*(Hoặc dùng lệnh Streamlit trực tiếp: `streamlit run dashboard/app.py`)*
 
 Trình duyệt web sẽ tự động mở tại địa chỉ: **`http://localhost:8501`**.
-
----
-
-#### Cách 2: Tự chạy Lại Toàn bộ Quy trình từ A đến Z (End-to-End Pipeline)
-
-Nếu bạn muốn trải nghiệm toàn bộ quy trình từ lúc cào tin tức đến khi hiển thị:
-
-```bash
-# 1. Thu thập tin tức mới từ VnExpress (20 bài / 5 chuyên mục)
-python -m src.crawler.crawler
-
-# 2. Kiểm định kỹ thuật dữ liệu vừa cào
-python -m src.validation.validate_raw
-
-# 3. Phân tích Khám phá Dữ liệu (EDA) & sinh 6 biểu đồ PNG
-python -m src.eda.run_eda
-
-# 4. Tiền xử lý, chuẩn hóa Unicode NFC & trích xuất 13 đặc trưng mô tả
-python -m src.preprocessing.preprocess
-
-# 5. Tự động nhóm chuyên mục & trích xuất Top từ khóa nóng
-python -m src.organization.category_organizer
-
-# 6. (Tùy chọn) Nạp và đồng bộ vào CSDL Microsoft SQL Server 3NF
-# Cấu hình biến môi trường kết nối (nếu dùng SQL Server cục bộ):
-# $env:ADY_SQLSERVER_SERVER = "localhost"
-# $env:ADY_SQLSERVER_DATABASE = "ADY201m"
-python -m src.database.run_database --sync
-
-# 7. Khởi chạy Giao diện Streamlit BI Dashboard
-streamlit run dashboard/app.py
-```
 
 ---
 
@@ -504,9 +480,9 @@ streamlit run dashboard/app.py
 
 Để đảm bảo toàn bộ mã nguồn hoạt động chính xác và không có lỗi:
 ```bash
-# Chạy bộ unit tests tự động (23/23 tests PASS)
-python -m unittest discover -s tests -v
+# 1. Chạy bộ unit tests tự động (23/23 tests PASS)
+python run_pipeline.py --test
 
-# Chạy kiểm toán toàn diện tính toàn vẹn dữ liệu và mã băm SHA-256
+# 2. Chạy kiểm toán toàn diện tính toàn vẹn dữ liệu và mã băm SHA-256
 python -m src.validation.project_audit
 ```

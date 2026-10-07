@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import statistics
@@ -9,21 +8,24 @@ from pathlib import Path
 from typing import Any
 
 from src.eda import deeper_eda, temporal_analysis, text_statistics
+from src.utils import (
+    EXPECTED_FIELDS,
+    NONEMPTY_FIELDS,
+    OUTPUTS_DIR,
+    RAW_DATA_PATH,
+    calculate_sha256,
+    describe_numeric,
+    load_jsonl,
+    save_json,
+)
 from src.validation import validate_raw
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-RAW_FILE = PROJECT_ROOT / "data" / "raw" / "articles.jsonl"
-REPORT_DIR = PROJECT_ROOT / "outputs"
+PROJECT_ROOT = RAW_DATA_PATH.parents[2]
+RAW_FILE = RAW_DATA_PATH
+REPORT_DIR = OUTPUTS_DIR
 AUDIT_FILE = REPORT_DIR / "project_audit.json"
 
-EXPECTED_FIELDS = [
-    "url", "title", "description", "content", "author", "publisher",
-    "published_at", "category", "subcategory", "article_id", "crawled_at", "source",
-]
-REQUIRED_FIELDS = [
-    "url", "title", "description", "content", "publisher",
-    "published_at", "category", "crawled_at", "source",
-]
+REQUIRED_FIELDS = NONEMPTY_FIELDS
 STANDALONE_UI_PHRASES = {
     "navigation": {"trang chủ", "đăng nhập", "đăng ký", "liên hệ", "tài khoản", "menu", "home"},
     "sharing": {"chia sẻ", "theo dõi", "bình luận", "đăng lại"},
@@ -40,14 +42,10 @@ STRONG_UI_COMBINATIONS = [
     ("related_ui", re.compile(r"\b(?:bài viết liên quan|tin liên quan)\b.{0,120}\b(?:xem thêm|đọc thêm)\b", flags=re.IGNORECASE)),
 ]
 
-
 # Tính mã băm SHA-256 của file được chỉ định
 def sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+    """Tính mã băm SHA-256 của file dữ liệu."""
+    return calculate_sha256(path)
 
 
 # Chuẩn hóa khoảng trắng đầu cuối của chuỗi

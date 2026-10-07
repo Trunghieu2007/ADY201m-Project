@@ -208,7 +208,7 @@ class CategoryOrganizationTests(unittest.TestCase):
         path = Path("data/processed/category_summary.json")
         self.assertTrue(path.exists(), f"Không tìm thấy tệp {path}")
         data = json.loads(path.read_text(encoding="utf-8"))
-        self.assertEqual(data["total_articles"], 20)
+        self.assertGreaterEqual(data["total_articles"], 20)
         self.assertEqual(data["total_categories"], 5)
         for cat in CANONICAL_CATEGORIES.values():
             self.assertIn(cat, data["categories"])
@@ -260,9 +260,9 @@ class Phase6Tests(unittest.TestCase):
         self.assertIn("ROW_NUMBER() OVER", sql)
 
     def test_phase6_processed_input_is_20_records(self):
-        """Kiểm tra dữ liệu nạp CSDL articles_processed.jsonl có đủ 20 bản ghi hợp lệ."""
+        """Kiểm tra dữ liệu nạp CSDL articles_processed.jsonl có đủ số bản ghi hợp lệ (>= 20 bản ghi)."""
         records = load_processed_records()
-        self.assertEqual(len(records), 20)
+        self.assertGreaterEqual(len(records), 20)
         for r in records:
             self.assertTrue(bool(r.get("article_id")))
             self.assertTrue(bool(r.get("url")))

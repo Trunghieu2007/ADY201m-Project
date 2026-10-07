@@ -1,252 +1,277 @@
 {
-  "total_articles": 20,
+  "total_articles": 40,
   "total_categories": 5,
   "categories": {
     "Thời sự": {
-      "count": 4,
+      "count": 8,
       "percentage": 20.0,
-      "average_word_count": 943.2,
+      "average_word_count": 958.8,
       "subcategories": {
-        "Thời sự": 2,
+        "Thời sự": 4,
         "Đầu tư": 1,
-        "Chính trị": 1
+        "Chính trị": 2,
+        "Giao thông": 1
       },
       "authors": {
         "Đắc Thành": 1,
         "An Bình": 1,
         "Sơn Hà": 1,
-        "Việt Quốc - Thanh Biên": 1
+        "Việt Quốc - Thanh Biên": 1,
+        "Vũ Tuân": 1,
+        "Võ Hải": 1,
+        "Unknown": 1,
+        "Phước Tuấn": 1
       },
       "top_keywords": [
         [
-          "dân",
-          43
-        ],
-        [
-          "rừng",
-          36
-        ],
-        [
-          "quả",
-          33
-        ],
-        [
-          "hái",
-          32
+          "cầu",
+          92
         ],
         [
           "cây",
-          29
+          68
         ],
         [
-          "thực",
-          25
+          "đồng",
+          60
         ],
         [
-          "phẩm",
-          25
+          "dân",
+          48
+        ],
+        [
+          "thành",
+          48
+        ],
+        [
+          "ngập",
+          45
+        ],
+        [
+          "điểm",
+          40
         ],
         [
           "nước",
-          21
+          39
         ]
       ]
     },
     "Kinh doanh": {
-      "count": 4,
+      "count": 8,
       "percentage": 20.0,
-      "average_word_count": 560.8,
+      "average_word_count": 660.8,
       "subcategories": {
-        "Doanh nghiệp": 1,
-        "Chứng khoán": 1,
-        "Quốc tế": 1,
-        "Hàng hóa": 1
+        "Doanh nghiệp": 2,
+        "Chứng khoán": 2,
+        "Quốc tế": 2,
+        "Hàng hóa": 1,
+        "Vĩ mô": 1
       },
       "authors": {
         "Anh Tú": 1,
         "Tất Đạt": 1,
-        "Hà Thu (theo Reuters)": 1,
-        "Phương Dung": 1
+        "Hà Thu (theo Reuters)": 2,
+        "Phương Dung": 1,
+        "Thi Hà - Phương Dung": 1,
+        "Thi Hà": 1,
+        "Phương Đông": 1
       },
       "top_keywords": [
         [
           "bán",
-          24
+          48
         ],
         [
           "giá",
-          19
+          47
         ],
         [
           "hàng",
-          18
-        ],
-        [
-          "đồng",
-          17
-        ],
-        [
-          "tăng",
-          15
-        ],
-        [
-          "livestream",
-          13
+          43
         ],
         [
           "công",
-          12
+          39
         ],
         [
-          "tháng",
-          12
+          "đồng",
+          36
+        ],
+        [
+          "đầu",
+          32
+        ],
+        [
+          "tăng",
+          32
+        ],
+        [
+          "doanh",
+          31
         ]
       ]
     },
     "Bất động sản": {
-      "count": 4,
+      "count": 8,
       "percentage": 20.0,
-      "average_word_count": 730.5,
+      "average_word_count": 836.2,
       "subcategories": {
         "Ngoại thất": 1,
-        "Chính sách": 3
+        "Chính sách": 4,
+        "Nội thất": 1,
+        "Bất động sản": 1,
+        "Thị trường": 1
       },
       "authors": {
         "Bích Phương Nhóm thiết kế: Nguyễn Quang Hiếu, Lê Hoàng Minh Thư, Nguyễn Thị Thanh Bình Kết cấu: Đặng Quốc Bảo Đơn vị thi công: HQN CONS Ảnh: Nam Võ": 1,
         "Phương Uyên": 1,
-        "Quang Huy": 2
+        "Quang Huy": 2,
+        "Anh Tú": 1,
+        "Đơn vị": 1,
+        "Hoài Phương": 1,
+        "Song Anh": 1
       },
       "top_keywords": [
         [
-          "đất",
-          37
+          "khu",
+          61
         ],
         [
-          "khu",
-          29
+          "đất",
+          56
         ],
         [
           "nhà",
-          28
+          49
+        ],
+        [
+          "khoảng",
+          49
+        ],
+        [
+          "công",
+          45
         ],
         [
           "gian",
-          27
+          44
         ],
         [
-          "sáng",
-          24
-        ],
-        [
-          "hợp",
-          23
-        ],
-        [
-          "định",
-          23
+          "đồng",
+          38
         ],
         [
           "dân",
-          20
+          37
         ]
       ]
     },
     "Khoa học công nghệ": {
-      "count": 4,
+      "count": 8,
       "percentage": 20.0,
-      "average_word_count": 515.8,
+      "average_word_count": 560.2,
       "subcategories": {
         "Thế giới tự nhiên": 1,
-        "AI": 2,
-        "Đổi mới sáng tạo": 1
+        "AI": 3,
+        "Đổi mới sáng tạo": 1,
+        "Thiết bị": 1,
+        "Chuyển đổi số": 1,
+        "Nhịp sống số": 1
       },
       "authors": {
         "An Khang tổng hợp": 1,
-        "Thu Thảo tổng hợp": 1,
+        "Thu Thảo tổng hợp": 2,
         "Trọng Đạt": 1,
-        "Huy Đức tổng hợp": 1
+        "Huy Đức tổng hợp": 2,
+        "Lưu Quý": 1,
+        "Huy Đức t ổng hợp": 1
       },
       "top_keywords": [
         [
           "công",
-          20
-        ],
-        [
-          "cứu",
-          15
-        ],
-        [
-          "năm",
-          15
-        ],
-        [
-          "nghiên",
-          14
-        ],
-        [
-          "dãy",
-          14
-        ],
-        [
-          "học",
-          13
-        ],
-        [
-          "hiện",
-          13
+          40
         ],
         [
           "lớp",
-          13
+          26
+        ],
+        [
+          "thiết",
+          26
+        ],
+        [
+          "dùng",
+          24
+        ],
+        [
+          "thể",
+          23
+        ],
+        [
+          "nhà",
+          21
+        ],
+        [
+          "đồng",
+          21
+        ],
+        [
+          "dụng",
+          21
         ]
       ]
     },
     "Sức khỏe": {
-      "count": 4,
+      "count": 8,
       "percentage": 20.0,
-      "average_word_count": 649.5,
+      "average_word_count": 749.5,
       "subcategories": {
-        "Các bệnh": 2,
+        "Các bệnh": 3,
         "Sống khỏe": 1,
-        "Tin tức": 1
+        "Tin tức": 4
       },
       "authors": {
         "Bảo Bảo ( Tổng hợp )": 2,
         "Thúy Quỳnh": 1,
-        "Lê Nga": 1
+        "Lê Nga": 1,
+        "Mỹ Ý (Theo Yahoo TW )": 1,
+        "Bình Minh (Theo Nobel Prize )": 1,
+        "Bình Minh (Theo Chongqing Morning Post, SCMP )": 1,
+        "An Bình": 1
       },
       "top_keywords": [
         [
           "thể",
-          59
-        ],
-        [
-          "lượng",
-          32
-        ],
-        [
-          "đường",
-          30
-        ],
-        [
-          "động",
-          24
+          71
         ],
         [
           "bệnh",
-          22
+          53
         ],
         [
-          "hóa",
-          20
+          "đường",
+          45
         ],
         [
-          "rượu",
-          20
+          "tuổi",
+          41
         ],
         [
-          "huyết",
-          20
+          "lượng",
+          41
+        ],
+        [
+          "sinh",
+          37
+        ],
+        [
+          "học",
+          32
+        ],
+        [
+          "chỉ",
+          31
         ]
       ]
     }

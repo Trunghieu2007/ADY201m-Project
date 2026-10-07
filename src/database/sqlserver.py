@@ -8,28 +8,25 @@ import sys
 from pathlib import Path
 from typing import Any, Iterable
 
-if sys.stdout and hasattr(sys.stdout, "reconfigure"):
-    try:
-        sys.stdout.reconfigure(encoding="utf-8")
-    except Exception:
-        pass
+from src.utils import (
+    FEATURE_COLUMNS,
+    OUTPUTS_DIR,
+    PROCESSED_DATA_PATH,
+    RAW_DATA_PATH,
+    SQL_DIR,
+    load_jsonl,
+    save_json,
+)
 
 logger = logging.getLogger(__name__)
 
-ROOT = Path(__file__).resolve().parents[2]
-SCHEMA_SQL = ROOT / "sql" / "create_tables.sql"
-QUERIES_SQL = ROOT / "sql" / "queries.sql"
-UPSERT_SQL = ROOT / "sql" / "upsert_article.sql"
-PROCESSED_JSONL = ROOT / "data" / "processed" / "articles_processed.jsonl"
-DATABASE_MANIFEST = ROOT / "outputs" / "database" / "database_manifest.json"
-DATABASE_SUMMARY = ROOT / "outputs" / "database" / "database_summary.md"
-
-FEATURE_COLUMNS = (
-    "char_count", "word_count", "sentence_count", "unique_word_count",
-    "lexical_diversity", "avg_word_length", "title_char_count", "title_word_count",
-    "description_char_count", "description_word_count", "title_to_content_word_ratio",
-    "publication_hour", "publication_weekday",
-)
+ROOT = RAW_DATA_PATH.parents[2]
+SCHEMA_SQL = SQL_DIR / "create_tables.sql"
+QUERIES_SQL = SQL_DIR / "queries.sql"
+UPSERT_SQL = SQL_DIR / "upsert_article.sql"
+PROCESSED_JSONL = PROCESSED_DATA_PATH
+DATABASE_MANIFEST = OUTPUTS_DIR / "database" / "database_manifest.json"
+DATABASE_SUMMARY = OUTPUTS_DIR / "database" / "database_summary.md"
 
 
 # Tự động nhận diện ODBC Driver cho SQL Server khả dụng trên hệ thống
@@ -125,20 +122,8 @@ def get_connection():
 
 # Đọc các bản ghi đã tiền xử lý từ file JSONL
 def load_processed_records(path: Path = PROCESSED_JSONL) -> list[dict[str, Any]]:
-    import json
-    records: list[dict[str, Any]] = []
-    with path.open("r", encoding="utf-8") as handle:
-        for line_no, line in enumerate(handle, start=1):
-            if not line.strip():
-                continue
-            try:
-                record = json.loads(line)
-            except json.JSONDecodeError as exc:
-                raise ValueError(f"Invalid JSON at line {line_no}: {exc}") from exc
-            if not record.get("article_id") or not record.get("category"):
-                raise ValueError(f"Missing core fields at line {line_no}")
-            records.append(record)
-    return records
+    """Nạp danh sách các bản ghi đã tiền xử lý từ tệp JSONL."""
+    return load_jsonl(path)
 
 
 # Trích xuất 13 giá trị đặc trưng hợp lệ không phụ thuộc biến mục tiêu

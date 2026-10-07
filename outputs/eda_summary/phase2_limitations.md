@@ -1,7 +1,7 @@
 # ADY201m — EDA Limitations
 
 ## 1. Sample size
-The current dataset contains 20 records. Statistics are descriptive
+The current dataset contains 40 records. Statistics are descriptive
 statistics of this dataset only and are not population estimates.
 
 ## 2. Sampling
