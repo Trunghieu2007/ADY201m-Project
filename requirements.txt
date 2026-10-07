@@ -4,3 +4,4 @@ matplotlib==3.11.2
 numpy==2.5.3
 requests==2.34.2
 pyodbc==5.2.0
+streamlit==1.64.0

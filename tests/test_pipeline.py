@@ -243,9 +243,10 @@ class Phase6Tests(unittest.TestCase):
         self.assertEqual(len(feature_values(records[0])), len(FEATURE_COLUMNS))
 
     def test_phase6_streamlit_dashboard_exists(self):
-        """Kiểm tra mã nguồn Streamlit Dashboard và tệp requirements-streamlit.txt tồn tại."""
+        """Kiểm tra mã nguồn Streamlit Dashboard và cấu hình thư viện streamlit trong requirements.txt."""
         self.assertTrue(Path("dashboard/app.py").exists())
-        self.assertTrue(Path("requirements-streamlit.txt").exists())
+        req_content = Path("requirements.txt").read_text(encoding="utf-8")
+        self.assertIn("streamlit", req_content)
 
     def test_phase6_update_sql_is_parameterized(self):
         """Kiểm tra câu lệnh SQL Upsert sử dụng tham số hóa parameterized (chống SQL Injection)."""

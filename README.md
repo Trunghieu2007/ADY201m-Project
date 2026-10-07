@@ -220,8 +220,7 @@ ADY201m Project/
 ├── .env.example                          # Mẫu biến môi trường kết nối SQL Server
 ├── .gitignore                            # Cấu hình bỏ qua file nhị phân & môi trường ảo
 ├── Knowledge.md                          # Cơ sở tri thức chuẩn môn học ADY201m, PFP191, DBI202
-├── requirements.txt                      # Thư viện pipeline chính (Data + SQL + Streamlit)
-├── requirements-streamlit.txt            # Thư viện tương thích cho Dashboard Streamlit
+├── requirements.txt                      # Thư viện toàn diện của dự án (Data + SQL + Streamlit)
 └── README.md                             # Tài liệu hướng dẫn dự án chi tiết
 ```
 
@@ -454,7 +453,6 @@ Nâng cấp `pip` và cài đặt đầy đủ các gói thư viện cần thi�
 ```bash
 pip install --upgrade pip
 pip install -r requirements.txt
-pip install -r requirements-streamlit.txt
 ```
 
 ---
