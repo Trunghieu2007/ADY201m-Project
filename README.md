@@ -293,7 +293,7 @@ ADY201m Project/
      - So sánh dung lượng bài viết trung bình giữa các chuyên mục.
   3. **Quản lý & Tự động Phân loại Tin tức (Auto-Organize):** Trình duyệt tin tức theo chuyên mục, xem bài viết chi tiết và liên kết nguồn VnExpress.
   4. **CSDL SQL Server 3NF:** Khám phá cấu trúc bảng và chạy thử nghiệm trực tiếp các câu truy vấn SQL phân tích nghiệp vụ.
-  5. **Kiểm toán & Tính Toàn vẹn (Audit):** Báo cáo kiểm định toàn diện chất lượng dữ liệu, mã băm SHA-256 đóng băng dữ liệu thô.
+  5. **Kiểm toán & Tính Toàn vẹn (Audit):** Báo cáo kiểm định toàn diện chất lượng dữ liệu, bảo đảm tính toàn vẹn schema 12 trường dữ liệu thô.
 
 ---
 
@@ -301,23 +301,15 @@ ADY201m Project/
 
 Mỗi hàm trong mã nguồn được chú thích bằng 1 dòng comment `#` súc tích; tài liệu kỹ thuật tập trung được liệt kê tại đây:
 
-#### 1. Module Thu thập Dữ liệu (`src/crawler/`)
-- [`src/crawler/crawler.py`](src/crawler/crawler.py):
+#### 1. Module Thu thập Dữ liệu (`src/crawler.py`)
+- [`src/crawler.py`](src/crawler.py):
   - `fetch_url(url: str, retries: int, delay: float) -> str`: Tải trang với cơ chế retry và header giả lập trình duyệt.
-  - `ArticleCrawler`: Bóc tách 12 trường cấu trúc bài viết (tiêu đề, mô tả, nội dung, tác giả, thời gian xuất bản, chuyên mục, ID).
+  - `extract_article_content(soup: BeautifulSoup) -> str`: Bóc tách và làm sạch nội dung bài báo, khử khối rác/quảng cáo.
+  - `ArticleCrawler`: Bóc tách đúng 12 trường cấu trúc bài viết (tiêu đề, mô tả, nội dung, tác giả, thời gian xuất bản, chuyên mục, ID).
   - `RSSCrawler`: Bóc tách và quét danh sách tin bài từ luồng RSS của 5 chuyên mục mục tiêu.
   - `SitemapCrawler`: Bóc tách danh sách URL bài báo từ XML sitemap của VnExpress.
-  - `main()`: Điều phối cào cân bằng 5 chuyên mục mục tiêu và lưu vào `data/raw/articles.jsonl`.
-- [`src/crawler/article.py`](src/crawler/article.py):
-  - `ArticleParser`: Bóc tách chi tiết cấu trúc HTML5 từng bài báo (tiêu đề `h1.title-detail`, mô tả, nội dung `article.fck_detail`, tác giả, thời gian xuất bản).
-- [`src/crawler/validate_raw.py`](src/crawler/validate_raw.py):
-  - `load_jsonl(path: Path) -> tuple[list[dict], list[str]]`: Tải các dòng dữ liệu JSONL và bắt lỗi cú pháp.
-  - `count_empty_fields(records: list[dict]) -> Counter[str]`: Đếm số lượng trường bắt buộc bị rỗng hoặc thiếu.
-  - `find_duplicate_urls(records: list[dict]) -> list[str]`: Tìm kiếm các URL bài viết xuất hiện nhiều hơn 1 lần.
-  - `schema_issues(records: list[dict]) -> list[dict]`: Kiểm tra tính khớp nối của các trường so với schema mong đợi.
-  - `timestamp_issues(records: list[dict], field: str) -> list[dict]`: Kiểm tra định dạng thời gian ISO 8601 hợp lệ.
-  - `invalid_urls(records: list[dict]) -> list[dict]`: Xác thực các URL phải thuộc tên miền VnExpress.
-  - `calculate_content_statistics(lengths: list[int]) -> dict`: Tính các chỉ số thống kê độ dài nội dung.
+  - `save_articles_json(path: Path, articles: list[dict]) -> None`: Xuất toàn bộ bản ghi ra tệp JSON chuẩn hóa.
+  - `main()`: Điều phối cào cân bằng 5 chuyên mục mục tiêu và lưu vào `data/raw/articles.json`.
 
 #### 2. Module Kiểm định Chất lượng (`src/validation/`)
 - [`src/validation/create_manifest.py`](src/validation/create_manifest.py):

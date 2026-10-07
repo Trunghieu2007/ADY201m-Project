@@ -117,7 +117,7 @@ def main() -> None:
     start_time = time.time()
 
     if args.stage == "crawl":
-        from src.crawler.crawler import main as crawl_main
+        from src.crawler import main as crawl_main
         crawl_main()
         return
 

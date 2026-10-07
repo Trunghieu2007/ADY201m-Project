@@ -10,14 +10,14 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 
-from src.crawler.crawler import (
+from src.crawler import (
     CATEGORIES,
     RSS_FEEDS,
     SITEMAP_URLS,
     ArticleCrawler,
     SitemapCrawler,
 )
-from src.crawler.validate_raw import count_empty_fields
+from src.validation.validate_raw import count_empty_fields
 from src.database.sqlserver import (
     FEATURE_COLUMNS,
     build_connection_string,
