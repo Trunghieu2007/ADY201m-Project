@@ -27,14 +27,14 @@ from src.database.sqlserver import (
     verify_database,
 )
 from src.eda.text_statistics import sentence_count, word_count
-from src.organization.category_organizer import (
+from src.preprocessing import (
     CANONICAL_CATEGORIES,
     compute_category_summary,
     extract_category_from_url,
     get_top_keywords,
     organize_articles,
+    preprocess_record,
 )
-from src.preprocessing.preprocess import preprocess_record
 from src.validation.create_manifest import EXPECTED_SCHEMA, inspect_schema
 
 

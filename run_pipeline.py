@@ -36,7 +36,7 @@ def run_stage_preprocess() -> bool:
     print("\n" + "=" * 60)
     print("⚙️ [CHẶNG 3/5] TIỀN XỬ LÝ (PREPROCESSING) & TRÍCH XUẤT 13 ĐẶC TRƯNG")
     print("=" * 60)
-    from src.preprocessing.preprocess import run as preprocess_run
+    from src.preprocessing import run as preprocess_run
     manifest = preprocess_run()
     val = manifest.get("validation", {})
     return val.get("result") == "PASS"
@@ -47,7 +47,7 @@ def run_stage_organize() -> bool:
     print("\n" + "=" * 60)
     print("📑 [CHẶNG 4/5] TỔ CHỨC CHUYÊN MỤC & TOP TỪ KHÓA XU HƯỚNG")
     print("=" * 60)
-    from src.organization.category_organizer import run_organization, validate_summary
+    from src.preprocessing import run_organization, validate_summary
     run_organization()
     val = validate_summary()
     return val.get("result") == "PASS"

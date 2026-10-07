@@ -25,7 +25,7 @@ flowchart TD
     end
 
     subgraph S2 ["PHA 2: TIỀN XỬ LÝ & TRÍCH XUẤT ĐẶC TRƯNG MÔ TẢ"]
-        PRE["src/preprocessing/preprocess.py\n(Unicode NFC, Khử lặp tiêu đề)"]
+        PRE["src/preprocessing.py\n(Unicode NFC, Khử lặp tiêu đề)"]
         FEAT["Trích xuất 13 Đặc trưng Mô tả\n(Độ dài, số câu, khung giờ, gap)"]
         PROC_JSONL[("data/processed/articles_processed.jsonl\nVăn bản đã làm sạch")]
         FEAT_CSV[("data/processed/feature_matrix.csv\nMa trận 13 đặc trưng số")]
@@ -33,7 +33,7 @@ flowchart TD
     end
 
     subgraph S3 ["PHA 3: TỔ CHỨC CHUYÊN MỤC & KHÁM PHÁ TỪ KHÓA"]
-        ORG["src/organization/category_organizer.py\n(Vietnamese Stopwords Filter)"]
+        ORG["src/preprocessing.py\n(Vietnamese Stopwords Filter)"]
         VOCAB["Đếm tần suất từ vựng (Counter)\nTính TTR (Lexical Diversity)"]
         CAT_SUM[("data/processed/category_summary.json\nCơ cấu chuyên mục & Top từ khóa")]
     end
@@ -302,8 +302,8 @@ flowchart TD
 | Chặng | Tên Chặng | Module & Hàm Thực Thi | Dữ Liệu Vào (Input) | Cơ Chế Xử Lý & Bảo Đảm Kỹ Thuật | Dữ Liệu Ra (Output) | Tiêu Chí Nghiệm Thu |
 | :---: | :--- | :--- | :--- | :--- | :--- | :--- |
 | **1** | **Thu Thập & Bóc Tách Thô** | `src/crawler.py`<br>`src/validation/validate_raw.py` | VnExpress Web / RSS / Sitemap | - Bóc tách chuẩn 12 trường cấu trúc từ DOM mẫu website.<br>- Lọc sạch tiêu đề trùng, sapo lặp, rò rỉ tác giả, khối quảng cáo/tin liên quan.<br>- Khử trùng lặp URL.<br>- Xuất định dạng JSON mảng chuẩn xác. | `data/raw/articles.json`<br>`outputs/dataset_manifest.json` | - Đủ 40 bản ghi (8 bài/chuyên mục).<br>- Schema 12 trường đạt 100%.<br>- Không có trường nào bị None hay thiếu sót. |
-| **2** | **Tiền Xử Lý & Ma Trận Đặc Trưng** | `src/preprocessing/preprocess.py`<br>`src/utils.py` | `data/raw/articles.jsonl` | - Chuẩn hóa Unicode NFC (`unicodedata.normalize`).<br>- Khử lặp tiêu đề ở đoạn mở đầu (sapo).<br>- Khử khoảng trắng thừa, ký tự xuống dòng rác.<br>- Trích xuất 13 đặc trưng số học (độ dài, số câu, thời gian xuất bản, gap phút). | `data/processed/articles_processed.jsonl`<br>`data/processed/feature_matrix.csv`<br>`outputs/preprocessing/feature_summary.json` | - 40 bài viết sạch chuẩn NFC.<br>- Ma trận 40 dòng x 13 cột số không khuyết thiếu.<br>- Báo cáo thống kê mean, std đầy đủ. |
-| **3** | **Tổ Chức Chuyên Mục & Từ Khóa** | `src/organization/category_organizer.py` | `data/processed/articles_processed.jsonl` | - Phân bổ bài viết vào 5 chuyên mục mục tiêu.<br>- Lọc bộ Stopwords tiếng Việt (loại bỏ hư từ thông dụng).<br>- Đếm tần suất từ (`collections.Counter`).<br>- Tính chỉ số độ phong phú từ vựng TTR = `unique_words / total_words`. | `data/processed/category_summary.json` | - Đầy đủ 5 chuyên mục.<br>- Mỗi chuyên mục có Top 10 từ khóa, Vocabulary size và TTR hợp lệ. |
+| **2** | **Tiền Xử Lý & Ma Trận Đặc Trưng** | `src/preprocessing.py`<br>`src/utils.py` | `data/raw/articles.json` | - Chuẩn hóa Unicode NFC (`unicodedata.normalize`).<br>- Khử lặp tiêu đề ở đoạn mở đầu (sapo).<br>- Khử khoảng trắng thừa, ký tự xuống dòng rác.<br>- Trích xuất 13 đặc trưng số học (độ dài, số câu, thời gian xuất bản, gap phút). | `data/processed/articles_processed.jsonl`<br>`data/processed/feature_matrix.csv`<br>`outputs/preprocessing/feature_summary.json` | - 40 bài viết sạch chuẩn NFC.<br>- Ma trận 40 dòng x 13 cột số không khuyết thiếu.<br>- Báo cáo thống kê mean, std đầy đủ. |
+| **3** | **Tổ Chức Chuyên Mục & Từ Khóa** | `src/preprocessing.py` | `data/processed/articles_processed.jsonl` | - Phân bổ bài viết vào 5 chuyên mục mục tiêu.<br>- Lọc bộ Stopwords tiếng Việt (loại bỏ hư từ thông dụng).<br>- Đếm tần suất từ (`collections.Counter`).<br>- Tính chỉ số độ phong phú từ vựng TTR = `unique_words / total_words`. | `data/processed/category_summary.json` | - Đầy đủ 5 chuyên mục.<br>- Mỗi chuyên mục có Top 10 từ khóa, Vocabulary size và TTR hợp lệ. |
 | **4** | **Khám Phá Dữ Liệu (EDA)** | `src/eda/run_eda.py`<br>`src/eda/text_statistics.py`<br>`src/eda/temporal_analysis.py`<br>`src/eda/deeper_eda.py` | `data/processed/feature_matrix.csv`<br>`data/processed/category_summary.json` | - Phân tích phân phối độ dài văn bản (Skewness, Outliers).<br>- Phân tích khung giờ vàng đăng bài & nhịp độ tuần.<br>- Phân tích ma trận tương quan Pearson đa biến.<br>- Xuất 6 biểu đồ PNG độ phân giải cao (300 DPI, 1200x800). | `outputs/eda/*.png` (6 biểu đồ)<br>`outputs/eda_summary/*.json`<br>`outputs/eda/eda_report.json` | - Đủ 6 tệp PNG chuẩn kích thước.<br>- Không sinh tệp thừa/mồ côi.<br>- Các chỉ số thống kê logic. |
 | **5** | **Quản Trị CSDL 3NF (DBI202)** | `src/database/sync.py`<br>`src/database/sqlserver.py`<br>`sql/create_tables.sql` | `articles_processed.jsonl`<br>`feature_matrix.csv` | - Thiết kế 5 bảng đạt chuẩn hóa 3NF.<br>- Kết nối qua ODBC Driver với cơ chế tự nhận diện driver.<br>- Thực thi Upsert bằng Transaction an toàn.<br>- Hỗ trợ chế độ Mock/Bypass an toàn khi chạy offline không có server. | CSDL Microsoft SQL Server 3NF<br>`sql/queries.sql` (Window Functions) | - Bảng dữ liệu toàn vẹn khóa ngoại.<br>- Truy vấn phân tích Window Functions (DENSE_RANK, LEAD) chạy mượt mà. |
 | **6** | **Trình Diễn BI & Kiểm Thử** | `dashboard/app.py`<br>`run_pipeline.py`<br>`tests/test_pipeline.py` | Dữ liệu sạch, biểu đồ PNG, CSDL | - Streamlit Web Dashboard 5 Tab tương tác cao.<br>- Master CLI runner hỗ trợ các tham số linh hoạt.<br>- Bộ kiểm thử tự động 23 bài test kiểm tra 100% các khâu. | Web UI tại `http://localhost:8501`<br>Báo cáo kiểm thử 23/23 Tests PASS | - 23/23 tests hoàn thành trong < 5s.<br>- Giao diện web hiển thị đầy đủ biểu đồ và dữ liệu. |

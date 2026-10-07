@@ -69,10 +69,10 @@ flowchart LR
 
 | Chặng | Tên giai đoạn | Dữ liệu Đầu vào (Input) | Module xử lý chính | Dữ liệu Đầu ra (Output) | Vai trò trong hệ thống |
 | :---: | :--- | :--- | :--- | :--- | :--- |
-| **1** | **Thu thập (Ingestion)** | RSS Feeds & Sitemap VnExpress | [`src/crawler/`](src/crawler/) | `data/raw/articles.json` | Bóc tách 12 trường cấu trúc dữ liệu thô|
+| **1** | **Thu thập (Ingestion)** | RSS Feeds & Sitemap VnExpress | [`src/crawler.py`](src/crawler.py) | `data/raw/articles.json` | Bóc tách 12 trường cấu trúc dữ liệu thô|
 | **2** | **Khám phá (EDA)** | `data/raw/articles.json` | [`src/eda/`](src/eda/) | `outputs/eda/*.png`<br>`outputs/eda_summary/` | Đánh giá phân phối, khung giờ vàng, xuất 6 biểu đồ PNG tĩnh và báo cáo. |
-| **3** | **Tiền xử lý (Cleaning)** | `data/raw/articles.json` | [`src/preprocessing/`](src/preprocessing/) | `data/processed/articles_processed.jsonl`<br>`data/processed/feature_matrix.csv` | Chuẩn hóa Unicode NFC, khử tiêu đề lặp, trích xuất 13 đặc trưng mô tả. |
-| **4** | **Tổ chức (Taxonomy)** | `articles_processed.jsonl` | [`src/organization/`](src/organization/) | `data/processed/category_summary.json` | Lọc stopwords tiếng Việt, gom nhóm chuyên mục, trích xuất top từ khóa nóng. |
+| **3** | **Tiền xử lý (Cleaning)** | `data/raw/articles.json` | [`src/preprocessing.py`](src/preprocessing.py) | `data/processed/articles_processed.jsonl`<br>`data/processed/feature_matrix.csv` | Chuẩn hóa Unicode NFC, khử tiêu đề lặp, trích xuất 13 đặc trưng mô tả. |
+| **4** | **Tổ chức (Taxonomy)** | `articles_processed.jsonl` | [`src/preprocessing.py`](src/preprocessing.py) | `data/processed/category_summary.json` | Lọc stopwords tiếng Việt, gom nhóm chuyên mục, trích xuất top từ khóa nóng. |
 | **5** | **Lưu trữ CSDL (Storage)** | Dữ liệu sạch `data/processed/` | [`src/database/`](src/database/) | CSDL Microsoft SQL Server (3NF) | Tạo 5 bảng chuẩn 3NF, đồng bộ Transaction an toàn, truy vấn Window Functions. |
 | **6** | **Trực quan hóa (BI UI)** | Dữ liệu sạch / CSDL SQL Server | [`dashboard/`](dashboard/) | Web App: `http://localhost:8501` | Trình diễn 5 Tab tương tác: KPI, Khám phá Xu hướng, Quản lý tin, CSDL, Kiểm toán. |
 
@@ -208,12 +208,11 @@ ADY201m Project/
 │   ├── upsert_article.sql                # Hợp đồng tham số hóa UPDATE/INSERT an toàn chống SQL Injection
 │   └── queries.sql                       # 6 truy vấn phân tích nghiệp vụ & Window Functions
 ├── src/                                  # Mã nguồn nghiệp vụ tinh gọn & tối ưu
+│   ├── crawler.py                        # Bóc tách RSS, Sitemap, Bài báo VnExpress (Phase E)
+│   ├── preprocessing.py                  # Chuẩn hóa Unicode NFC, 13 đặc trưng & tổ chức chuyên mục (Phase T)
 │   ├── utils.py                          # Tiện ích cốt lõi dùng chung (I/O, hằng số, thống kê mô tả)
-│   ├── crawler/                          # Bóc tách RSS, Sitemap, Bài báo VnExpress (crawler.py)
 │   ├── database/                         # Kết nối pyodbc & nạp SQL Server 3NF (sqlserver.py), vẽ ERD (draw_erd.py)
 │   ├── eda/                              # Thống kê từ vựng, xu hướng thời gian & xuất 6 biểu đồ (run_eda.py)
-│   ├── organization/                     # Tự động tổ chức chuyên mục & lọc stopwords từ khóa (category_organizer.py)
-│   ├── preprocessing/                    # Chuẩn hóa Unicode NFC & trích xuất 13 đặc trưng (preprocess.py)
 │   └── validation/                       # Kiểm định dữ liệu thô (validate_raw.py), Audit toàn dự án (project_audit.py)
 ├── tests/
 │   └── test_pipeline.py                  # Bộ kiểm thử hồi quy tự động 23/23 tests (unittest)
@@ -339,30 +338,25 @@ Mỗi hàm trong mã nguồn được chú thích bằng 1 dòng comment `#` sú
   - `validate_eda_outputs() -> dict`: Tự kiểm tra đối soát tính toàn vẹn của 6 biểu đồ trực quan PNG và 7 tệp báo cáo thống kê EDA.
   - `main()`: Điều phối toàn bộ quy trình EDA, xuất checklist kiểm định và tóm tắt markdown `outputs/eda_summary/phase2_summary.md`. Hỗ trợ cờ `--check` để kiểm tra nhanh tính đầy đủ của kết quả mà không cần render lại biểu đồ.
 
-#### 4. Module Tiền xử lý & Làm sạch Dữ liệu (`src/preprocessing/`)
-- [`src/preprocessing/preprocess.py`](src/preprocessing/preprocess.py):
-  - Hợp nhất toàn diện quy trình làm sạch văn bản, chuẩn hóa tác giả, trích xuất 13 đặc trưng mô tả và tự động kiểm định:
+#### 4. Module Tiền xử lý, Trích xuất Đặc trưng & Tổ chức Chuyên mục (`src/preprocessing.py`)
+- [`src/preprocessing.py`](src/preprocessing.py):
+  - Hợp nhất toàn diện quy trình Phase T (Transform) bao gồm làm sạch văn bản, chuẩn hóa tác giả, trích xuất 13 đặc trưng mô tả, phân loại chuyên mục và thống kê từ khóa:
     - `normalize_unicode(text: str) -> str`: Chuẩn hóa văn bản sang bảng mã Unicode NFC.
     - `normalize_text(text: str) -> str`: Loại bỏ URL rác, quy chuẩn khoảng trắng và giữ nguyên dấu câu tiếng Việt.
     - `remove_leading_duplicate_blocks(content, title, description) -> str`: Khử triệt để phần tiêu đề/mô tả lặp lại ở đầu bài viết.
     - `lexical_features(text: str) -> dict`: Tính các đặc trưng thống kê từ vựng xác định.
-    - `normalize_author(author: str | None) -> str | None`: Chuẩn hóa tên tác giả sang trường phái sinh `author_clean`, không ghi đè trường `author` thô.
+    - `normalize_author(author: str | None) -> str | None`: Chuẩn hóa tên tác giả sang trường phái sinh `author_clean`.
     - `preprocess_record(record, category_map, subcategory_map) -> dict`: Tiền xử lý bài viết, tạo `processed_text`, `processed_metadata` và `features` (13 chỉ số thống kê mô tả cho CSDL).
-    - `build_feature_matrix(rows) -> tuple[list[str], list[list]]`: Tạo ma trận 13 đặc trưng thống kê mô tả phục vụ trực tiếp bảng `dbo.ArticleFeatures`.
-    - `validate(...) -> dict`: Tự động kiểm tra bảo đảm tính bất biến của dữ liệu gốc và xác nhận tính toàn vẹn của kết quả tiền xử lý (không dùng SHA-256).
-    - `run() -> dict`: Điều phối tạo tệp `data/processed/articles_processed.jsonl` và `data/processed/feature_matrix.csv`, lưu manifest vào `outputs/preprocessing/`.
-    - `main()`: Hỗ trợ chạy dòng lệnh linh hoạt qua CLI:
-      - `python -m src.preprocessing.preprocess`: Chạy toàn bộ biến đổi và tự kiểm định.
-      - `python -m src.preprocessing.preprocess --check`: Chỉ kiểm tra tính toàn vẹn dữ liệu đã qua tiền xử lý.
-
-#### 5. Module Tự động Tổ chức Chuyên mục & Xu hướng Từ khóa (`src/organization/`)
-- [`src/organization/category_organizer.py`](src/organization/category_organizer.py):
-  - `extract_category_from_url(url: str) -> str`: Bóc tách tự nhiên tên chuyên mục chuẩn hóa từ slug URL VnExpress.
-  - `organize_articles(records: list[dict]) -> dict`: Phân nhóm bài viết theo chuyên mục tương ứng.
-  - `get_top_keywords(records: list[dict], top_n: int) -> list[tuple]`: Trích xuất top từ khóa xu hướng sau khi lọc bỏ stopwords tiếng Việt.
-  - `compute_category_summary(records: list[dict]) -> dict`: Tính toán tỷ lệ phần trăm bài viết, số từ trung bình, tiểu mục và từ khóa đại diện.
-  - `validate_summary() -> dict`: Tự động kiểm tra tính hợp lệ của tệp tổng hợp trên đĩa.
-  - `main()`: Lưu cấu trúc chuyên mục vào `data/processed/category_summary.json` và hỗ trợ cờ `--check` tự kiểm định nhanh.
+    - `build_feature_matrix(rows) -> tuple[list[str], list[list]]`: Tạo ma trận 13 đặc trưng thống kê mô tả phục vụ bảng `dbo.ArticleFeatures`.
+    - `validate(...) -> dict`: Tự động kiểm tra bảo đảm tính bất biến của dữ liệu gốc và tính toàn vẹn của kết quả tiền xử lý.
+    - `extract_category_from_url(url: str) -> str`: Bóc tách tự nhiên tên chuyên mục chuẩn hóa từ slug URL VnExpress.
+    - `organize_articles(records: list[dict]) -> dict`: Phân nhóm bài viết theo chuyên mục tương ứng.
+    - `get_top_keywords(records: list[dict], top_n: int) -> list[tuple]`: Trích xuất top từ khóa xu hướng sau khi lọc bỏ stopwords tiếng Việt.
+    - `compute_category_summary(records: list[dict]) -> dict`: Tính toán tỷ lệ phần trăm bài viết, số từ trung bình, tiểu mục và từ khóa đại diện.
+    - `run_preprocessing() -> dict` & `run_organization() -> dict`: Điều phối tạo tệp `articles_processed.jsonl`, `feature_matrix.csv`, `category_summary.json`.
+    - `main()`: Hỗ trợ chạy dòng lệnh qua CLI:
+      - `python src/preprocessing.py`: Chạy toàn bộ biến đổi và tự kiểm định.
+      - `python src/preprocessing.py --check`: Chỉ kiểm tra tính toàn vẹn dữ liệu đã qua tiền xử lý và chuyên mục.
 
 #### 6. Module Cơ sở Dữ liệu Microsoft SQL Server (`src/database/`)
 - [`src/database/sqlserver.py`](src/database/sqlserver.py):
