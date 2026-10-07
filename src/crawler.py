@@ -8,12 +8,17 @@ from __future__ import annotations
 import json
 import logging
 import re
+import sys
 import time
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 import requests
 from bs4 import BeautifulSoup, Tag
@@ -29,6 +34,7 @@ from src.utils import (
     save_json,
 )
 
+logging.basicConfig(level=logging.WARNING, format="%(message)s")
 logger = logging.getLogger(__name__)
 
 # Các thông số và đường dẫn cấu hình
@@ -78,9 +84,8 @@ def fetch_url(url: str, retries: int = 3, delay: float = 1.0) -> str:
             return res.text
         except requests.RequestException as exc:
             if attempt == retries:
-                logger.error("Hết số lần thử (%d/%d) tải %s: %s", attempt, retries, url, exc)
+                logger.warning("Không thể tải %s: %s", url, exc)
                 raise
-            logger.warning("Thử lại (%d/%d) tải %s do lỗi: %s. Chờ %.1fs...", attempt, retries, url, exc, delay * attempt)
             time.sleep(delay * attempt)
     return ""
 
@@ -370,6 +375,7 @@ def select_balanced_articles(articles: list[dict[str, Any]], max_articles: int =
 def main() -> None:
     """Hàm điều phối toàn bộ quá trình cào bài viết tự động và lưu ra tệp .json."""
     RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    print("Bắt đầu cào dữ liệu...")
     rss_crawler = RSSCrawler()
     article_crawler = ArticleCrawler()
     discovered = rss_crawler.discover()
@@ -380,26 +386,23 @@ def main() -> None:
     pending = [a for a in discovered if a["url"] not in crawled_urls]
     selected = select_balanced_articles(pending, MAX_ARTICLES, articles_per_category=4)
 
-    logger.info("Tìm thấy %d bài chờ, tiến hành cào %d bài...", len(pending), len(selected))
     crawled_records: list[dict[str, Any]] = list(existing_articles)
     new_count = 0
 
-    for idx, meta in enumerate(selected, start=1):
+    for meta in selected:
         url = meta["url"]
-        logger.info("[%d/%d] Đang cào: %s", idx, len(selected), url)
         try:
             art = article_crawler.crawl(url, rss_metadata=meta)
             crawled_records.append(art)
             new_count += 1
         except Exception as exc:
-            logger.warning("Thất bại khi cào %s: %s", url, exc)
+            logger.warning("Không thể cào bài viết %s: %s", url, exc)
         time.sleep(REQUEST_DELAY)
 
     # Lưu toàn bộ dữ liệu ra tệp .json cho các stage sau sử dụng
     save_articles_json(ARTICLE_OUTPUT, crawled_records)
-    logger.info("Hoàn tất cào: đã lưu %d bài viết vào %s", len(crawled_records), ARTICLE_OUTPUT)
+    print(f"Đã cào {new_count} bài")
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
     main()
