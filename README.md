@@ -50,6 +50,10 @@ Dự án **ADY201m — Vietnamese News Analytics & Trend Discovery Platform** t�
 
 Toàn bộ quy trình xử lý dữ liệu từ lúc cào tin tức từ VnExpress đến khi hiển thị trên giao diện Dashboard được thiết kế theo luồng tuần tự, khép kín và bảo toàn nguyên vẹn 100% dữ liệu gốc:
 
+![Sơ đồ Luồng Hoạt Động Chi Tiết Khép Kín 6 Pha](docs/pipeline_flow.png)
+
+> 📖 **Tài liệu đặc tả kiến trúc chi tiết:** Xem sơ đồ luồng dữ liệu, lược đồ CSDL 3NF (ERD) và bảng đặc tả toán học/kỹ thuật tại [docs/pipeline_flow.md](docs/pipeline_flow.md).
+
 ```mermaid
 flowchart LR
     A["🌐 VnExpress\n(Web Articles)"] -->|1. Crawler| B[("data/raw/\narticles.jsonl")]
@@ -59,6 +63,7 @@ flowchart LR
     D & E -->|5. SQL Sync| F[("MS SQL Server\n(Schema 3NF)")]
     D & E & F -->|6. Render| G["Streamlit Dashboard\n(5 Tabs BI UI)"]
 ```
+
 
 ### Bảng tóm tắt các chặng luân chuyển dữ liệu:
 
