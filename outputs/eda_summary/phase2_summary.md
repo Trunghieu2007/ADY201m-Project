@@ -6,10 +6,8 @@ Phân tích tập trung vào mô tả và khám phá dataset thông qua EDA. Kh�
 
 ## 2. Dataset
 
-- Raw dataset: `data\raw\articles.jsonl`
+- Raw dataset: `data\raw\articles.json`
 - Số records: 40
-- SHA-256 hiện tại: `08a082b19231a0b68b1e11a13e9421f2b7c8cf0837192332cefa9f768b73af9b`
-- Raw dataset không được chỉnh sửa trong EDA.
 
 ## 3. Schema
 

@@ -132,13 +132,37 @@ def find_suspicious_content(records: list[dict]) -> list[dict]:
 
 
 def load_jsonl(path: Path) -> tuple[list[dict], list[str]]:
-    """Tải dữ liệu từ tệp JSONL và bắt lỗi cú pháp nếu có."""
+    """Tải dữ liệu từ tệp JSON hoặc JSONL và bắt lỗi cú pháp nếu có."""
     import json
     records, errors = [], []
-    if not path.exists():
-        errors.append(f"Tệp không tồn tại: {path}")
+    target_path = path
+    if not target_path.exists():
+        alt = target_path.with_suffix(".json") if target_path.suffix == ".jsonl" else target_path.with_suffix(".jsonl")
+        if alt.exists():
+            target_path = alt
+        else:
+            errors.append(f"Tệp không tồn tại: {path}")
+            return records, errors
+
+    if target_path.suffix == ".json":
+        try:
+            with target_path.open("r", encoding="utf-8") as file:
+                data = json.load(file)
+                if isinstance(data, list):
+                    for idx, item in enumerate(data, start=1):
+                        if isinstance(item, dict):
+                            records.append(item)
+                        else:
+                            errors.append(f"Bản ghi {idx}: JSON không phải object")
+                elif isinstance(data, dict):
+                    records.append(data)
+                else:
+                    errors.append("Tệp JSON không chứa danh sách hoặc đối tượng hợp lệ")
+        except json.JSONDecodeError as exc:
+            errors.append(f"Lỗi cú pháp JSON: {exc}")
         return records, errors
-    with path.open("r", encoding="utf-8") as file:
+
+    with target_path.open("r", encoding="utf-8") as file:
         for line_num, line in enumerate(file, start=1):
             line = line.strip()
             if not line:
@@ -152,6 +176,7 @@ def load_jsonl(path: Path) -> tuple[list[dict], list[str]]:
             except json.JSONDecodeError as exc:
                 errors.append(f"Dòng {line_num}: {exc}")
     return records, errors
+
 
 
 def print_report(records: list[dict], errors: list[str]) -> bool:

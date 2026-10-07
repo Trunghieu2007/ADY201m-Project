@@ -2,10 +2,8 @@
   "phase": "EDA",
   "purpose": "Descriptive Data Analysis / Exploratory Data Analysis (EDA)",
   "dataset": {
-    "path": "data\\raw\\articles.jsonl",
-    "records": 40,
-    "raw_data_modified": false,
-    "sha256_current": "08a082b19231a0b68b1e11a13e9421f2b7c8cf0837192332cefa9f768b73af9b"
+    "path": "data\\raw\\articles.json",
+    "records": 40
   },
   "schema": {
     "expected_fields": [

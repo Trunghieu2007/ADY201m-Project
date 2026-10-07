@@ -40,7 +40,7 @@ Dự án **ADY201m — Vietnamese News Analytics & Trend Discovery Platform** t�
 
 | STT | Mã Sinh viên | Vai trò Cốt lõi | Phân công Nhiệm vụ Chi tiết |
 | :---: | :---: | :--- | :--- |
-| 1 | **HE210442** | **Cào dữ liệu & Làm sạch dữ liệu** | - Xây dựng bộ cào tự động VnExpress qua RSS & Sitemap XML ([`src/crawler/`](src/crawler/)).<br>- Kiểm định chất lượng dữ liệu thô và quản trị mã băm SHA-256 ([`src/validation/validate_raw.py`](src/validation/validate_raw.py)).<br>- Tiền xử lý, chuẩn hóa Unicode NFC và trích xuất 13 đặc trưng mô tả ([`src/preprocessing/preprocess.py`](src/preprocessing/preprocess.py)). |
+| 1 | **HE210442** | **Cào dữ liệu & Làm sạch dữ liệu** | - Xây dựng bộ cào tự động VnExpress qua RSS & Sitemap XML ([`src/crawler/`](src/crawler/)).<br>- Kiểm định chất lượng dữ liệu thô 12 trường cấu trúc ([`src/validation/validate_raw.py`](src/validation/validate_raw.py)).<br>- Tiền xử lý, chuẩn hóa Unicode NFC và trích xuất 13 đặc trưng mô tả ([`src/preprocessing/preprocess.py`](src/preprocessing/preprocess.py)). |
 | 2 | **HE210543** | **Quản lý Database** | - Thiết kế kiến trúc lược đồ CSDL quan hệ chuẩn hóa 3NF ([`src/database/schema.sql`](src/database/schema.sql)).<br>- Xây dựng pipeline nạp đồng bộ (ETL/Upsert) an toàn, chống SQL Injection ([`src/database/sync.py`](src/database/sync.py)).<br>- Quản trị kết nối ODBC, tối ưu hóa chỉ mục và viết truy vấn phân tích nâng cao với Window Functions ([`sql/queries.sql`](sql/queries.sql)). |
 | 3 | **HE210370** | **Vẽ sơ đồ trực quan & Dashboard** | - Phân tích khám phá dữ liệu (EDA), phân tích xu hướng thời gian & từ vựng ([`src/eda/`](src/eda/)).<br>- Thiết kế và kết xuất 6 biểu đồ trực quan hóa dữ liệu tĩnh ([`outputs/eda/`](outputs/eda/)).<br>- Phát triển giao diện web BI Dashboard Streamlit 5 Tab tương tác ([`dashboard/app.py`](dashboard/app.py)). |
 
@@ -56,7 +56,7 @@ Toàn bộ quy trình xử lý dữ liệu từ lúc cào tin tức từ VnExpre
 
 ```mermaid
 flowchart LR
-    A["🌐 VnExpress\n(Web Articles)"] -->|1. Crawler| B[("data/raw/\narticles.jsonl")]
+    A["🌐 VnExpress\n(Web Articles)"] -->|1. Crawler| B[("data/raw/\narticles.json")]
     B -->|2. EDA| C["outputs/eda/\n(6 Biểu đồ PNG + Report)"]
     B -->|3. Preprocessing| D[("data/processed/\narticles_processed.jsonl\nfeature_matrix.csv")]
     D -->|4. Organization| E[("data/processed/\ncategory_summary.json")]
@@ -69,9 +69,9 @@ flowchart LR
 
 | Chặng | Tên giai đoạn | Dữ liệu Đầu vào (Input) | Module xử lý chính | Dữ liệu Đầu ra (Output) | Vai trò trong hệ thống |
 | :---: | :--- | :--- | :--- | :--- | :--- |
-| **1** | **Thu thập (Ingestion)** | RSS Feeds & Sitemap VnExpress | [`src/crawler/`](src/crawler/) | `data/raw/articles.jsonl` | Bóc tách 12 trường cấu trúc dữ liệu thô|
-| **2** | **Khám phá (EDA)** | `data/raw/articles.jsonl` | [`src/eda/`](src/eda/) | `outputs/eda/*.png`<br>`outputs/eda_summary/` | Đánh giá phân phối, khung giờ vàng, xuất 6 biểu đồ PNG tĩnh và báo cáo. |
-| **3** | **Tiền xử lý (Cleaning)** | `data/raw/articles.jsonl` | [`src/preprocessing/`](src/preprocessing/) | `data/processed/articles_processed.jsonl`<br>`data/processed/feature_matrix.csv` | Chuẩn hóa Unicode NFC, khử tiêu đề lặp, trích xuất 13 đặc trưng mô tả. |
+| **1** | **Thu thập (Ingestion)** | RSS Feeds & Sitemap VnExpress | [`src/crawler/`](src/crawler/) | `data/raw/articles.json` | Bóc tách 12 trường cấu trúc dữ liệu thô|
+| **2** | **Khám phá (EDA)** | `data/raw/articles.json` | [`src/eda/`](src/eda/) | `outputs/eda/*.png`<br>`outputs/eda_summary/` | Đánh giá phân phối, khung giờ vàng, xuất 6 biểu đồ PNG tĩnh và báo cáo. |
+| **3** | **Tiền xử lý (Cleaning)** | `data/raw/articles.json` | [`src/preprocessing/`](src/preprocessing/) | `data/processed/articles_processed.jsonl`<br>`data/processed/feature_matrix.csv` | Chuẩn hóa Unicode NFC, khử tiêu đề lặp, trích xuất 13 đặc trưng mô tả. |
 | **4** | **Tổ chức (Taxonomy)** | `articles_processed.jsonl` | [`src/organization/`](src/organization/) | `data/processed/category_summary.json` | Lọc stopwords tiếng Việt, gom nhóm chuyên mục, trích xuất top từ khóa nóng. |
 | **5** | **Lưu trữ CSDL (Storage)** | Dữ liệu sạch `data/processed/` | [`src/database/`](src/database/) | CSDL Microsoft SQL Server (3NF) | Tạo 5 bảng chuẩn 3NF, đồng bộ Transaction an toàn, truy vấn Window Functions. |
 | **6** | **Trực quan hóa (BI UI)** | Dữ liệu sạch / CSDL SQL Server | [`dashboard/`](dashboard/) | Web App: `http://localhost:8501` | Trình diễn 5 Tab tương tác: KPI, Khám phá Xu hướng, Quản lý tin, CSDL, Kiểm toán. |
@@ -98,10 +98,10 @@ Hệ thống tiếp nhận 2 tầng dữ liệu đầu vào chính:
   - Tệp cấu hình môi trường `.env`: Khai báo thông số kết nối CSDL Microsoft SQL Server (`ODBC Driver 18/17/13`, Host, Port, Database, User, Password).
   - Bộ lọc Stopwords tiếng Việt: Tích hợp sẵn trong [`src/organization/category_organizer.py`](src/organization/category_organizer.py) chứa danh sách các hư từ tiếng Việt thông dụng (được, có, những, các, và, của, cho, ...) để làm sạch khi trích xuất từ khóa.
 
-#### 2. Dữ liệu Thô Thu thập được (Raw Ingestion Dataset - `data/raw/articles.jsonl`)
-- **Quy cách lưu trữ:** Định dạng JSON Lines (`.jsonl`), mỗi dòng là 1 đối tượng JSON đại diện cho 1 bài viết hoàn chỉnh.
+#### 2. Dữ liệu Thô Thu thập được (Raw Ingestion Dataset - `data/raw/articles.json`)
+- **Quy cách lưu trữ:** Định dạng JSON (`.json`), là danh sách mảng JSON đại diện cho 40 bài viết hoàn chỉnh với đầy đủ 12 trường dữ liệu.
 - **Quy mô tập mẫu:** 40 bài báo phân bổ cân bằng chính xác trên 5 chuyên mục mục tiêu (8 bài / chuyên mục).
-- **Tính bất biến (Data Immutability):** Tệp thô được đóng băng toàn vẹn qua mã băm SHA-256 đối soát tự động bởi [`outputs/dataset_manifest.json`](outputs/dataset_manifest.json), đảm bảo không bị biến đổi trong suốt các pha xử lý.
+- **Chuẩn hóa đầu vào:** Tệp JSON được lưu trữ chuẩn hóa làm nguồn dữ liệu đầu vào cho toàn bộ các chặng tiền xử lý, khám phá EDA và nạp cơ sở dữ liệu tiếp theo.
 - **Đặc tả 12 trường cấu trúc của bản ghi thô:**
 
 | STT | Tên trường | Kiểu dữ liệu | Ràng buộc | Ý nghĩa & Mô tả chi tiết |
@@ -192,15 +192,15 @@ ADY201m Project/
 │   │   ├── articles_processed.jsonl      # 40 bản ghi JSONL kèm trường phái sinh & 13 đặc trưng
 │   │   ├── category_summary.json         # Tóm tắt tổ chức chuyên mục & top từ khóa xu hướng
 │   │   └── feature_matrix.csv            # Ma trận 13 đặc trưng thống kê mô tả (40 dòng)
-│   └── raw/                              # Dữ liệu cào gốc (Đóng băng toàn vẹn SHA-256)
-│       ├── articles.jsonl                # 40 bản ghi gốc cân bằng (8 bài x 5 chuyên mục)
-│       └── crawl_log.jsonl               # Nhật ký thu thập dữ liệu
+│   └── raw/                              # Dữ liệu cào gốc 12 trường cấu trúc
+│       ├── articles.json                 # 40 bản ghi gốc chuẩn JSON (8 bài x 5 chuyên mục)
+│       └── crawl_log.json                # Nhật ký thu thập dữ liệu
 ├── outputs/                              # Toàn bộ sản phẩm xuất, báo cáo, manifest, biểu đồ
 │   ├── database/                         # Manifest CSDL SQL Server 3NF & Sơ đồ ERD (erd_diagram.png)
 │   ├── eda/                              # 6 biểu đồ phân tích EDA (.png chuẩn 150/300 DPI) & JSON kết quả
 │   ├── eda_summary/                      # Tóm tắt & checklist EDA (Markdown & JSON)
 │   ├── preprocessing/                    # Manifest tiền xử lý (phase3_manifest.json)
-│   ├── dataset_manifest.json             # Manifest SHA-256 đóng băng dữ liệu thô
+│   ├── dataset_manifest.json             # Biên bản tổng hợp tập dữ liệu thô
 │   └── project_audit.json                # Báo cáo kiểm toán chất lượng 40 tiêu chí
 ├── sql/                                  # Kịch bản DDL/DML Microsoft SQL Server chuẩn 3NF
 │   ├── create_database.sql               # Tạo CSDL ADY201m
@@ -208,7 +208,7 @@ ADY201m Project/
 │   ├── upsert_article.sql                # Hợp đồng tham số hóa UPDATE/INSERT an toàn chống SQL Injection
 │   └── queries.sql                       # 6 truy vấn phân tích nghiệp vụ & Window Functions
 ├── src/                                  # Mã nguồn nghiệp vụ tinh gọn & tối ưu
-│   ├── utils.py                          # Tiện ích cốt lõi dùng chung (I/O, SHA-256, hằng số, thống kê mô tả)
+│   ├── utils.py                          # Tiện ích cốt lõi dùng chung (I/O, hằng số, thống kê mô tả)
 │   ├── crawler/                          # Bóc tách RSS, Sitemap, Bài báo VnExpress (crawler.py)
 │   ├── database/                         # Kết nối pyodbc & nạp SQL Server 3NF (sqlserver.py), vẽ ERD (draw_erd.py)
 │   ├── eda/                              # Thống kê từ vựng, xu hướng thời gian & xuất 6 biểu đồ (run_eda.py)
@@ -321,10 +321,9 @@ Mỗi hàm trong mã nguồn được chú thích bằng 1 dòng comment `#` sú
 
 #### 2. Module Kiểm định Chất lượng (`src/validation/`)
 - [`src/validation/create_manifest.py`](src/validation/create_manifest.py):
-  - `calculate_sha256(path: Path) -> str`: Tính toán mã băm SHA-256 của toàn bộ tệp dữ liệu thô.
-  - `load_records(path: Path) -> list[dict]`: Đọc danh sách bản ghi JSONL mà không thay đổi tệp gốc.
+  - `load_records(path: Path) -> list[dict]`: Đọc danh sách bản ghi JSON mà không thay đổi tệp gốc.
   - `inspect_schema(records: list[dict]) -> dict`: Xác thực cấu trúc schema chuẩn trên từng bản ghi.
-  - `generate_manifest() -> dict`: Tạo tệp `outputs/dataset_manifest.json` ghi nhận thông tin kiểm định.
+  - `generate_manifest() -> dict`: Tạo tệp `outputs/dataset_manifest.json` ghi nhận thông tin tổng hợp tập dữ liệu.
 - [`src/validation/project_audit.py`](src/validation/project_audit.py):
   - `audit_content_quality(records, json_errors) -> dict`: Kiểm định chuyên sâu chất lượng bóc tách nội dung, phát hiện rò rỉ giao diện, trùng lặp và lỗi mã hóa.
   - `main() -> dict`: Chạy kiểm toán toàn diện tất cả các giai đoạn trong pipeline và xuất báo cáo `outputs/project_audit.json`.

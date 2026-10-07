@@ -1,6 +1,6 @@
 {
   "phase": "Phase T — Data Cleaning & Descriptive Feature Transformation",
-  "raw_input": "data/raw/articles.jsonl",
+  "raw_input": "data/raw/articles.json",
   "processed_output": "data/processed/articles_processed.jsonl",
   "feature_matrix": "data/processed/feature_matrix.csv",
   "records": 40,

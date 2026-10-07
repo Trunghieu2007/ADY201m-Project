@@ -1,8 +1,6 @@
 {
   "audit": {
     "status": "PASS_WITH_REVIEW",
-    "raw_dataset_modified": false,
-    "raw_sha256": "08a082b19231a0b68b1e11a13e9421f2b7c8cf0837192332cefa9f768b73af9b",
     "records": 40
   },
   "critical_failures": {
@@ -21,7 +19,7 @@
   },
   "quality_audit": {
     "audit_metadata": {
-      "dataset": "data\\raw\\articles.jsonl",
+      "dataset": "data\\raw\\articles.json",
       "audit_type": "raw_content_quality_and_extraction_integrity",
       "dataset_modified": false,
       "detector_version": "3.0"

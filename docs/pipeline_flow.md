@@ -17,11 +17,11 @@ flowchart TD
         SITEMAP["VnExpress Sitemap XML\n(Bổ sung bài mới)"]
     end
 
-    subgraph S1 ["PHA 1: THU THẬP & ĐÓNG BĂNG DỮ LIỆU THÔ"]
+    subgraph S1 ["PHA 1: THU THẬP & LÀM SẠCH DỮ LIỆU THÔ"]
         CRW["src/crawler/crawler.py\n(VnExpressCrawler)"]
-        RAW_JSONL[("data/raw/articles.jsonl\n40 bài viết thô (8 bài/chuyên mục)\nHash SHA-256 Đóng băng")]
-        VAL_RAW["src/validation/validate_raw.py\n(Kiểm toán 12 trường & Hash)"]
-        MAN_RAW[("outputs/dataset_manifest.json\nLưu trữ SHA-256 & Schema Status")]
+        RAW_JSON[("data/raw/articles.json\n40 bài viết thô (8 bài/chuyên mục)\nĐầy đủ 12 trường cấu trúc")]
+        VAL_RAW["src/validation/validate_raw.py\n(Kiểm toán 12 trường dữ liệu)"]
+        MAN_RAW[("outputs/dataset_manifest.json\nTổng hợp Schema & Số lượng bài")]
     end
 
     subgraph S2 ["PHA 2: TIỀN XỬ LÝ & TRÍCH XUẤT ĐẶC TRƯNG MÔ TẢ"]
@@ -59,9 +59,9 @@ flowchart TD
         AUDIT["src/validation/project_audit.py\n(Kiểm toán hệ thống toàn diện)"]
     end
 
-    RSS & SITEMAP --> CRW --> RAW_JSONL
-    RAW_JSONL --> VAL_RAW --> MAN_RAW
-    RAW_JSONL --> PRE --> FEAT
+    RSS & SITEMAP --> CRW --> RAW_JSON
+    RAW_JSON --> VAL_RAW --> MAN_RAW
+    RAW_JSON --> PRE --> FEAT
     FEAT --> PROC_JSONL & FEAT_CSV & FEAT_SUM
     PROC_JSONL --> ORG --> VOCAB --> CAT_SUM
     FEAT_CSV & CAT_SUM --> EDA_RUN
@@ -85,11 +85,11 @@ flowchart TD
     %% Pha 1
     subgraph P1 ["Pha 1: Thu Thập & Xác Minh Dữ Liệu Thô"]
         Step1_1 --> Step1_2["Phân tích HTML bằng BeautifulSoup (lxml)\nBóc tách 12 trường cấu trúc"]
-        Step1_2 --> Step1_3["Khử nhiễu tác giả rác & lọc ảnh thumbnail\n(VnExpressCrawler.clean_text/clean_author)"]
-        Step1_3 --> Step1_4["Ghi tuần tự vào tệp bất biến\n'data/raw/articles.jsonl'"]
-        Step1_4 --> Step1_5["Kiểm toán kỹ thuật: validate_raw.py\n- Tính băm SHA-256 (calculate_sha256)\n- Kiểm tra 12 trường bắt buộc (EXPECTED_FIELDS)"]
+        Step1_2 --> Step1_3["Khử nhiễu tác giả rác & lọc ảnh thumbnail\n(clean_text / clean_author)"]
+        Step1_3 --> Step1_4["Ghi tuần tự vào tệp JSON chuẩn\n'data/raw/articles.json'"]
+        Step1_4 --> Step1_5["Kiểm toán kỹ thuật: validate_raw.py\n- Kiểm tra 12 trường bắt buộc (EXPECTED_FIELDS)\n- Kiểm tra URL và thời gian ISO 8601"]
         Step1_5 --> Cond1{"Dữ liệu thô\nhợp lệ?"}
-        Cond1 -- Không --> Abort1["❌ Dừng: Tệp thô bị lỗi cấu trúc / sai băm"]
+        Cond1 -- Không --> Abort1["❌ Dừng: Tệp thô bị lỗi cấu trúc"]
         Cond1 -- Đạt --> Step1_6["Xuất bản: outputs/dataset_manifest.json\n(Trạng thái: PASS)"]
     end
 
@@ -153,8 +153,8 @@ Trực quan hóa sự chuyển đổi từ văn bản Web phi cấu trúc sang c
 flowchart LR
     subgraph Raw ["1. Tầng Dữ liệu Thô"]
         HTML["🌐 VnExpress Web Page\n(HTML phi cấu trúc)"]
-        RAW["📄 data/raw/articles.jsonl\n- 40 bài viết\n- 12 trường dữ liệu\n- Hash SHA-256 cố định"]
-        MANIFEST["🔒 outputs/dataset_manifest.json\n- sha256_hash\n- total_records: 40\n- status: PASS"]
+        RAW["📄 data/raw/articles.json\n- 40 bài viết\n- 12 trường dữ liệu"]
+        MANIFEST["🔒 outputs/dataset_manifest.json\n- total_records: 40\n- status: PASS"]
     end
 
     subgraph Cleaned ["2. Tầng Dữ liệu Sạch & Ma Trận"]
@@ -173,7 +173,7 @@ flowchart LR
     end
 
     HTML -->|Bóc tách BeautifulSoup| RAW
-    RAW -->|Kiểm toán Hash| MANIFEST
+    RAW -->|Kiểm toán Hợp lệ & Schema| MANIFEST
     RAW -->|Tiền xử lý & Trích xuất| PROC & FEAT & FEAT_SUM
     PROC -->|Phân loại & Lọc từ dừng| CAT
     FEAT & CAT -->|Phân tích mô tả & Trực quan| EDA_OUT
@@ -211,7 +211,7 @@ erDiagram
     }
 
     Articles {
-        NVARCHAR article_id PK "Mã định danh duy nhất (Hash URL)"
+        NVARCHAR article_id PK "Mã định danh duy nhất (ID/URL bài viết)"
         NVARCHAR url UK "Đường dẫn bài báo (Unique)"
         NVARCHAR title "Tiêu đề bài viết"
         NVARCHAR description "Tóm tắt Sapo"
@@ -301,7 +301,7 @@ flowchart TD
 
 | Chặng | Tên Chặng | Module & Hàm Thực Thi | Dữ Liệu Vào (Input) | Cơ Chế Xử Lý & Bảo Đảm Kỹ Thuật | Dữ Liệu Ra (Output) | Tiêu Chí Nghiệm Thu |
 | :---: | :--- | :--- | :--- | :--- | :--- | :--- |
-| **1** | **Thu Thập & Đóng Băng Thô** | `src/crawler/crawler.py`<br>`src/validation/validate_raw.py` | VnExpress RSS feeds & Sitemap XML | - Bóc tách 12 trường cấu trúc bằng `BeautifulSoup (lxml)`.<br>- Lọc ký danh tác giả, loại bỏ ảnh thumbnail lỗi.<br>- Khử trùng lặp URL.<br>- Tính băm SHA-256 đóng băng dữ liệu bất biến. | `data/raw/articles.jsonl`<br>`outputs/dataset_manifest.json` | - Đủ 40 bản ghi (8 bài/chuyên mục).<br>- Schema 12 trường đạt 100%.<br>- SHA-256 khớp với manifest. |
+| **1** | **Thu Thập & Bóc Tách Thô** | `src/crawler/crawler.py`<br>`src/validation/validate_raw.py` | VnExpress Web / RSS / Sitemap | - Bóc tách chuẩn 12 trường cấu trúc từ DOM mẫu website.<br>- Lọc sạch tiêu đề trùng, sapo lặp, rò rỉ tác giả, khối quảng cáo/tin liên quan.<br>- Khử trùng lặp URL.<br>- Xuất định dạng JSON mảng chuẩn xác. | `data/raw/articles.json`<br>`outputs/dataset_manifest.json` | - Đủ 40 bản ghi (8 bài/chuyên mục).<br>- Schema 12 trường đạt 100%.<br>- Không có trường nào bị None hay thiếu sót. |
 | **2** | **Tiền Xử Lý & Ma Trận Đặc Trưng** | `src/preprocessing/preprocess.py`<br>`src/utils.py` | `data/raw/articles.jsonl` | - Chuẩn hóa Unicode NFC (`unicodedata.normalize`).<br>- Khử lặp tiêu đề ở đoạn mở đầu (sapo).<br>- Khử khoảng trắng thừa, ký tự xuống dòng rác.<br>- Trích xuất 13 đặc trưng số học (độ dài, số câu, thời gian xuất bản, gap phút). | `data/processed/articles_processed.jsonl`<br>`data/processed/feature_matrix.csv`<br>`outputs/preprocessing/feature_summary.json` | - 40 bài viết sạch chuẩn NFC.<br>- Ma trận 40 dòng x 13 cột số không khuyết thiếu.<br>- Báo cáo thống kê mean, std đầy đủ. |
 | **3** | **Tổ Chức Chuyên Mục & Từ Khóa** | `src/organization/category_organizer.py` | `data/processed/articles_processed.jsonl` | - Phân bổ bài viết vào 5 chuyên mục mục tiêu.<br>- Lọc bộ Stopwords tiếng Việt (loại bỏ hư từ thông dụng).<br>- Đếm tần suất từ (`collections.Counter`).<br>- Tính chỉ số độ phong phú từ vựng TTR = `unique_words / total_words`. | `data/processed/category_summary.json` | - Đầy đủ 5 chuyên mục.<br>- Mỗi chuyên mục có Top 10 từ khóa, Vocabulary size và TTR hợp lệ. |
 | **4** | **Khám Phá Dữ Liệu (EDA)** | `src/eda/run_eda.py`<br>`src/eda/text_statistics.py`<br>`src/eda/temporal_analysis.py`<br>`src/eda/deeper_eda.py` | `data/processed/feature_matrix.csv`<br>`data/processed/category_summary.json` | - Phân tích phân phối độ dài văn bản (Skewness, Outliers).<br>- Phân tích khung giờ vàng đăng bài & nhịp độ tuần.<br>- Phân tích ma trận tương quan Pearson đa biến.<br>- Xuất 6 biểu đồ PNG độ phân giải cao (300 DPI, 1200x800). | `outputs/eda/*.png` (6 biểu đồ)<br>`outputs/eda_summary/*.json`<br>`outputs/eda/eda_report.json` | - Đủ 6 tệp PNG chuẩn kích thước.<br>- Không sinh tệp thừa/mồ côi.<br>- Các chỉ số thống kê logic. |

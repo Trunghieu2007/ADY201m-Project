@@ -1,10 +1,9 @@
 """Module tiện ích dùng chung cho toàn bộ dự án ADY201m.
-Chứa các hằng số cấu hình hệ thống, hàm xử lý tệp JSON/JSONL, tính mã băm SHA-256
+Chứa các hằng số cấu hình hệ thống, hàm xử lý tệp JSON/JSONL
 và các hàm thống kê mô tả cơ bản tuân thủ chuẩn tri thức Knowledge.md.
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import statistics
 import sys
@@ -21,8 +20,9 @@ if sys.stdout and hasattr(sys.stdout, "reconfigure"):
 # Định nghĩa các đường dẫn thư mục và tệp cốt lõi của dự án
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
-RAW_DATA_PATH = DATA_DIR / "raw" / "articles.jsonl"
-CRAWL_LOG_PATH = DATA_DIR / "raw" / "crawl_log.jsonl"
+RAW_DATA_PATH = DATA_DIR / "raw" / "articles.json"
+RAW_DATA_JSONL_PATH = DATA_DIR / "raw" / "articles.jsonl"
+CRAWL_LOG_PATH = DATA_DIR / "raw" / "crawl_log.json"
 PROCESSED_DATA_PATH = DATA_DIR / "processed" / "articles_processed.jsonl"
 CATEGORY_SUMMARY_PATH = DATA_DIR / "processed" / "category_summary.json"
 FEATURE_MATRIX_PATH = DATA_DIR / "processed" / "feature_matrix.csv"
@@ -74,37 +74,8 @@ STOPWORDS = {
 }
 
 
-def load_jsonl(path: Path) -> list[dict[str, Any]]:
-    """Đọc dữ liệu từ tệp JSON Lines (JSONL).
-    Mỗi dòng là một đối tượng JSON hợp lệ, bỏ qua các dòng trống.
-    """
-    if not path.exists():
-        return []
-    records: list[dict[str, Any]] = []
-    with path.open("r", encoding="utf-8") as file:
-        for line_num, line in enumerate(file, start=1):
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                record = json.loads(line)
-                if isinstance(record, dict):
-                    records.append(record)
-            except json.JSONDecodeError as exc:
-                print(f"[Cảnh báo] Lỗi cú pháp JSON tại dòng {line_num} trong {path}: {exc}")
-    return records
-
-
-def save_jsonl(path: Path, records: list[dict[str, Any]]) -> None:
-    """Ghi danh sách bản ghi ra tệp JSON Lines theo chuẩn mã hóa UTF-8."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as file:
-        for record in records:
-            file.write(json.dumps(record, ensure_ascii=False) + "\n")
-
-
-def load_json(path: Path) -> dict[str, Any]:
-    """Đọc tệp JSON và trả về từ điển dữ liệu (dict)."""
+def load_json(path: Path) -> Any:
+    """Đọc tệp JSON và trả về dữ liệu (dict hoặc list)."""
     if not path.exists():
         return {}
     with path.open("r", encoding="utf-8") as file:
@@ -118,20 +89,61 @@ def save_json(path: Path, data: Any, indent: int = 2) -> None:
         json.dump(data, file, ensure_ascii=False, indent=indent)
 
 
-def calculate_sha256(path: Path) -> str:
-    """Tính toán mã băm SHA-256 của tệp để kiểm định tính bất biến của dữ liệu gốc."""
-    if not path.exists():
-        return ""
-    hasher = hashlib.sha256()
-    with path.open("rb") as file:
-        for chunk in iter(lambda: file.read(1024 * 1024), b""):
-            hasher.update(chunk)
-    return hasher.hexdigest()
+def load_jsonl(path: Path) -> list[dict[str, Any]]:
+    """Đọc dữ liệu bài viết từ tệp JSON hoặc JSONL một cách linh hoạt và an toàn."""
+    target_path = path
+    if not target_path.exists():
+        # Thử tìm file tương ứng với đuôi mở rộng khác
+        alt = target_path.with_suffix(".json") if target_path.suffix == ".jsonl" else target_path.with_suffix(".jsonl")
+        if alt.exists():
+            target_path = alt
+        else:
+            return []
+
+    # Nếu là file .json thông thường chứa danh sách bài viết
+    if target_path.suffix == ".json":
+        try:
+            data = load_json(target_path)
+            if isinstance(data, list):
+                return data
+            if isinstance(data, dict):
+                return [data]
+        except Exception:
+            return []
+
+    # Nếu là file .jsonl (mỗi dòng 1 bản ghi)
+    records: list[dict[str, Any]] = []
+    with target_path.open("r", encoding="utf-8") as file:
+        for line_num, line in enumerate(file, start=1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                record = json.loads(line)
+                if isinstance(record, dict):
+                    records.append(record)
+            except json.JSONDecodeError as exc:
+                print(f"[Cảnh báo] Lỗi cú pháp JSON tại dòng {line_num} trong {target_path}: {exc}")
+    return records
+
+
+def save_jsonl(path: Path, records: list[dict[str, Any]]) -> None:
+    """Ghi danh sách bản ghi ra tệp JSON Lines theo chuẩn mã hóa UTF-8."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as file:
+        for record in records:
+            file.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
+def load_raw_articles(path: Path | None = None) -> list[dict[str, Any]]:
+    """Tải tập dữ liệu bài viết thô (mặc định từ data/raw/articles.json)."""
+    target = path or RAW_DATA_PATH
+    return load_jsonl(target)
 
 
 def describe_numeric(values: list[float | int]) -> dict[str, Any]:
     """Tính toán 7 chỉ số thống kê mô tả (min, max, mean, median, std, q1, q3).
-    Tuân thủ đúng định hướng môn học ADY201m (Descriptive Statistics).
+    Tuân thủ đúng định hướng môn học ADY201m (Descriptive Statistics) trong Knowledge.md.
     """
     clean = sorted([v for v in values if v is not None and not isinstance(v, bool)])
     if not clean:

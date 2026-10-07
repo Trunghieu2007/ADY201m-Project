@@ -11,7 +11,6 @@ from src.utils import (
     EXPECTED_FIELDS,
     OUTPUTS_DIR,
     RAW_DATA_PATH,
-    calculate_sha256,
     describe_numeric,
     load_jsonl,
     save_json,
@@ -35,18 +34,12 @@ CHECKLIST_FILE = EDA_SUMMARY_DIR / "phase2_checklist.md"
 UNIQUE_FIELDS = ["url", "title", "article_id"]
 
 
-# Đọc danh sách bản ghi thô từ file JSONL
+# Đọc danh sách bản ghi thô từ file JSON / JSONL
 def load_raw(path: Path = RAW_DATA) -> list[dict[str, Any]]:
-    """Tải toàn bộ bản ghi dữ liệu thô từ tệp JSONL."""
+    """Tải toàn bộ bản ghi dữ liệu thô từ tệp JSON."""
     if not path.exists():
         raise FileNotFoundError(f"Raw dataset not found: {path}")
     return load_jsonl(path)
-
-
-# Tính mã băm SHA-256 của file dữ liệu để đảm bảo tính bất biến
-def sha256_file(path: Path) -> str:
-    """Tính mã băm SHA-256 của tệp dữ liệu."""
-    return calculate_sha256(path)
 
 
 # Kiểm tra tính toàn vẹn cấu trúc và trường thông tin so với schema mong đợi
@@ -136,7 +129,6 @@ def generate_findings(
         "phase": "EDA", "purpose": "Descriptive Data Analysis / Exploratory Data Analysis (EDA)",
         "dataset": {
             "path": str(RAW_DATA.relative_to(PROJECT_ROOT)), "records": len(articles),
-            "raw_data_modified": False, "sha256_current": sha256_file(RAW_DATA),
         },
         "schema": schema_analysis(articles),
         "duplicates": {f: count_duplicates(articles, f) for f in UNIQUE_FIELDS},
@@ -176,8 +168,7 @@ def generate_summary(findings: dict[str, Any]) -> str:
         "Phân tích tập trung vào mô tả và khám phá dataset thông qua EDA. "
         "Không thực hiện machine learning, classification, regression hoặc prediction.", "",
         "## 2. Dataset", "", f"- Raw dataset: `{dataset['path']}`",
-        f"- Số records: {dataset['records']}", f"- SHA-256 hiện tại: `{dataset['sha256_current']}`",
-        "- Raw dataset không được chỉnh sửa trong EDA.", "", "## 3. Schema", "",
+        f"- Số records: {dataset['records']}", "", "## 3. Schema", "",
         f"- Expected fields: {len(EXPECTED_FIELDS)}",
         f"- Tất cả records có đủ expected fields: {findings['schema']['all_records_contain_expected_fields']}",
         f"- Tất cả records match exact schema: {findings['schema']['all_records_match_exact_expected_schema']}", "",

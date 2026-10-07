@@ -13,7 +13,6 @@ from src.utils import (
     NONEMPTY_FIELDS,
     OUTPUTS_DIR,
     RAW_DATA_PATH,
-    calculate_sha256,
     describe_numeric,
     load_jsonl,
     save_json,
@@ -42,10 +41,7 @@ STRONG_UI_COMBINATIONS = [
     ("related_ui", re.compile(r"\b(?:bài viết liên quan|tin liên quan)\b.{0,120}\b(?:xem thêm|đọc thêm)\b", flags=re.IGNORECASE)),
 ]
 
-# Tính mã băm SHA-256 của file được chỉ định
-def sha256(path: Path) -> str:
-    """Tính mã băm SHA-256 của file dữ liệu."""
-    return calculate_sha256(path)
+
 
 
 # Chuẩn hóa khoảng trắng đầu cuối của chuỗi
@@ -242,7 +238,6 @@ def main() -> dict[str, Any]:
     records, json_errors = validate_raw.load_jsonl(RAW_FILE)
     for idx, r in enumerate(records, start=1):
         r.setdefault("_line_no", idx)
-    raw_hash = sha256(RAW_FILE)
 
     schema = []
     for idx, record in enumerate(records, start=1):
@@ -286,8 +281,6 @@ def main() -> dict[str, Any]:
     result = {
         "audit": {
             "status": "PASS" if not any(critical_failures.values()) and not any(review_issues.values()) else ("PASS_WITH_REVIEW" if not any(critical_failures.values()) else "REVIEW_REQUIRED"),
-            "raw_dataset_modified": False,
-            "raw_sha256": raw_hash,
             "records": len(records),
         },
         "critical_failures": critical_failures,
@@ -317,4 +310,3 @@ if __name__ == "__main__":
     print("=" * 70)
     print(f"Status: {result['audit']['status']}")
     print(f"Records: {result['audit']['records']}")
-    print(f"Raw SHA-256: {result['audit']['raw_sha256']}")

@@ -13,7 +13,6 @@ from src.utils import (
     EXPECTED_FIELDS,
     OUTPUTS_DIR,
     RAW_DATA_PATH,
-    calculate_sha256,
     load_jsonl,
     save_json,
 )
@@ -76,10 +75,9 @@ def field_completeness(records: list[dict[str, Any]]) -> dict[str, int]:
 
 
 def generate_manifest(raw_path: Path = RAW_DATA_PATH) -> dict[str, Any]:
-    """Tạo biên bản manifest đóng băng dữ liệu thô với mã băm SHA-256."""
+    """Tạo biên bản tổng hợp tập dữ liệu thô."""
     records = load_records(raw_path)
     file_size = raw_path.stat().st_size if raw_path.exists() else 0
-    sha_hash = calculate_sha256(raw_path)
     schema_report = inspect_schema(records)
 
     manifest = {
@@ -87,11 +85,10 @@ def generate_manifest(raw_path: Path = RAW_DATA_PATH) -> dict[str, Any]:
         "dataset": {
             "name": "ADY201m Raw Dataset v1",
             "path": str(raw_path.relative_to(raw_path.parents[2])),
-            "format": "JSONL",
+            "format": "JSON",
             "source": "VnExpress",
             "records": len(records),
             "file_size_bytes": file_size,
-            "sha256": sha_hash,
         },
         "created_at": datetime.now().isoformat(),
         "schema": schema_report,

@@ -1,6 +1,7 @@
 """Module thu thập (Crawler) dữ liệu bài báo tự động từ VnExpress.
 Hỗ trợ khám phá tin tức qua RSS Feeds và Sitemap XML, bóc tách cấu trúc HTML5
-thành từ điển 12 trường dữ liệu thô tuân thủ nguyên lý Ingestion trong Knowledge.md.
+thành từ điển 12 trường dữ liệu thô tuân thủ nguyên lý Ingestion trong Knowledge.md
+và xuất dữ liệu ra tệp JSON chuẩn hóa.
 """
 from __future__ import annotations
 
@@ -18,10 +19,14 @@ import requests
 from bs4 import BeautifulSoup, Tag
 
 from src.utils import (
+    CANONICAL_CATEGORIES,
     CRAWL_LOG_PATH,
+    EXPECTED_FIELDS,
     PROJECT_ROOT,
     RAW_DATA_PATH,
     TARGET_CATEGORIES,
+    load_jsonl,
+    save_json,
 )
 
 logger = logging.getLogger(__name__)
@@ -57,6 +62,7 @@ CATEGORY_PATHS = {
     "/bat-dong-san/": "Bất động sản",
     "/suc-khoe/": "Sức khỏe",
     "/khoa-hoc-cong-nghe/": "Khoa học công nghệ",
+    "/khoa-hoc/": "Khoa học công nghệ",
 }
 
 
@@ -138,7 +144,11 @@ def extract_article_content(soup: BeautifulSoup) -> str:
             continue
         if end_marker and child is end_marker:
             break
-        if (author_el and child is author_el) or child.name in ("script", "style", "iframe", "noscript", "button", "h1"):
+        # Loại bỏ các thẻ nhúng, quảng cáo, nút bấm hoặc tin liên quan lồng ghép
+        if (author_el and child is author_el) or child.name in ("script", "style", "iframe", "noscript", "button", "h1", "section"):
+            continue
+        child_classes = set(child.get("class") or [])
+        if {"item-news", "banner-ads", "box-category", "list-news", "related-news"}.intersection(child_classes):
             continue
         if child.name == "p" and "description" in (child.get("class") or []):
             continue
@@ -161,6 +171,50 @@ def get_meta(soup: BeautifulSoup, **attrs) -> str | None:
 def extract_category_from_url(url: str) -> str | None:
     """Nhận diện tên chuyên mục chuẩn hóa từ đường dẫn URL VnExpress."""
     return next((cat for path, cat in CATEGORY_PATHS.items() if path in url), None)
+
+
+def extract_category(soup: BeautifulSoup, url: str, rss_metadata: dict | None = None) -> str | None:
+    """Xác định tên chuyên mục chuẩn từ metadata RSS, URL, meta tags hoặc breadcrumbs của trang web."""
+    # 1. Từ metadata RSS
+    if rss_metadata and rss_metadata.get("category"):
+        cat = rss_metadata["category"]
+        return CANONICAL_CATEGORIES.get(cat, cat)
+
+    # 2. Từ URL path
+    from_url = extract_category_from_url(url)
+    if from_url:
+        return from_url
+
+    # 3. Từ meta tt_list_folder_name (ví dụ: "VnExpress,Thời sự")
+    folder_meta = get_meta(soup, name="tt_list_folder_name")
+    if folder_meta:
+        parts = [p.strip() for p in folder_meta.split(",") if p.strip()]
+        for p in parts:
+            if p in TARGET_CATEGORIES:
+                return p
+            if p.lower() in CANONICAL_CATEGORIES:
+                return CANONICAL_CATEGORIES[p.lower()]
+
+    # 4. Từ breadcrumb trên trang
+    for a in soup.select("ul.breadcrumb li a, ul.breadcrumb a, .breadcrumb li"):
+        txt = a.get_text(strip=True)
+        if txt in TARGET_CATEGORIES:
+            return txt
+
+    # 5. Từ meta articleSection
+    sec = get_meta(soup, itemprop="articleSection")
+    if sec and sec in TARGET_CATEGORIES:
+        return sec
+
+    return None
+
+
+def extract_subcategory(soup: BeautifulSoup) -> str | None:
+    """Bóc tách tên tiểu mục từ breadcrumb hoặc meta articleSection."""
+    bc_items = [a.get_text(strip=True) for a in soup.select("ul.breadcrumb li a, ul.breadcrumb a, .breadcrumb li") if a.get_text(strip=True)]
+    if len(bc_items) >= 2:
+        return bc_items[1]
+    return get_meta(soup, itemprop="articleSection") or get_meta(soup, name="its_subsection")
 
 
 def extract_article_id(soup: BeautifulSoup, url: str) -> str | None:
@@ -200,7 +254,7 @@ class ArticleCrawler:
         return extract_article_content(soup)
 
     def parse(self, html: str | None, url: str, rss_metadata: dict | None = None) -> dict[str, Any]:
-        """Phân tích HTML và trả về bản ghi 12 trường dữ liệu thô."""
+        """Phân tích HTML và trả về bản ghi đúng 12 trường dữ liệu thô."""
         soup = BeautifulSoup(html or "", "lxml")
         rss = rss_metadata or {}
         t_el = soup.select_one("h1.title-detail") or soup.find("h1")
@@ -213,8 +267,8 @@ class ArticleCrawler:
             "author": self.extract_author(soup),
             "publisher": "VnExpress",
             "published_at": extract_published_at(soup, rss),
-            "category": rss.get("category") or extract_category_from_url(url),
-            "subcategory": get_meta(soup, itemprop="articleSection"),
+            "category": extract_category(soup, url, rss),
+            "subcategory": extract_subcategory(soup),
             "article_id": extract_article_id(soup, url),
             "crawled_at": datetime.now(timezone.utc).isoformat(),
             "source": "vnexpress",
@@ -252,29 +306,26 @@ class RSSCrawler:
                     "description": get_text_tag("description"),
                     "published_at": get_text_tag("pubDate"),
                     "category": category,
-                    "categories": [category],
                 })
         return articles
 
     def discover(self) -> list[dict[str, Any]]:
-        """Quét và gom nhóm các bài viết từ 5 luồng RSS chuyên mục mục tiêu."""
-        discovered: dict[str, dict[str, Any]] = {}
-        for category, feed_url in RSS_FEEDS.values():
+        """Thu thập danh sách tất cả bài viết từ toàn bộ 5 luồng RSS cấu hình."""
+        all_articles: list[dict[str, Any]] = []
+        seen_urls: set[str] = set()
+        for cat_slug, (cat_name, feed_url) in RSS_FEEDS.items():
             try:
-                for a in self.parse_feed(fetch_url(feed_url), category):
-                    url = a["url"]
-                    if "vnexpress.net" in url:
-                        if url not in discovered:
-                            discovered[url] = a
-                        elif category not in discovered[url].setdefault("categories", []):
-                            discovered[url]["categories"].append(category)
+                for item in self.parse_feed(self.fetch_feed(feed_url), cat_name):
+                    if item["url"] not in seen_urls:
+                        seen_urls.add(item["url"])
+                        all_articles.append(item)
             except Exception as exc:
-                logger.warning("Không thể xử lý RSS feed %s: %s", feed_url, exc)
-        return list(discovered.values())
+                logger.warning("Không thể đọc RSS cho chuyên mục %s: %s", cat_name, exc)
+        return all_articles
 
 
 class SitemapCrawler:
-    """Lớp quét danh sách liên kết bài viết từ Sitemap XML của VnExpress."""
+    """Lớp khám phá bài viết thông qua sitemap XML của VnExpress."""
 
     def discover(self) -> list[str]:
         """Duyệt và trích xuất tất cả các URL bài báo kết thúc bằng .html từ sitemap XML."""
@@ -291,19 +342,20 @@ class SitemapCrawler:
         return sorted(discovered)
 
 
-def save_record(path: Path, record: dict[str, Any]) -> None:
-    """Ghi bổ sung một bản ghi vào tệp JSON Lines."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+def save_articles_json(path: Path, articles: list[dict[str, Any]]) -> None:
+    """Ghi toàn bộ danh sách bản ghi bài viết ra một tệp JSON hoàn chỉnh định dạng UTF-8."""
+    save_json(path, articles, indent=2)
+    # Đồng thời lưu bản sao .jsonl nếu cần tương thích
+    jsonl_path = path.with_suffix(".jsonl")
+    with jsonl_path.open("w", encoding="utf-8") as f:
+        for a in articles:
+            f.write(json.dumps(a, ensure_ascii=False) + "\n")
 
 
 def load_crawled_urls(path: Path) -> set[str]:
-    """Đọc danh sách các URL bài viết đã được cào trước đó để tránh cào trùng."""
-    if not path.exists():
-        return set()
-    with path.open("r", encoding="utf-8") as f:
-        return {u for line in f if line.strip() and (u := json.loads(line).get("url"))}
+    """Đọc danh sách các URL bài viết đã được cào trước đó từ tệp JSON hoặc JSONL để tránh cào trùng."""
+    records = load_jsonl(path)
+    return {r.get("url") for r in records if r.get("url")}
 
 
 def select_balanced_articles(articles: list[dict[str, Any]], max_articles: int = MAX_ARTICLES, articles_per_category: int = 4) -> list[dict[str, Any]]:
@@ -316,30 +368,36 @@ def select_balanced_articles(articles: list[dict[str, Any]], max_articles: int =
 
 
 def main() -> None:
-    """Hàm điều phối toàn bộ quá trình cào bài viết tự động."""
+    """Hàm điều phối toàn bộ quá trình cào bài viết tự động và lưu ra tệp .json."""
     RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
     rss_crawler = RSSCrawler()
     article_crawler = ArticleCrawler()
     discovered = rss_crawler.discover()
-    pending = [a for a in discovered if a["url"] not in load_crawled_urls(ARTICLE_OUTPUT)]
+
+    existing_articles = load_jsonl(ARTICLE_OUTPUT)
+    crawled_urls = {a.get("url") for a in existing_articles if a.get("url")}
+
+    pending = [a for a in discovered if a["url"] not in crawled_urls]
     selected = select_balanced_articles(pending, MAX_ARTICLES, articles_per_category=4)
 
     logger.info("Tìm thấy %d bài chờ, tiến hành cào %d bài...", len(pending), len(selected))
-    success, failed = 0, 0
+    crawled_records: list[dict[str, Any]] = list(existing_articles)
+    new_count = 0
+
     for idx, meta in enumerate(selected, start=1):
         url = meta["url"]
         logger.info("[%d/%d] Đang cào: %s", idx, len(selected), url)
         try:
             art = article_crawler.crawl(url, rss_metadata=meta)
-            save_record(ARTICLE_OUTPUT, art)
-            save_record(CRAWL_LOG_OUTPUT, {"url": url, "status": "success", "timestamp": datetime.now(timezone.utc).isoformat()})
-            success += 1
+            crawled_records.append(art)
+            new_count += 1
         except Exception as exc:
-            failed += 1
             logger.warning("Thất bại khi cào %s: %s", url, exc)
-            save_record(CRAWL_LOG_OUTPUT, {"url": url, "status": "failed", "error": str(exc), "timestamp": datetime.now(timezone.utc).isoformat()})
         time.sleep(REQUEST_DELAY)
-    logger.info("Hoàn tất cào: %d thành công, %d thất bại", success, failed)
+
+    # Lưu toàn bộ dữ liệu ra tệp .json cho các stage sau sử dụng
+    save_articles_json(ARTICLE_OUTPUT, crawled_records)
+    logger.info("Hoàn tất cào: đã lưu %d bài viết vào %s", len(crawled_records), ARTICLE_OUTPUT)
 
 
 if __name__ == "__main__":
