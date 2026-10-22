@@ -6,10 +6,6 @@ import pyodbc  # type: ignore
 import pandas as pd  # type: ignore
 # pyrefly: ignore[missing-import]
 import matplotlib.pyplot as plt  # type: ignore
-# pyrefly: ignore[missing-import]
-import matplotlib.cm as cm  # type: ignore
-# pyrefly: ignore[missing-import]
-import matplotlib.colors as mcolors  # type: ignore
 
 # Đảm bảo hiển thị tiếng Việt chuẩn trên Console và Biểu đồ
 sys.stdout.reconfigure(encoding="utf-8")
@@ -49,6 +45,25 @@ def luu_anh(fig, ten_file):
     plt.close(fig)
     print(f"[+] Đã lưu: {ten_file}")
 
+#Bảng 20 màu rời cách đều: thấp nhất = xanh biển -> giữa = xanh lá -> cao nhất = đỏ
+#Chèn vàng/cam giữa xanh lá và đỏ để vùng chuyển không bị nâu (lỗi nội suy RGB)
+PALETTE = ["#1f78b4", "#2786a7", "#2e949b", "#36a38e", "#34a473",
+           "#31a254", "#2da136", "#46a92d", "#6cb62e", "#93c32f",
+           "#afc82e", "#c1c62d", "#d4c32b", "#e2bd29", "#e7af25",
+           "#eca221", "#ef8f1e", "#eb681d", "#e7411d", "#e31a1c"]
+
+#Gán mỗi giá trị vào 1 trong 20 bậc màu cách đều nhau trên đoạn [min, max]
+def mau_theo_gia_tri(values):
+    vmin, vmax = min(values), max(values)
+    if vmax == vmin:
+        return [PALETTE[len(PALETTE) // 2]] * len(values)
+    buoc = (vmax - vmin) / (len(PALETTE) - 1)
+    mau = []
+    for v in values:
+        idx = min(max(int(round((v - vmin) / buoc)), 0), len(PALETTE) - 1)
+        mau.append(PALETTE[idx])
+    return mau
+
 #Phân tích khám phá dữ liệu (EDA) và xuất 4 biểu đồ ra 4 file PNG riêng
 def generate_eda_charts():
     df = get_data_from_sql()
@@ -74,27 +89,24 @@ def generate_eda_charts():
     print(df["category"].value_counts().to_string())
     print("===========================\n")
 
-    # 3. BIỂU ĐỒ 1: Phân bố chuyên mục (Bar Chart, màu gradient theo số bài)
+    # 3. BIỂU ĐỒ 1: Phân bố chuyên mục (Bar Chart, màu theo mốc least/avg/most)
     fig1, ax1 = plt.subplots(figsize=(9, 6))
     cat_counts = df["category"].value_counts().sort_values(ascending=True)
-    norm1 = mcolors.Normalize(vmin=cat_counts.min(), vmax=cat_counts.max())
-    bars1 = ax1.barh(cat_counts.index, cat_counts.values, color=cm.viridis(norm1(cat_counts.values)), edgecolor="black", height=0.6)
+    bars1 = ax1.barh(cat_counts.index, cat_counts.values, color=mau_theo_gia_tri(cat_counts.values), edgecolor="black", height=0.6)
     ax1.set_title("Phân bố số lượng bài theo chuyên mục", fontsize=13, fontweight="bold")
     ax1.set_xlabel("Số lượng bài viết")
     for b in bars1:
         w = b.get_width()
         ax1.text(w + 0.2, b.get_y() + b.get_height() / 2, f"{int(w)}", va="center", fontsize=9)
-    fig1.colorbar(cm.ScalarMappable(norm=norm1, cmap="viridis"), ax=ax1).set_label("Số lượng bài")
     luu_anh(fig1, "bieu_do_1_chuyen_muc.png")
 
-    # 4. BIỂU ĐỒ 2: Phân bố độ dài bài viết (Histogram, màu gradient theo tần số)
+    # 4. BIỂU ĐỒ 2: Phân bố độ dài bài viết (Histogram, màu theo mốc least/avg/most)
     fig2, ax2 = plt.subplots(figsize=(9, 6))
     mean_val = df["word_count"].mean()
     counts, _, patches = ax2.hist(df["word_count"], bins=12, edgecolor="white")
-    norm2 = mcolors.Normalize(vmin=0, vmax=counts.max() if counts.max() > 0 else 1)
-    for cnt, p in zip(counts, patches):
-        p.set_facecolor(cm.viridis(norm2(cnt)))
-    ax2.axvline(mean_val, color="red", linestyle="--", linewidth=1.5, label=f"Trung bình: {mean_val:.0f} từ")
+    for c, p in zip(mau_theo_gia_tri(list(counts)), patches):
+        p.set_facecolor(c)
+    ax2.axvline(mean_val, color="#333333", linestyle="--", linewidth=1.5, label=f"Trung bình: {mean_val:.0f} từ")
     ax2.set_title("Hình thái phân bố độ dài bài báo (số từ)", fontsize=13, fontweight="bold")
     ax2.set_xlabel("Số từ trong bài")
     ax2.set_ylabel("Số lượng bài viết")
@@ -115,12 +127,11 @@ def generate_eda_charts():
     ax3.set_title("Tỷ lệ nguồn tác giả", fontsize=13, fontweight="bold")
     luu_anh(fig3, "bieu_do_3_tac_gia.png")
 
-    # 6. BIỂU ĐỒ 4: Phân bố theo 24 khung giờ xuất bản (Bar Chart, màu gradient theo số bài)
+    # 6. BIỂU ĐỒ 4: Phân bố theo 24 khung giờ xuất bản (Bar Chart, màu theo mốc least/avg/most)
     fig4, ax4 = plt.subplots(figsize=(9, 6))
     hour_series = df["hour"].dropna().astype(int)
     hour_counts = hour_series.value_counts().reindex(range(24), fill_value=0)
-    norm4 = mcolors.Normalize(vmin=hour_counts.min(), vmax=hour_counts.max())
-    bars4 = ax4.bar(hour_counts.index, hour_counts.values, color=cm.viridis(norm4(hour_counts.values)), edgecolor="black", width=0.7)
+    bars4 = ax4.bar(hour_counts.index, hour_counts.values, color=mau_theo_gia_tri(hour_counts.values), edgecolor="black", width=0.7)
     ax4.set_title("Phân bố theo 24 khung giờ xuất bản", fontsize=13, fontweight="bold")
     ax4.set_xlabel("Khung giờ (0h - 23h)")
     ax4.set_ylabel("Số lượng bài đăng")
@@ -129,7 +140,6 @@ def generate_eda_charts():
         h = b.get_height()
         if h > 0:
             ax4.text(b.get_x() + b.get_width() / 2, h + 0.2, f"{int(h)}", ha="center", fontsize=8)
-    fig4.colorbar(cm.ScalarMappable(norm=norm4, cmap="viridis"), ax=ax4).set_label("Số lượng bài")
     luu_anh(fig4, "bieu_do_4_khung_gio.png")
 
     print("[+] Hoàn tất! Đã xuất 4 biểu đồ ra 4 file PNG riêng.")
