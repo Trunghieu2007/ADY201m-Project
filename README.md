@@ -18,10 +18,10 @@ Hệ thống được thiết kế theo mô hình 3 bước:
 [1. Web crawler]                 [2. SQL importer]                [3. EDA + charts]
   Webcrawler.py       ───►         SQLimporter.py        ───►       Charts.py
   (Cào tin RSS + lọc và            (Nạp dữ liệu đã xử lý         (Query SQL, thống kê &
-   bóc tách 9 trường)                vào SQL Server )             xuất 1 ảnh Dashboard)
+   bóc tách 9 trường)                vào SQL Server )             xuất 4 ảnh PNG)
          │                                 │                               │
          ▼                                 ▼                               ▼
-vnexpress_data.json              dbo.VnExpress_Articles          tong_hop_4_bieu_do.png
+vnexpress_data.json              dbo.VnExpress_Articles          bieu_do_1..4_*.png
 vnexpress_data.csv               (Database: ADY201m)
 ```
 
@@ -36,7 +36,7 @@ vnexpress_data.csv               (Database: ADY201m)
      - Cắt tỉa khoảng trắng thừa (`.strip()`), loại bỏ hoàn toàn các đoạn văn rỗng.
      - Bóc nội dung bằng `extract_paragraphs()` với nhiều selector dự phòng (`.fck_detail p.Normal` → `.fck_detail p` → ...) để không âm thầm mất nội dung khi VnExpress đổi markup.
      - Tách rời chữ ký tác giả in đậm (`<strong>`) ở cuối bài ra khỏi trường `content` để lưu đúng vào cột `author`.
-     - `normalize_datetime()` bóc riêng **ngày** (`dd/mm/yyyy`) và **giờ** (`HH:mm`) từ chuỗi gốc kiểu `"Thứ bảy, 17/10/2026, 23:37 (GMT+7)"`, rồi ghép về chuẩn `YYYY-MM-DD HH:MM:SS` (bỏ được cả dấu phẩy và hậu tố GMT); thiếu giờ thì giờ = `00:00`, không parse được ngày thì để `null`.
+     - `normalize_datetime()` bóc riêng ngày (`dd/mm/yyyy`) và giờ (`HH:mm`) từ chuỗi gốc `"Thứ bảy, 17/10/2026, 23:37 (GMT+7)"`, rồi ghép về chuẩn `YYYY-MM-DD HH:MM:SS` (bỏ được cả dấu phẩy và hậu tố GMT); thiếu giờ thì giờ = `00:00`, không parse được ngày thì để `null`.
      - Xử lý giá trị khuyết thiếu: Gán mặc định `"Không có"` cho tiểu mục, `"Khác"` cho chuyên mục, và `"VnExpress"` cho bài không đề tên tác giả.
   5. Đóng gói và lưu đồng thời ra 2 định dạng file tại thư mục `Web crawler/`:
      - `vnexpress_data.json`.
@@ -47,41 +47,41 @@ vnexpress_data.csv               (Database: ADY201m)
 * **Mục tiêu:** Nạp dữ liệu từ file JSON vào Microsoft SQL Server, duy trì tính toàn vẹn và tích lũy dữ liệu theo thời gian.
 * **Luồng hoạt động:**
   1. Tự động tìm nạp file `vnexpress_data.json` từ thư mục `Web crawler/`.
-  2. **Kiểm tra Database thật:** mở kết nối tới `master`, truy vấn `sys.databases` xem `ADY201m` đã tồn tại chưa. Nếu chưa, in thông báo yêu cầu người dùng chạy `SQL importer/SQLschema.sql` và **dừng** (importer không tự tạo DB).
-  3. **Kiểm tra Bảng:** nối trực tiếp `ADY201m`, kiểm tra `dbo.VnExpress_Articles` qua `OBJECT_ID`. Nếu bảng chưa có, in thông báo nạp schema và **dừng** (giảm codebase — schema luôn do người dùng chạy bằng `SQLschema.sql`).
-  4. Khử trùng lặp 2 tầng: trước hết loại `article_id` trùng **ngay trong batch** JSON (tránh vi phạm PRIMARY KEY), rồi đối chiếu với `set` các `article_id` đã có trong CSDL để chỉ giữ bài hoàn toàn mới.
-  5. Nạp bằng `executemany` với `fast_executemany = True` (nhanh hơn chèn từng dòng). Trường `published_at` được ép về `datetime` để ghi vào cột `DATETIME`. Nếu lệnh chèn hàng loạt lỗi, tự động **fallback chèn từng dòng** trong `try/except`, để một dòng hỏng không phá cả batch, và in báo cáo số bài chèn được / thất bại.
+  2. Kiểm tra Database thật: mở kết nối tới `master`, truy vấn `sys.databases` xem `ADY201m` đã tồn tại chưa. Nếu chưa, in thông báo yêu cầu người dùng chạy `SQL importer/SQLschema.sql` và dừng.
+  3. Kiểm tra bảng: nối trực tiếp `ADY201m`, kiểm tra `dbo.VnExpress_Articles` qua `OBJECT_ID`. Nếu bảng chưa có, in thông báo nạp schema và **dừng** (giảm codebase — schema luôn do người dùng chạy bằng `SQLschema.sql`).
+  4. Khử trùng lặp 2 tầng: trước hết loại `article_id` trùng ngay trong batch JSON (tránh vi phạm PRIMARY KEY), rồi đối chiếu với `set` các `article_id` đã có trong CSDL để chỉ giữ bài hoàn toàn mới.
+  5. Nạp bằng `executemany` với `fast_executemany = True` (nhanh hơn chèn từng dòng). Trường `published_at` được ép về `datetime` để ghi vào cột `DATETIME`. Nếu lệnh chèn hàng loạt lỗi, tự động fallback chèn từng dòng trong `try/except`, để một dòng hỏng không phá cả batch, và in báo cáo số bài chèn được / thất bại.
 
 ### 1.3. Module Mô tả dữ liệu & Trực quan hóa (`EDA + charts`)
 
-* **Mục tiêu:** Truy vấn dữ liệu trực tiếp từ SQL Server, tính toán các chỉ số thống kê mô tả và xuất ra 1 Dashboard biểu đồ tổng hợp duy nhất.
+* **Mục tiêu:** Truy vấn dữ liệu trực tiếp từ SQL Server, tính toán các chỉ số thống kê mô tả và xuất ra 4 biểu đồ (mỗi biểu đồ 1 file PNG riêng).
 * **Luồng hoạt động:**
   1. Mở kết nối tới SQL Server, dùng lệnh SQL `SELECT ... FROM dbo.VnExpress_Articles` để tải toàn bộ các bản ghi đã lưu vào DataFrame của `pandas`.
   2. Tiền xử lý đặc trưng cho EDA:
      - Tính toán độ dài số từ của bài viết (`word_count`) từ trường `content`.
      - Lấy khung giờ xuất bản (0h - 23h) trực tiếp từ cột `DATETIME` `published_at` bằng `pandas .dt.hour` (không còn parse chuỗi tiếng Việt mong manh như trước).
      - Chuẩn hóa nguồn bài viết thành biến phân loại nhị phân: `"Tác giả cụ thể"` vs `"Chung (VnExpress)"`.
-  3. In các chỉ số Thống kê mô tả ra terminal: tổng số bài, `describe()` (Count, Mean, Min, Max, các phân vị 25/50/75%) cho `word_count` và `hour`, cùng tần số chuyên mục.
-  4. Dùng `matplotlib` dựng một Dashboard `2x2` gom 4 biểu đồ đơn biến vào 1 file ảnh duy nhất tại `EDA + charts/tong_hop_4_bieu_do.png`.
+  3. In các chỉ số thống kê mô tả ra terminal: tổng số bài, số bài có nội dung rỗng, count/mean/std/min/max cho `word_count` và `hour`, cùng tần số chuyên mục.
+  4. Dùng `matplotlib` dựng 4 biểu đồ đơn biến, mỗi biểu đồ lưu thành 1 file PNG riêng trong `EDA + charts/` (`bieu_do_1_chuyen_muc.png` ... `bieu_do_4_khung_gio.png`), tô màu theo 20 bậc rời (thấp = xanh biển, giữa = xanh lá, cao = đỏ).
 
 ---
 
 ## 2. Thư viện Python sử dụng
 
-| Thư viện | Chức năng trong dự án |
-| :--- | :--- |
-| `requests` | Gửi HTTP Request tải RSS Feed và trang bài viết từ VnExpress. |
-| `beautifulsoup4` (`bs4`) | Phân tích cú pháp HTML/XML, bóc tách 9 trường dữ liệu từ từng bài báo. |
-| `lxml` | Parser XML tốc độ cao, được BeautifulSoup dùng làm backend khi đọc RSS Feed. |
-| `pandas` | Cấu trúc dữ liệu dạng DataFrame, tính toán thống kê mô tả và xuất file CSV. |
-| `pyodbc` | Kết nối và thực thi câu lệnh SQL tới Microsoft SQL Server qua ODBC Driver. |
-| `matplotlib` | Vẽ và xuất Dashboard 4 biểu đồ trực quan hóa ra file ảnh PNG. |
+| Thư viện                   | Chức năng trong dự án                                                                |
+| :--------------------------- | :--------------------------------------------------------------------------------------- |
+| `requests`                 | Gửi HTTP Request tải RSS Feed và trang bài viết từ VnExpress.                      |
+| `beautifulsoup4` (`bs4`) | Phân tích cú pháp HTML/XML, bóc tách 9 trường dữ liệu từ từng bài báo.     |
+| `lxml`                     | Parser XML tốc độ cao, được BeautifulSoup dùng làm backend khi đọc RSS Feed.   |
+| `pandas`                   | Cấu trúc dữ liệu dạng DataFrame, tính toán thống kê mô tả và xuất file CSV. |
+| `pyodbc`                   | Kết nối và thực thi câu lệnh SQL tới Microsoft SQL Server qua ODBC Driver.        |
+| `matplotlib`               | Vẽ 4 biểu đồ trực quan hóa và xuất ra 4 file ảnh PNG.                             |
 
 ---
 
 ## 3. Mô tả cấu trúc dữ liệu
 
-Bảng **`dbo.VnExpress_Articles`** trên Microsoft SQL Server lưu trữ 9 trường thông tin:
+Bảng **`dbo.VnExpress_Articles`** trên Microsoft SQL Server lưu trữ 10 trường thông tin (9 trường bóc tách từ crawler + `created_at`):
 
 | Tên cột        | Kiểu dữ liệu    | Ý nghĩa                                                         |
 | :--------------- | :----------------- | :---------------------------------------------------------------- |
@@ -90,7 +90,7 @@ Bảng **`dbo.VnExpress_Articles`** trên Microsoft SQL Server lưu trữ 9 trư
 | `description`  | `NVARCHAR(MAX)`  | Đoạn tóm tắt / Sa-pô                                         |
 | `content`      | `NVARCHAR(MAX)`  | Toàn bộ nội dung văn bản (Full text)                         |
 | `author`       | `NVARCHAR(255)`  | Tên phóng viên / Nguồn bài viết                             |
-| `published_at` | `DATETIME`       | Thời gian xuất bản (đã ép về chuẩn datetime từ crawler)    |
+| `published_at` | `DATETIME`       | Thời gian xuất bản (đã ép về chuẩn datetime từ crawler)  |
 | `category`     | `NVARCHAR(100)`  | Chuyên mục chính (Kinh doanh, Thế giới, Sức khỏe...)       |
 | `subcategory`  | `NVARCHAR(100)`  | Chuyên mục phụ                                                 |
 | `url`          | `NVARCHAR(1000)` | Đường dẫn bài viết gốc                                     |
@@ -100,7 +100,7 @@ Bảng **`dbo.VnExpress_Articles`** trên Microsoft SQL Server lưu trữ 9 trư
 
 ## 4. Báo cáo thống kê mô tả dữ liệu
 
-Toàn bộ dữ liệu được truy vấn trực tiếp từ SQL Server và trực quan hóa thành một bảng điều khiển với 4 biểu đồ:
+Toàn bộ dữ liệu được truy vấn trực tiếp từ SQL Server và trực quan hóa thành 4 biểu đồ, mỗi biểu đồ xuất ra 1 file PNG riêng:
 
 1. **Biểu đồ 1: Phân bố số lượng bài theo chuyên mục (Bar Chart)**
 2. **Biểu đồ 2: Hình thái phân bố độ dài bài báo (Histogram)**
@@ -138,6 +138,6 @@ python "Web crawler\Webcrawler.py"
 # Bước 2: Nạp dữ liệu vào Microsoft SQL Server
 python "SQL importer\SQLimporter.py"
 
-# Bước 3: Xuất thống kê mô tả và vẽ biểu đồ Dashboard
+# Bước 3: Xuất thống kê mô tả và vẽ 4 biểu đồ PNG
 python "EDA + charts\Charts.py"
 ```

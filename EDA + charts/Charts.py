@@ -27,7 +27,7 @@ def get_data_from_sql():
     conn.close()
     return df
 
-#Bộ thống kê mô tả gọn: bỏ phân vị (25/50/75), đổi nhãn viết tắt sang tên đầy đủ
+#Bộ thống kê mô tả gọn
 def thong_ke(series):
     s = series.dropna()
     return pd.Series({
@@ -46,13 +46,12 @@ def luu_anh(fig, ten_file):
     print(f"[+] Đã lưu: {ten_file}")
 
 #Bảng 20 màu rời cách đều: thấp nhất = xanh biển -> giữa = xanh lá -> cao nhất = đỏ
-#Chèn vàng/cam giữa xanh lá và đỏ để vùng chuyển không bị nâu (lỗi nội suy RGB)
 PALETTE = ["#1f78b4", "#2786a7", "#2e949b", "#36a38e", "#34a473",
            "#31a254", "#2da136", "#46a92d", "#6cb62e", "#93c32f",
            "#afc82e", "#c1c62d", "#d4c32b", "#e2bd29", "#e7af25",
            "#eca221", "#ef8f1e", "#eb681d", "#e7411d", "#e31a1c"]
 
-#Gán mỗi giá trị vào 1 trong 20 bậc màu cách đều nhau trên đoạn [min, max]
+#Gán mỗi giá trị vào 1 trong 20 bậc màu cách đều nhau trên đoạn [min, max] để phân bổ màu sắc tối ưu hơn
 def mau_theo_gia_tri(values):
     vmin, vmax = min(values), max(values)
     if vmax == vmin:
