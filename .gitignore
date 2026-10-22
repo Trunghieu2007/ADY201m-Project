@@ -16,3 +16,7 @@ venv/
 # OS generated files
 Thumbs.db
 .DS_Store
+
+# Du lieu tu sinh tu crawler (khong commit)
+Web crawler/vnexpress_data.json
+Web crawler/vnexpress_data.csv

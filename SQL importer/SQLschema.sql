@@ -23,7 +23,7 @@ BEGIN
         description     NVARCHAR(MAX)  NULL,
         content         NVARCHAR(MAX)  NULL,
         author          NVARCHAR(255)  NULL,
-        published_at    NVARCHAR(255)  NULL,
+        published_at    DATETIME       NULL,
         category        NVARCHAR(100)  NULL,
         subcategory     NVARCHAR(100)  NULL,
         url             NVARCHAR(1000) NULL,

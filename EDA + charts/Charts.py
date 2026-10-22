@@ -35,7 +35,17 @@ def generate_eda_charts():
     # 1. Tiền xử lý các trường mô tả dữ liệu
     df["word_count"] = df["content"].fillna("").apply(lambda x: len(x.split()))
     df["author_type"] = df["author"].apply(lambda x: "Chung (VnExpress)" if x in ["VnExpress", "", None] else "Tác giả cụ thể")
-    df["hour"] = df["published_at"].str.extract(r"(\d{1,2}):\d{2}")[0].astype(float)
+    df["published_at"] = pd.to_datetime(df["published_at"], errors="coerce")  # cột đã là DATETIME trong CSDL
+    df["hour"] = df["published_at"].dt.hour
+
+    # 2. In Thống kê mô tả (Count / Mean / Min / Max / Quantiles + tần số chuyên mục)
+    print("\n===== THỐNG KÊ MÔ TẢ =====")
+    print(f"Tổng số bài: {len(df)}")
+    print("\n-- Độ dài bài (word_count) & khung giờ (hour) --")
+    print(df[["word_count", "hour"]].describe().to_string())
+    print("\n-- Tần số chuyên mục --")
+    print(df["category"].value_counts().to_string())
+    print("===========================\n")
 
     # ========================================================
     # BIỂU ĐỒ TỔNG HỢP DUY NHẤT (Dashboard 2x2: 4 trong 1)

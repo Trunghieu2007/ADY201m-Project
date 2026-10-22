@@ -1,8 +1,11 @@
 import os
+import re
 import sys
 import time
 import json
-import requests
+from datetime import datetime
+# pyrefly: ignore[missing-import]
+import requests  # type: ignore
 # pyrefly: ignore[missing-import]
 from bs4 import BeautifulSoup  # type: ignore
 # pyrefly: ignore[missing-import]
@@ -11,15 +14,70 @@ import pandas as pd  # type: ignore
 # Đảm bảo in tiếng Việt không bị lỗi font trên Windows
 sys.stdout.reconfigure(encoding="utf-8")
 
-#Header giả lập trình duyệt gửi kèm trong các request HTTP
+BASE_URL = "https://vnexpress.net"
+RSS_URL = f"{BASE_URL}/rss/tin-moi-nhat.rss"
+CRAWL_DELAY = 1.0  # giây nghỉ giữa các request để lịch sự với server
+
+# Header giả lập trình duyệt gửi kèm trong các request HTTP
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 }
 
+# Gửi request kèm kiểm tra lỗi HTTP và ép mã hóa UTF-8
+def fetch(url):
+    res = requests.get(url, headers=HEADERS, timeout=10)
+    res.raise_for_status()          # ném exception nếu 4xx/5xx -> tránh nạp trang rác
+    res.encoding = "utf-8"          # VnExpress dùng UTF-8, tránh đoán sai mã hóa
+    return res
+
+# Đọc robots.txt và trả về danh sách đường dẫn bị cấm (áp dụng cho User-agent *)
+def load_disallow():
+    disallow = []
+    try:
+        text = fetch(f"{BASE_URL}/robots.txt").text
+        applies = False
+        for line in text.splitlines():
+            line = line.strip()
+            if line.lower().startswith("user-agent:"):
+                applies = line.split(":", 1)[1].strip() == "*"
+            elif applies and line.lower().startswith("disallow:"):
+                path = line.split(":", 1)[1].strip()
+                if path and path != "/":
+                    disallow.append(BASE_URL + path)
+    except Exception as e:
+        print(f"[!] Không đọc được robots.txt ({e}), bỏ qua kiểm tra cho phép.")
+    return disallow
+
+#URL có được phép cào theo robots.txt không
+def is_allowed(url, disallow):
+    return not any(url.startswith(p) for p in disallow)
+
+#Ép thời gian tiếng Việt về định dạng DATETIME 'YYYY-MM-DD HH:MM:SS'
+def normalize_datetime(raw):
+    if not raw:
+        return None
+    m = re.search(r"\d{1,2}/\d{1,2}/\d{4}(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?", raw)
+    if not m:
+        return None
+    s = m.group(0).strip()
+    for fmt in ("%d/%m/%Y %H:%M:%S", "%d/%m/%Y %H:%M", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(s, fmt).strftime("%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            continue
+    return None
+
+#Bóc các đoạn văn nội dung, thử nhiều selector dự phòng nếu markup VnExpress thay đổi
+def extract_paragraphs(soup):
+    for sel in (".fck_detail p.Normal", ".fck_detail p", "#main-content p.Normal", ".article-detail p.Normal"):
+        paragraphs = soup.select(sel)
+        if paragraphs:
+            return paragraphs
+    return []
+
 #Cào chi tiết 1 bài báo VnExpress và trích xuất 9 trường dữ liệu
 def parse_article(url):
-    res = requests.get(url, headers=HEADERS, timeout=10)
-    soup = BeautifulSoup(res.text, "html.parser")
+    soup = BeautifulSoup(fetch(url).text, "html.parser")
 
     # 1. Article ID
     meta_id = soup.find("meta", {"name": "tt_article_id"})
@@ -33,9 +91,9 @@ def parse_article(url):
     desc = soup.find("p", class_="description")
     description = desc.text.strip() if desc else ""
 
-    # 4. Published Date
+    # 4. Published Date (ép về DATETIME)
     date_tag = soup.find("span", class_="date")
-    published_at = date_tag.text.strip() if date_tag else ""
+    published_at = normalize_datetime(date_tag.text.strip() if date_tag else "")
 
     # 5 & 6. Category & Subcategory
     breadcrumbs = [a.text.strip() for a in soup.select("ul.breadcrumb li a")]
@@ -43,9 +101,8 @@ def parse_article(url):
     subcategory = breadcrumbs[1] if len(breadcrumbs) >= 2 else "Không có"
 
     # 7 & 8. Content & Author
-    paragraphs = soup.select(".fck_detail p.Normal")
+    paragraphs = extract_paragraphs(soup)
     author = "VnExpress"
-    content_lines = []
 
     if paragraphs:
         last_p = paragraphs[-1]
@@ -53,8 +110,8 @@ def parse_article(url):
         if strong_tag and len(last_p.text.strip()) < 50:
             author = strong_tag.text.strip()
             paragraphs = paragraphs[:-1]
-        content_lines = [p.text.strip() for p in paragraphs if p.text.strip()]
 
+    content_lines = [p.text.strip() for p in paragraphs if p.text.strip()]
     content = "\n".join(content_lines)
 
     return {
@@ -71,11 +128,10 @@ def parse_article(url):
 
 #Thu thập danh sách URL từ RSS tin mới nhất VnExpress và cào nội dung từng bài
 def crawl_rss():
-    rss_url = "https://vnexpress.net/rss/tin-moi-nhat.rss"
     print("Đang lấy danh sách tin từ RSS...")
-    res = requests.get(rss_url, headers=HEADERS, timeout=10)
-    
+    res = fetch(RSS_URL)
     soup = BeautifulSoup(res.content, "xml")
+    disallow = load_disallow()
     articles = []
 
     for item in soup.find_all("item"):
@@ -88,19 +144,21 @@ def crawl_rss():
 
         if not link.endswith(".html"):
             continue
+        if not is_allowed(link, disallow):
+            print(f"-> Bỏ qua (robots.txt): {link}")
+            continue
 
         print(f"-> Đang cào: {link}")
         try:
-            data = parse_article(link)
-            articles.append(data)
+            articles.append(parse_article(link))
         except Exception as e:
             print(f"   Lỗi bài {link}: {e}")
-        time.sleep(0.5)
+        time.sleep(CRAWL_DELAY)
 
     return articles
 
 if __name__ == "__main__":
-    #Khởi chạy cào dữ liệu RSS và lưu kết quả ra file JSON và CSV
+    # Khởi chạy cào dữ liệu RSS và lưu kết quả ra file JSON và CSV
     data = crawl_rss()
 
     save_dir = os.path.dirname(os.path.abspath(__file__))

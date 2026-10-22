@@ -29,12 +29,14 @@ vnexpress_data.csv               (Database: ADY201m)
 
 * **Mục tiêu:** Thu thập các bài báo mới nhất từ RSS Feed của VnExpress và thực hiện làm sạch dữ liệu ngay trong quá trình bóc tách.
 * **Luồng hoạt động:**
-  1. Gửi HTTP Request tải danh sách bài viết mới từ RSS feed (`https://vnexpress.net/rss/tin-moi-nhat.rss`) bằng thư viện `requests` và parser XML `lxml`.
-  2. Lọc bỏ các liên kết không phải bài báo chính thống (bỏ qua video, podcast, trang ảnh).
-  3. Truy cập vào từng liên kết bài viết, dùng `BeautifulSoup` bóc tách 9 trường dữ liệu (`article_id`, `title`, `description`, `content`, `author`, `published_at`, `category`, `subcategory`, `url`).
+  1. Gửi HTTP Request tải danh sách bài viết mới từ RSS feed (`https://vnexpress.net/rss/tin-moi-nhat.rss`) bằng thư viện `requests` và parser XML `lxml`. Mọi request đều qua hàm `fetch()` gọi `raise_for_status()` (bắt lỗi 4xx/5xx để không nạp trang rác) và ép `encoding = "utf-8"`.
+  2. Đọc `robots.txt` của miền để lấy danh sách đường dẫn bị cấm, lọc bỏ liên kết không phải bài báo chính thống (video, podcast, trang ảnh) và bỏ qua các URL bị `robots.txt` cấm.
+  3. Truy cập vào từng liên kết bài viết (nghỉ `CRAWL_DELAY` = 1.0s giữa các request), dùng `BeautifulSoup` bóc tách 9 trường dữ liệu (`article_id`, `title`, `description`, `content`, `author`, `published_at`, `category`, `subcategory`, `url`).
   4. Làm sạch tại nguồn:
      - Cắt tỉa khoảng trắng thừa (`.strip()`), loại bỏ hoàn toàn các đoạn văn rỗng.
+     - Bóc nội dung bằng `extract_paragraphs()` với nhiều selector dự phòng (`.fck_detail p.Normal` → `.fck_detail p` → ...) để không âm thầm mất nội dung khi VnExpress đổi markup.
      - Tách rời chữ ký tác giả in đậm (`<strong>`) ở cuối bài ra khỏi trường `content` để lưu đúng vào cột `author`.
+     - `normalize_datetime()` ép thời gian tiếng Việt (`dd/mm/yyyy HH:mm`) về chuẩn `YYYY-MM-DD HH:MM:SS`; không parse được thì để `null`.
      - Xử lý giá trị khuyết thiếu: Gán mặc định `"Không có"` cho tiểu mục, `"Khác"` cho chuyên mục, và `"VnExpress"` cho bài không đề tên tác giả.
   5. Đóng gói và lưu đồng thời ra 2 định dạng file tại thư mục `Web crawler/`:
      - `vnexpress_data.json`.
@@ -45,10 +47,10 @@ vnexpress_data.csv               (Database: ADY201m)
 * **Mục tiêu:** Nạp dữ liệu từ file JSON vào Microsoft SQL Server, duy trì tính toàn vẹn và tích lũy dữ liệu theo thời gian.
 * **Luồng hoạt động:**
   1. Tự động tìm nạp file `vnexpress_data.json` từ thư mục `Web crawler/`.
-  2. Tự động kiểm tra Database `ADY201m`qua kết nối `master`, sau đó mở kết nối trực tiếp vào `ADY201m`.
-  3. Kiểm tra và tự động khởi tạo bảng `dbo.VnExpress_Articles` cùng chỉ mục Index nếu bảng chưa tồn tại.
-  4. Khử trùng lặp: Truy vấn toàn bộ `article_id` đã có trong CSDL đưa vào một Python `set`, sau đó lọc chỉ giữ lại những bài viết hoàn toàn mới (`new_articles`).
-  5. Thực thi câu lệnh `INSERT` nạp các bài mới vào bảng, bỏ qua các bài đã có.
+  2. **Kiểm tra Database thật:** mở kết nối tới `master`, truy vấn `sys.databases` xem `ADY201m` đã tồn tại chưa. Nếu chưa, in thông báo yêu cầu người dùng chạy `SQL importer/SQLschema.sql` và **dừng** (importer không tự tạo DB).
+  3. **Kiểm tra Bảng:** nối trực tiếp `ADY201m`, kiểm tra `dbo.VnExpress_Articles` qua `OBJECT_ID`. Nếu bảng chưa có, in thông báo nạp schema và **dừng** (giảm codebase — schema luôn do người dùng chạy bằng `SQLschema.sql`).
+  4. Khử trùng lặp 2 tầng: trước hết loại `article_id` trùng **ngay trong batch** JSON (tránh vi phạm PRIMARY KEY), rồi đối chiếu với `set` các `article_id` đã có trong CSDL để chỉ giữ bài hoàn toàn mới.
+  5. Nạp bằng `executemany` với `fast_executemany = True` (nhanh hơn chèn từng dòng). Trường `published_at` được ép về `datetime` để ghi vào cột `DATETIME`. Nếu lệnh chèn hàng loạt lỗi, tự động **fallback chèn từng dòng** trong `try/except`, để một dòng hỏng không phá cả batch, và in báo cáo số bài chèn được / thất bại.
 
 ### 1.3. Module Mô tả dữ liệu & Trực quan hóa (`EDA + charts`)
 
@@ -57,14 +59,27 @@ vnexpress_data.csv               (Database: ADY201m)
   1. Mở kết nối tới SQL Server, dùng lệnh SQL `SELECT ... FROM dbo.VnExpress_Articles` để tải toàn bộ các bản ghi đã lưu vào DataFrame của `pandas`.
   2. Tiền xử lý đặc trưng cho EDA:
      - Tính toán độ dài số từ của bài viết (`word_count`) từ trường `content`.
-     - Bóc tách khung giờ xuất bản (0h - 23h) từ chuỗi thời gian tiếng Việt `published_at` và ép về kiểu số nguyên (`int`).
+     - Lấy khung giờ xuất bản (0h - 23h) trực tiếp từ cột `DATETIME` `published_at` bằng `pandas .dt.hour` (không còn parse chuỗi tiếng Việt mong manh như trước).
      - Chuẩn hóa nguồn bài viết thành biến phân loại nhị phân: `"Tác giả cụ thể"` vs `"Chung (VnExpress)"`.
-  3. In các chỉ số Thống kê mô tả (Count, Mean, Min, Max, Quantiles, Tần số chuyên mục) ra terminal.
+  3. In các chỉ số Thống kê mô tả ra terminal: tổng số bài, `describe()` (Count, Mean, Min, Max, các phân vị 25/50/75%) cho `word_count` và `hour`, cùng tần số chuyên mục.
   4. Dùng `matplotlib` dựng một Dashboard `2x2` gom 4 biểu đồ đơn biến vào 1 file ảnh duy nhất tại `EDA + charts/tong_hop_4_bieu_do.png`.
 
 ---
 
-## 2. Mô tả cấu trúc dữ liệu
+## 2. Thư viện Python sử dụng
+
+| Thư viện | Chức năng trong dự án |
+| :--- | :--- |
+| `requests` | Gửi HTTP Request tải RSS Feed và trang bài viết từ VnExpress. |
+| `beautifulsoup4` (`bs4`) | Phân tích cú pháp HTML/XML, bóc tách 9 trường dữ liệu từ từng bài báo. |
+| `lxml` | Parser XML tốc độ cao, được BeautifulSoup dùng làm backend khi đọc RSS Feed. |
+| `pandas` | Cấu trúc dữ liệu dạng DataFrame, tính toán thống kê mô tả và xuất file CSV. |
+| `pyodbc` | Kết nối và thực thi câu lệnh SQL tới Microsoft SQL Server qua ODBC Driver. |
+| `matplotlib` | Vẽ và xuất Dashboard 4 biểu đồ trực quan hóa ra file ảnh PNG. |
+
+---
+
+## 3. Mô tả cấu trúc dữ liệu
 
 Bảng **`dbo.VnExpress_Articles`** trên Microsoft SQL Server lưu trữ 9 trường thông tin:
 
@@ -75,7 +90,7 @@ Bảng **`dbo.VnExpress_Articles`** trên Microsoft SQL Server lưu trữ 9 trư
 | `description`  | `NVARCHAR(MAX)`  | Đoạn tóm tắt / Sa-pô                                         |
 | `content`      | `NVARCHAR(MAX)`  | Toàn bộ nội dung văn bản (Full text)                         |
 | `author`       | `NVARCHAR(255)`  | Tên phóng viên / Nguồn bài viết                             |
-| `published_at` | `NVARCHAR(255)`  | Thời gian xuất bản (dạng chuỗi nguyên bản)                 |
+| `published_at` | `DATETIME`       | Thời gian xuất bản (đã ép về chuẩn datetime từ crawler)    |
 | `category`     | `NVARCHAR(100)`  | Chuyên mục chính (Kinh doanh, Thế giới, Sức khỏe...)       |
 | `subcategory`  | `NVARCHAR(100)`  | Chuyên mục phụ                                                 |
 | `url`          | `NVARCHAR(1000)` | Đường dẫn bài viết gốc                                     |
@@ -83,7 +98,7 @@ Bảng **`dbo.VnExpress_Articles`** trên Microsoft SQL Server lưu trữ 9 trư
 
 ---
 
-## 3. Báo cáo thống kê mô tả dữ liệu
+## 4. Báo cáo thống kê mô tả dữ liệu
 
 Toàn bộ dữ liệu được truy vấn trực tiếp từ SQL Server và trực quan hóa thành một bảng điều khiển với 4 biểu đồ:
 
@@ -94,24 +109,24 @@ Toàn bộ dữ liệu được truy vấn trực tiếp từ SQL Server và tr�
 
 ---
 
-## 4. Hướng dẫn cài đặt môi trường
+## 5. Hướng dẫn cài đặt môi trường
 
-### 4.1. Cài đặt Python & Thư viện
+### 5.1. Cài đặt Python & Thư viện
 
 1. Cài đặt **Python 3.11 hoặc 3.12** (Lưu ý tích chọn `Add python.exe to PATH`).
-2. Cài đặt toàn bộ thư viện cần thiết bằng 1 câu lệnh duy nhất:
+2. Cài đặt toàn bộ thư viện (đã pin phiên bản trong `requirements.txt`) bằng 1 câu lệnh duy nhất:
    ```powershell
-   pip install requests beautifulsoup4 lxml pandas pyodbc matplotlib
+   pip install -r requirements.txt
    ```
 
-### 4.2. Cài đặt Microsoft SQL Server & SSMS
+### 5.2. Cài đặt Microsoft SQL Server & SSMS
 
 1. Cài đặt **SQL Server Express** (Instance mặc định: `.\SQLEXPRESS`) và **SSMS**.
-2. Khởi tạo Database: Mở file `SQL importer/SQLschema.sql` trong SSMS và nhấn `F5` (hoặc để script tự tạo khi chạy).
+2. **Bắt buộc khởi tạo schema trước khi nạp:** Mở file `SQL importer/SQLschema.sql` trong SSMS và nhấn `F5` để tạo Database `ADY201m` và bảng `dbo.VnExpress_Articles`. `SQLimporter.py` không tự tạo DB/bảng — nếu chưa có, nó sẽ in thông báo hướng dẫn chạy schema và dừng lại.
 
 ---
 
-## 5. Hướng dẫn vận hành hệ thống
+## 6. Hướng dẫn vận hành hệ thống
 
 Mở Terminal tại thư mục gốc `ADY201m Final` và thực thi lần lượt 3 lệnh:
 
