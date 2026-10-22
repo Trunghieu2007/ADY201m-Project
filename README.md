@@ -25,7 +25,19 @@ vnexpress_data.json              dbo.VnExpress_Articles          bieu_do_1..4_*.
 vnexpress_data.csv               (Database: ADY201m)
 ```
 
-### 1.1. Module Thu thập & Làm sạch dữ liệu tại nguồn (`Web crawler`)
+### 1.1. Ý nghĩa thực tiễn của mô tả dữ liệu
+
+**Ứng dụng theo lĩnh vực:**
+
+- **A. Báo chí và truyền thông:** theo dõi nhịp độ xuất bản theo giờ và chuyên mục; phân tích độ dài và đặc điểm nội dung; so sánh cơ cấu tin tức giữa các chuyên mục; làm nền cho hệ thống media monitoring và báo cáo truyền thông.
+- **B. Phân tích xã hội:** theo dõi biến động các chủ đề kinh tế, giáo dục, y tế, môi trường và chính sách qua cơ cấu chuyên mục; phát hiện chủ đề mới hoặc tăng tần suất bất thường khi có chuỗi dữ liệu nhiều đợt cào; kiểm chứng các nhận định về nội dung báo chí bằng số liệu định lượng thay vì cảm nhận.
+- **C. Kinh doanh và thị trường:** theo dõi các nhóm chủ đề Kinh doanh, Bất động sản và Khoa học công nghệ, hỗ trợ nghiên cứu thị trường và theo dõi tin liên quan đến ngành hoặc thương hiệu. Các phát hiện chỉ nên dùng để xây dựng giả thuyết, không tự động coi là kết luận kinh doanh.
+- **D. Y tế, khoa học và công nghệ:** theo dõi mức độ chú ý của truyền thông dành cho sức khỏe và công nghệ mới; so sánh chủ đề khoa học qua nhiều giai đoạn khi có thêm dữ liệu.
+- **E. Giáo dục và nghiên cứu:** cung cấp bộ dữ liệu tiếng Việt có nguồn gốc rõ ràng để thực hành thống kê mô tả, trực quan hóa, tái lập kết quả và mở rộng kho dữ liệu cho nghiên cứu tiếp theo.
+
+*Lưu ý:* biểu đồ khung giờ phản ánh mẫu cào tại thời điểm chạy, không phải toàn bộ nhịp xuất bản trong ngày
+
+### 1.2. Module Thu thập & Làm sạch dữ liệu tại nguồn (`Web crawler`)
 
 * **Mục tiêu:** Thu thập các bài báo mới nhất từ RSS Feed của VnExpress và thực hiện làm sạch dữ liệu ngay trong quá trình bóc tách.
 * **Luồng hoạt động:**
@@ -42,7 +54,7 @@ vnexpress_data.csv               (Database: ADY201m)
      - `vnexpress_data.json`.
      - `vnexpress_data.csv`.
 
-### 1.2. Module Lưu trữ & Khử trùng lặp (`SQL importer`)
+### 1.3. Module Lưu trữ & Khử trùng lặp (`SQL importer`)
 
 * **Mục tiêu:** Nạp dữ liệu từ file JSON vào Microsoft SQL Server, duy trì tính toàn vẹn và tích lũy dữ liệu theo thời gian.
 * **Luồng hoạt động:**
@@ -52,7 +64,7 @@ vnexpress_data.csv               (Database: ADY201m)
   4. Khử trùng lặp 2 tầng: trước hết loại `article_id` trùng ngay trong batch JSON (tránh vi phạm PRIMARY KEY), rồi đối chiếu với `set` các `article_id` đã có trong CSDL để chỉ giữ bài hoàn toàn mới.
   5. Nạp bằng `executemany` với `fast_executemany = True` (nhanh hơn chèn từng dòng). Trường `published_at` được ép về `datetime` để ghi vào cột `DATETIME`. Nếu lệnh chèn hàng loạt lỗi, tự động fallback chèn từng dòng trong `try/except`, để một dòng hỏng không phá cả batch, và in báo cáo số bài chèn được / thất bại.
 
-### 1.3. Module Mô tả dữ liệu & Trực quan hóa (`EDA + charts`)
+### 1.4. Module Mô tả dữ liệu & Trực quan hóa (`EDA + charts`)
 
 * **Mục tiêu:** Truy vấn dữ liệu trực tiếp từ SQL Server, tính toán các chỉ số thống kê mô tả và xuất ra 4 biểu đồ (mỗi biểu đồ 1 file PNG riêng).
 * **Luồng hoạt động:**
@@ -75,7 +87,7 @@ vnexpress_data.csv               (Database: ADY201m)
 | `lxml`                     | Parser XML tốc độ cao, được BeautifulSoup dùng làm backend khi đọc RSS Feed.   |
 | `pandas`                   | Cấu trúc dữ liệu dạng DataFrame, tính toán thống kê mô tả và xuất file CSV. |
 | `pyodbc`                   | Kết nối và thực thi câu lệnh SQL tới Microsoft SQL Server qua ODBC Driver.        |
-| `matplotlib`               | Vẽ 4 biểu đồ trực quan hóa và xuất ra 4 file ảnh PNG.                             |
+| `matplotlib`               | Vẽ 4 biểu đồ trực quan hóa và xuất ra 4 file ảnh PNG.                           |
 
 ---
 
