@@ -56,16 +56,15 @@ def is_allowed(url, disallow):
 def normalize_datetime(raw):
     if not raw:
         return None
-    m = re.search(r"\d{1,2}/\d{1,2}/\d{4}(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?", raw)
-    if not m:
+    dm = re.search(r"\d{1,2}/\d{1,2}/\d{4}", raw)          # ngày: 17/10/2026
+    if not dm:
         return None
-    s = m.group(0).strip()
-    for fmt in ("%d/%m/%Y %H:%M:%S", "%d/%m/%Y %H:%M", "%d/%m/%Y"):
-        try:
-            return datetime.strptime(s, fmt).strftime("%Y-%m-%d %H:%M:%S")
-        except ValueError:
-            continue
-    return None
+    dt = datetime.strptime(dm.group(0), "%d/%m/%Y")
+    tm = re.search(r"\d{1,2}:\d{2}", raw)                   # giờ: 23:37 (bỏ qua dấu phẩy/GMT)
+    if tm:
+        h, m = map(int, tm.group(0).split(":"))
+        dt = dt.replace(hour=h, minute=m)
+    return dt.strftime("%Y-%m-%d %H:%M:%S")
 
 #Bóc các đoạn văn nội dung, thử nhiều selector dự phòng nếu markup VnExpress thay đổi
 def extract_paragraphs(soup):

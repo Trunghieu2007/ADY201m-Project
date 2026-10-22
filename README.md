@@ -36,7 +36,7 @@ vnexpress_data.csv               (Database: ADY201m)
      - Cắt tỉa khoảng trắng thừa (`.strip()`), loại bỏ hoàn toàn các đoạn văn rỗng.
      - Bóc nội dung bằng `extract_paragraphs()` với nhiều selector dự phòng (`.fck_detail p.Normal` → `.fck_detail p` → ...) để không âm thầm mất nội dung khi VnExpress đổi markup.
      - Tách rời chữ ký tác giả in đậm (`<strong>`) ở cuối bài ra khỏi trường `content` để lưu đúng vào cột `author`.
-     - `normalize_datetime()` ép thời gian tiếng Việt (`dd/mm/yyyy HH:mm`) về chuẩn `YYYY-MM-DD HH:MM:SS`; không parse được thì để `null`.
+     - `normalize_datetime()` bóc riêng **ngày** (`dd/mm/yyyy`) và **giờ** (`HH:mm`) từ chuỗi gốc kiểu `"Thứ bảy, 17/10/2026, 23:37 (GMT+7)"`, rồi ghép về chuẩn `YYYY-MM-DD HH:MM:SS` (bỏ được cả dấu phẩy và hậu tố GMT); thiếu giờ thì giờ = `00:00`, không parse được ngày thì để `null`.
      - Xử lý giá trị khuyết thiếu: Gán mặc định `"Không có"` cho tiểu mục, `"Khác"` cho chuyên mục, và `"VnExpress"` cho bài không đề tên tác giả.
   5. Đóng gói và lưu đồng thời ra 2 định dạng file tại thư mục `Web crawler/`:
      - `vnexpress_data.json`.
@@ -123,6 +123,7 @@ Toàn bộ dữ liệu được truy vấn trực tiếp từ SQL Server và tr�
 
 1. Cài đặt **SQL Server Express** (Instance mặc định: `.\SQLEXPRESS`) và **SSMS**.
 2. **Bắt buộc khởi tạo schema trước khi nạp:** Mở file `SQL importer/SQLschema.sql` trong SSMS và nhấn `F5` để tạo Database `ADY201m` và bảng `dbo.VnExpress_Articles`. `SQLimporter.py` không tự tạo DB/bảng — nếu chưa có, nó sẽ in thông báo hướng dẫn chạy schema và dừng lại.
+3. **Nâng cấp từ phiên bản cũ:** nếu bảng đã tồn tại với cột `published_at` kiểu `NVARCHAR` (dữ liệu lẫn lộn định dạng), hãy `DROP TABLE dbo.VnExpress_Articles;` rồi chạy lại `SQLschema.sql` để có cột `DATETIME` sạch, sau đó chạy lại 3 bước.
 
 ---
 
