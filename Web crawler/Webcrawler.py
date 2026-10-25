@@ -23,39 +23,20 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 }
 
-# Gửi request kèm kiểm tra lỗi HTTP và ép mã hóa UTF-8
+#fetch: gửi request HTTP, kiểm tra lỗi 4xx/5xx và ép mã hóa UTF-8
 def fetch(url):
     res = requests.get(url, headers=HEADERS, timeout=10)
     res.raise_for_status()          # ném exception nếu 4xx/5xx -> tránh nạp trang rác
     res.encoding = "utf-8"          # VnExpress dùng UTF-8, tránh đoán sai mã hóa
     return res
 
-# Đọc robots.txt và trả về danh sách đường dẫn bị cấm (áp dụng cho User-agent *)
-def load_disallow():
-    disallow = []
-    try:
-        text = fetch(f"{BASE_URL}/robots.txt").text
-        applies = False
-        for line in text.splitlines():
-            line = line.strip()
-            if line.lower().startswith("user-agent:"):
-                applies = line.split(":", 1)[1].strip() == "*"
-            elif applies and line.lower().startswith("disallow:"):
-                path = line.split(":", 1)[1].strip()
-                if path and path != "/":
-                    disallow.append(BASE_URL + path)
-    except Exception as e:
-        print(f"[!] Không đọc được robots.txt ({e}), bỏ qua kiểm tra cho phép.")
-    return disallow
-
-#URL có được phép cào theo robots.txt không
-def is_allowed(url, disallow):
-    return not any(url.startswith(p) for p in disallow)
-
-#Ép thời gian tiếng Việt về định dạng DATETIME 'YYYY-MM-DD HH:MM:SS'
+#normalize_datetime: ép ngày giờ (dd/mm/yyyy HH:MM hoặc ISO) về 'YYYY-MM-DD HH:MM:SS'
 def normalize_datetime(raw):
     if not raw:
         return None
+    iso = re.search(r"\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}", raw)   # dạng 2026-10-24T18:00 (meta pubdate)
+    if iso:
+        return datetime.strptime(iso.group(0).replace("T", " "), "%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M:%S")
     dm = re.search(r"\d{1,2}/\d{1,2}/\d{4}", raw)          # ngày: 17/10/2026
     if not dm:
         return None
@@ -66,52 +47,80 @@ def normalize_datetime(raw):
         dt = dt.replace(hour=h, minute=m)
     return dt.strftime("%Y-%m-%d %H:%M:%S")
 
-#Bóc các đoạn văn nội dung, thử nhiều selector dự phòng nếu markup VnExpress thay đổi
-def extract_paragraphs(soup):
-    for sel in (".fck_detail p.Normal", ".fck_detail p", "#main-content p.Normal", ".article-detail p.Normal"):
-        paragraphs = soup.select(sel)
-        if paragraphs:
-            return paragraphs
-    return []
+#is_article_page: loại trang video/clip/album (og:type khác "article" hoặc không có thẻ h1)
+def is_article_page(soup):
+    og = soup.find("meta", {"property": "og:type"})
+    og_type = og.get("content", "").strip().lower() if og else ""
+    if og_type and og_type != "article":
+        return False
+    return soup.find("h1") is not None
 
-#Cào chi tiết 1 bài báo VnExpress và trích xuất 9 trường dữ liệu
+#extract_paragraphs: bóc đoạn văn có chữ, ưu tiên selector cho >=2 đoạn (selector hẹp
+#có thể chỉ bắt được dòng byline); trả về danh sách đoạn dự phòng nếu không selector nào đủ
+def extract_paragraphs(soup):
+    fallback = []
+    for sel in (".fck_detail p.Normal", ".fck_detail p", "#main-content p.Normal",
+                ".article-detail p.Normal", "article p"):
+        paragraphs = [p for p in soup.select(sel) if p.text.strip()]
+        if len(paragraphs) >= 2:
+            return paragraphs
+        if paragraphs and not fallback:
+            fallback = paragraphs
+    return fallback
+
+#parse_article: cào 1 bài và trả về dict 9 trường; trả về None nếu không phải bài báo hợp lệ
 def parse_article(url):
     soup = BeautifulSoup(fetch(url).text, "html.parser")
+
+    # 0. Bỏ trang video/clip vì không có nội dung bài báo để phân tích
+    if not is_article_page(soup):
+        print(f"   Bỏ qua (không phải bài báo): {url}")
+        return None
 
     # 1. Article ID
     meta_id = soup.find("meta", {"name": "tt_article_id"})
     article_id = meta_id["content"] if meta_id and meta_id.get("content") else url.split("-")[-1].replace(".html", "")
 
-    # 2. Title
-    h1 = soup.find("h1", class_="title-detail")
+    # 2. Title: ưu tiên h1.title-detail, dự phòng h1 bất kỳ
+    h1 = soup.find("h1", class_="title-detail") or soup.find("h1")
     title = h1.text.strip() if h1 else ""
 
     # 3. Description
     desc = soup.find("p", class_="description")
     description = desc.text.strip() if desc else ""
 
-    # 4. Published Date (ép về DATETIME)
+    # 4. Published Date: span.date, dự phòng meta pubdate (dạng ISO)
     date_tag = soup.find("span", class_="date")
-    published_at = normalize_datetime(date_tag.text.strip() if date_tag else "")
+    raw_date = date_tag.text.strip() if date_tag else ""
+    if not raw_date:
+        meta_date = soup.find("meta", {"name": "pubdate"})
+        raw_date = meta_date["content"] if meta_date and meta_date.get("content") else ""
+    published_at = normalize_datetime(raw_date)
 
     # 5 & 6. Category & Subcategory
     breadcrumbs = [a.text.strip() for a in soup.select("ul.breadcrumb li a")]
     category = breadcrumbs[0] if len(breadcrumbs) >= 1 else "Khác"
     subcategory = breadcrumbs[1] if len(breadcrumbs) >= 2 else "Không có"
 
-    # 7 & 8. Content & Author
+    # 7 & 8. Content & Author (extract_paragraphs đã bỏ các đoạn rỗng)
     paragraphs = extract_paragraphs(soup)
-    author = "VnExpress"
 
+    # Tên tác giả nằm ở đoạn cuối (in đậm, ngắn); strong rỗng thì giữ mặc định
+    author = "VnExpress"
     if paragraphs:
         last_p = paragraphs[-1]
         strong_tag = last_p.find("strong")
-        if strong_tag and len(last_p.text.strip()) < 50:
+        if strong_tag and len(last_p.text.strip()) < 50 and strong_tag.text.strip():
             author = strong_tag.text.strip()
             paragraphs = paragraphs[:-1]
 
     content_lines = [p.text.strip() for p in paragraphs if p.text.strip()]
     content = "\n".join(content_lines)
+
+    # 9. Quality gate: bỏ bài thiếu tiêu đề hoặc thiếu nội dung
+    if not title or not content:
+        print(f"   Bỏ qua (thiếu title hoặc content): {url}")
+        return None
 
     return {
         "article_id": article_id,
@@ -125,12 +134,11 @@ def parse_article(url):
         "url": url,
     }
 
-#Thu thập danh sách URL từ RSS tin mới nhất VnExpress và cào nội dung từng bài
+#crawl_rss: đọc RSS tin mới nhất, cào từng bài hợp lệ và trả về danh sách bài báo
 def crawl_rss():
     print("Đang lấy danh sách tin từ RSS...")
     res = fetch(RSS_URL)
     soup = BeautifulSoup(res.content, "xml")
-    disallow = load_disallow()
     articles = []
 
     for item in soup.find_all("item"):
@@ -143,13 +151,12 @@ def crawl_rss():
 
         if not link.endswith(".html"):
             continue
-        if not is_allowed(link, disallow):
-            print(f"-> Bỏ qua (robots.txt): {link}")
-            continue
 
         print(f"-> Đang cào: {link}")
         try:
-            articles.append(parse_article(link))
+            article = parse_article(link)
+            if article:
+                articles.append(article)
         except Exception as e:
             print(f"   Lỗi bài {link}: {e}")
         time.sleep(CRAWL_DELAY)
