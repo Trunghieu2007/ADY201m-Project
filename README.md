@@ -69,14 +69,14 @@ vnexpress_data.csv               (Database: ADY201m)             bieu_do_2_phan_
 
 ### 1.4. Module Mô tả dữ liệu & Trực quan hóa (`EDA + charts`)
 
-* **Mục tiêu:** Truy vấn dữ liệu trực tiếp từ SQL Server, tính toán các chỉ số thống kê mô tả và xuất ra 4 biểu đồ (2 biểu đồ phân bố một biến + 2 biểu đồ quan hệ giữa hai biến), mỗi biểu đồ 1 file PNG riêng.
+* **Mục tiêu:** Truy vấn dữ liệu trực tiếp từ SQL Server, tính toán các chỉ số thống kê mô tả và xuất ra 4 biểu đồ (3 biểu đồ phân bố một biến + 1 biểu đồ quan hệ giữa hai biến), mỗi biểu đồ 1 file PNG riêng.
 * **Luồng hoạt động:**
   1. Mở kết nối tới SQL Server, dùng lệnh SQL `SELECT ... FROM dbo.VnExpress_Articles` để tải toàn bộ các bản ghi đã lưu vào DataFrame của `pandas`.
   2. Tiền xử lý đặc trưng cho EDA:
-     - Tính toán độ dài số từ của bài viết (`word_count`) từ trường `content` và độ dài mô tả (`desc_wc`) từ trường `description`.
+     - Tính toán độ dài số từ của bài viết (`word_count`) từ trường `content` và độ dài mô tả (`desc_wc`) từ trường `description`; hai chỉ số này dùng cho phần thống kê mô tả ở terminal, không còn là trục của biểu đồ.
      - Lấy khung giờ xuất bản (0h - 23h) trực tiếp từ cột `DATETIME` `published_at` bằng `pandas .dt.hour` (không còn parse chuỗi tiếng Việt mong manh như trước).
   3. In các chỉ số thống kê mô tả ra terminal: tổng số bài, số bài có nội dung/mô tả rỗng, số bài thiếu `published_at`, count/mean/std/min/max cho `word_count` và `hour`, cùng tần số chuyên mục.
-  4. Dùng `matplotlib` dựng 4 biểu đồ và lưu thành 4 file PNG riêng trong `EDA + charts/`: số bài theo đầy đủ chuyên mục (bar ngang), số bài theo 24 khung giờ (histogram, màu động theo tần số), cơ cấu tác giả (pie 2 lát: VnExpress và các tác giả khác) và heatmap chuyên mục × khung giờ (`bieu_do_1_chuyen_muc.png` ... `bieu_do_4_nhiet_do_chuyen_muc_gio.png`), tô màu theo 10 bậc rời (thấp = xanh biển, giữa = xanh lá, cao = đỏ).
+  4. Dùng `matplotlib` dựng 4 biểu đồ và lưu thành 4 file PNG riêng trong `EDA + charts/`: số bài theo đầy đủ chuyên mục (bar ngang), số bài theo 24 khung giờ (histogram, màu động theo tần số), cơ cấu tác giả (pie 2 lát: VnExpress và các tác giả khác) và heatmap chuyên mục × khung giờ (`bieu_do_1_chuyen_muc.png` ... `bieu_do_4_nhiet_do_chuyen_muc_gio.png`). Biểu đồ 1, 2 và 4 tô màu theo 10 bậc rời (thấp = xanh biển, giữa = xanh lá, cao = đỏ); biểu đồ 3 dùng cặp xanh/xám để phân biệt hai nhóm.
 
 ---
 
@@ -120,7 +120,7 @@ Toàn bộ dữ liệu được truy vấn trực tiếp từ SQL Server (`dbo.V
 | :-: | :--- | :--- | :--- | :--- |
 | 1 | Số bài theo chuyên mục | Bar chart ngang | `category` | Mỗi chuyên mục có bao nhiêu bài, cơ cấu ra sao? |
 | 2 | Số bài xuất bản theo 24 khung giờ | Histogram (24 bin) | `published_at` → `hour` | Mỗi giờ có bao nhiêu bài, phân bố tập trung ở đâu? |
-| 3 | Cơ cấu tác giả bài viết | Pie chart | `author` | Ai viết nhiều nhất, mức độ tập trung hay phân tán của tác giả? |
+| 3 | Cơ cấu tác giả bài viết | Pie chart | `author` | Bao nhiêu % bài do byline mặc định VnExpress, bao nhiêu % do tác giả có tên? |
 | 4 | Chuyên mục × khung giờ xuất bản | Heatmap | `category`, `published_at` | Chuyên mục nào đăng nhiều vào giờ nào? |
 
 ### 4.1. Biểu đồ 1 — Số bài theo chuyên mục (Bar Chart)
@@ -135,7 +135,7 @@ Toàn bộ dữ liệu được truy vấn trực tiếp từ SQL Server (`dbo.V
 
 * **Dạng:** histogram 24 cột, mỗi cột là một khung giờ 0h–23h, chiều cao là số bài trong giờ đó; cột tô màu động theo tần số (10 bậc rời), đầu cột ghi số bài, trục x hiện đủ **24 nhãn giờ** 0h–23h.
 * **Trường dữ liệu:** `published_at` → `hour`; 46/46 bài có timestamp.
-* **Ý nghĩa thống kê:** đếm **tần số tuyệt đối** của biến định lượng rời rạc `hour` với bin cố định 1 giờ, phủ đủ 24 bin. So với đường lũy kế, histogram cho thấy trực tiếp quy mô từng giờ, giờ cao điểm và các khoảng trống mà không phải đọc chênh lệch giữa hai điểm liên tiếp.
+* **Ý nghĩa thống kê:** đếm **tần số tuyệt đối** của biến định lượng rời rạc `hour` với bin cố định 1 giờ, phủ đủ 24 bin. Histogram cho thấy trực tiếp quy mô từng giờ, giờ cao điểm và các khoảng trống mà không phải đọc chênh lệch giữa hai điểm như biểu đồ đường; đổi lại, bin 1 giờ làm mất khác biệt trong cùng giờ.
 * **Kết quả hiện tại:** 13h 6 bài (13,0%), 14h 6 (13,0%), 15h 9 (19,6%), 16h 9 (19,6%), 17h 6 (13,0%), 18h 7 (15,2%), 19h 3 (6,5%); 17 giờ còn lại 0 bài. Trung bình 15,8h, trung vị 16h. Hai giờ cao nhất là 15h–16h, chiếm 18/46 = 39,1% số bài.
 * **Lưu ý:** 17/24 cột bằng 0 vì snapshot chỉ phủ 13:05–19:17; cột 0 nghĩa là **ngoài phạm vi mẫu**, không phải "giờ đó không đăng bài". Bin rộng 1 giờ gộp mọi bài trong cùng giờ (ví dụ 13:05–13:59), nên không thấy được khác biệt phút.
 
@@ -161,7 +161,7 @@ Toàn bộ 4 biểu đồ là **thống kê mô tả trên một mẫu 46 bài t
 
 * RSS lúc cào có 48 item; crawler giữ 46 bài và loại 2: 1 trang video (`og:type = website`, 5136624) và 1 trang điểm tin không có tiêu đề/nội dung (5136669). Toàn bộ 46 bài đã lưu đều có `title`, `content`, `description` và `published_at`, không trùng `article_id`.
 * 5/46 bài (10,9%) không có `subcategory` (ghi "Không có"); 25 nhãn chuyên mục con còn lại phân bố rất mỏng.
-* 46 bài đến từ **35 tác giả khác nhau**; 40 bài (87,0%) thuộc 34 tác giả có tên, phần đuôi rất dài (29 người chỉ có 1 bài) nên biểu đồ 3 gộp họ thành nhóm "Các tác giả khác".
+* 46 bài đến từ **35 tác giả khác nhau**; 40 bài (87,0%) thuộc 34 tác giả có tên, phần đuôi rất dài (29 người chỉ có 1 bài) nên biểu đồ 3 gộp toàn bộ 34 người vào nhóm "Các tác giả khác".
 * 6/46 bài (13,0%) dùng byline mặc định `"VnExpress"` — lát VnExpress trên pie chart là quy ước của crawler, không đại diện một người viết thật.
 * Quy mô mỗi chuyên mục rất nhỏ (lớn nhất 7 bài, nhiều mục 1–2 bài), nên mọi tỷ lệ % và so sánh giữa nhóm chỉ mang tính mô tả.
 * Dữ liệu chỉ phủ 13:05–19:17 của một ngày; mọi kết luận về "khung giờ vàng" hay nhịp xuất bản cần thêm nhiều ngày cào.
