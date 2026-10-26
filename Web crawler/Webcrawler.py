@@ -82,9 +82,12 @@ def parse_article(url):
     h1 = soup.find("h1", class_="title-detail") or soup.find("h1")
     title = h1.text.strip() if h1 else ""
 
-    # 3. Description
+    # 3. Description: ưu tiên p.description, dự phòng meta description khi bài không có sao-pô
     desc = soup.find("p", class_="description")
     description = desc.text.strip() if desc else ""
+    if not description:
+        meta_desc = soup.find("meta", {"name": "description"}) or soup.find("meta", {"property": "og:description"})
+        description = meta_desc["content"].strip() if meta_desc and meta_desc.get("content") else ""
 
     # 4. Published Date: span.date, dự phòng meta pubdate (dạng ISO)
     date_tag = soup.find("span", class_="date")

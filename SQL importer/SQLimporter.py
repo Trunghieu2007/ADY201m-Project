@@ -103,20 +103,24 @@ def import_json_to_sql(json_path=None):
         )
 
     inserted, failed = 0, []
-    try:
-        cursor.fast_executemany = True
-        cursor.executemany(insert_sql, [to_params(a) for a in new_articles])
-        inserted = len(new_articles)
-    except pyodbc.Error as bulk_err:
-        # Fallback: chèn từng dòng để 1 dòng lỗi không phá hỏng cả batch
-        cursor.fast_executemany = False
-        print(f"[!] executemany lỗi ({bulk_err}); chuyển sang chèn từng dòng...")
-        for a in new_articles:
-            try:
-                cursor.execute(insert_sql, to_params(a))
-                inserted += 1
-            except pyodbc.Error as e:
-                failed.append((a.get("article_id"), str(e).strip()))
+    if not new_articles:
+        # Không có bài mới (ví dụ chạy lại khi RSS chưa đổi): executemany với danh sách rỗng sẽ báo lỗi
+        print("[+] Không có bài mới, bỏ qua bước chèn.")
+    else:
+        try:
+            cursor.fast_executemany = True
+            cursor.executemany(insert_sql, [to_params(a) for a in new_articles])
+            inserted = len(new_articles)
+        except pyodbc.Error as bulk_err:
+            # Fallback: chèn từng dòng để 1 dòng lỗi không phá hỏng cả batch
+            cursor.fast_executemany = False
+            print(f"[!] executemany lỗi ({bulk_err}); chuyển sang chèn từng dòng...")
+            for a in new_articles:
+                try:
+                    cursor.execute(insert_sql, to_params(a))
+                    inserted += 1
+                except pyodbc.Error as e:
+                    failed.append((a.get("article_id"), str(e).strip()))
 
     cursor.close()
     conn.close()

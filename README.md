@@ -51,6 +51,7 @@ vnexpress_data.csv               (Database: ADY201m)             bieu_do_2_phan_
      - Tách chữ ký tác giả in đậm (`<strong>`) ở đoạn cuối ra khỏi `content` để lưu vào cột `author`; bỏ qua `<strong>` rỗng nên không bị mất tên tác giả khi trang kết thúc bằng `<p><strong></strong></p>`.
      - `normalize_datetime()` đọc được cả chuỗi tiếng Việt (`"Thứ bảy, 17/10/2026, 23:37 (GMT+7)"` → bóc ngày `dd/mm/yyyy` + giờ `HH:mm`, bỏ dấu phẩy/GMT) và chuỗi ISO của `meta pubdate` (`2026-10-24T18:00`), ghép về `YYYY-MM-DD HH:MM:SS`; không parse được ngày thì để `null`.
      - Tách `category`/`subcategory` từ breadcrumb; mục đầu là icon home không có chữ nên lấy thuộc tính `title` thay thế, sau đó bỏ các mục rỗng — tránh trường hợp `category` bị chuỗi rỗng.
+     - `description` lấy từ `p.description`; bài không có sao-pô thì lấy `meta[name=description]`, sau đó `og:description`.
      - **Quality gate:** bài thiếu `title` hoặc thiếu `content` bị loại, không ghi vào JSON/CSV/CSDL.
      - Xử lý giá trị khuyết thiếu: Gán mặc định `"Không có"` cho tiểu mục, `"Khác"` cho chuyên mục, và `"VnExpress"` cho bài không đề tên tác giả.
   4. Đóng gói và lưu đồng thời ra 2 định dạng file tại thư mục `Web crawler/`:
