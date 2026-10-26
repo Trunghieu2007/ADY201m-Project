@@ -20,3 +20,6 @@ Thumbs.db
 # Du lieu tu sinh tu crawler (khong commit)
 Web crawler/vnexpress_data.json
 Web crawler/vnexpress_data.csv
+
+# Log cua scheduler (khong commit)
+scheduler.log
