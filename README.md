@@ -2,11 +2,11 @@
 
 Thành viên nhóm và phân công:
 
-**Đinh Trung Hiếu**:
+**Đinh Trung Hiếu**: phụ trách EDA
 
-**Phạm Hùng Dương**:
+**Phạm Hùng Dương**: phụ trách web crawler
 
-**Nguyễn Hữu Hùng**:
+**Nguyễn Hữu Hùng**: phụ trách SQL
 
 ---
 
