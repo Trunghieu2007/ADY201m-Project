@@ -4,11 +4,8 @@ import sys
 import time
 import json
 from datetime import datetime
-# pyrefly: ignore[missing-import]
 import requests  # type: ignore
-# pyrefly: ignore[missing-import]
 from bs4 import BeautifulSoup  # type: ignore
-# pyrefly: ignore[missing-import]
 import pandas as pd  # type: ignore
 
 # Đảm bảo in tiếng Việt không bị lỗi font trên Windows
@@ -97,8 +94,10 @@ def parse_article(url):
         raw_date = meta_date["content"] if meta_date and meta_date.get("content") else ""
     published_at = normalize_datetime(raw_date)
 
-    # 5 & 6. Category & Subcategory
-    breadcrumbs = [a.text.strip() for a in soup.select("ul.breadcrumb li a")]
+    # 5 & 6. Category & Subcategory (breadcrumb đầu là icon home, lấy title khi không có chữ)
+    breadcrumbs = [(a.text.strip() or a.get("title", "").strip())
+                   for a in soup.select("ul.breadcrumb li a")]
+    breadcrumbs = [b for b in breadcrumbs if b]
     category = breadcrumbs[0] if len(breadcrumbs) >= 1 else "Khác"
     subcategory = breadcrumbs[1] if len(breadcrumbs) >= 2 else "Không có"
 

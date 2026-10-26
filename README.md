@@ -18,11 +18,13 @@ Hệ thống được thiết kế theo mô hình 3 bước:
 [1. Web crawler]                 [2. SQL importer]                [3. EDA + charts]
   Webcrawler.py       ───►         SQLimporter.py        ───►       Charts.py
   (Cào tin RSS + lọc và            (Nạp dữ liệu đã xử lý         (Query SQL, thống kê &
-   bóc tách 9 trường)                vào SQL Server )             xuất 5 ảnh PNG)
+   bóc tách 9 trường)                vào SQL Server )             xuất 4 ảnh PNG)
          │                                 │                               │
          ▼                                 ▼                               ▼
-vnexpress_data.json              dbo.VnExpress_Articles          bieu_do_1..5_*.png
-vnexpress_data.csv               (Database: ADY201m)
+vnexpress_data.json              dbo.VnExpress_Articles          bieu_do_1_chuyen_muc.png
+vnexpress_data.csv               (Database: ADY201m)             bieu_do_2_phan_bo_gio.png
+                                                                 bieu_do_3_tac_gia.png
+                                                                 bieu_do_4_nhiet_do_chuyen_muc_gio.png
 ```
 
 ### 1.1. Ý nghĩa thực tiễn của mô tả dữ liệu
@@ -48,6 +50,7 @@ vnexpress_data.csv               (Database: ADY201m)
      - `extract_paragraphs()` thử nhiều selector dự phòng (`.fck_detail p.Normal` → `.fck_detail p` → ...) và chọn selector đầu tiên cho **từ ≥2 đoạn có chữ**, vì selector hẹp đôi khi chỉ bắt được dòng byline (trang trắc nghiệm); nếu không selector nào đủ thì dùng danh sách dự phòng.
      - Tách chữ ký tác giả in đậm (`<strong>`) ở đoạn cuối ra khỏi `content` để lưu vào cột `author`; bỏ qua `<strong>` rỗng nên không bị mất tên tác giả khi trang kết thúc bằng `<p><strong></strong></p>`.
      - `normalize_datetime()` đọc được cả chuỗi tiếng Việt (`"Thứ bảy, 17/10/2026, 23:37 (GMT+7)"` → bóc ngày `dd/mm/yyyy` + giờ `HH:mm`, bỏ dấu phẩy/GMT) và chuỗi ISO của `meta pubdate` (`2026-10-24T18:00`), ghép về `YYYY-MM-DD HH:MM:SS`; không parse được ngày thì để `null`.
+     - Tách `category`/`subcategory` từ breadcrumb; mục đầu là icon home không có chữ nên lấy thuộc tính `title` thay thế, sau đó bỏ các mục rỗng — tránh trường hợp `category` bị chuỗi rỗng.
      - **Quality gate:** bài thiếu `title` hoặc thiếu `content` bị loại, không ghi vào JSON/CSV/CSDL.
      - Xử lý giá trị khuyết thiếu: Gán mặc định `"Không có"` cho tiểu mục, `"Khác"` cho chuyên mục, và `"VnExpress"` cho bài không đề tên tác giả.
   4. Đóng gói và lưu đồng thời ra 2 định dạng file tại thư mục `Web crawler/`:
@@ -66,15 +69,14 @@ vnexpress_data.csv               (Database: ADY201m)
 
 ### 1.4. Module Mô tả dữ liệu & Trực quan hóa (`EDA + charts`)
 
-* **Mục tiêu:** Truy vấn dữ liệu trực tiếp từ SQL Server, tính toán các chỉ số thống kê mô tả và xuất ra 5 biểu đồ (2 biểu đồ phân bố một biến + 3 biểu đồ quan hệ/cơ cấu), mỗi biểu đồ 1 file PNG riêng.
+* **Mục tiêu:** Truy vấn dữ liệu trực tiếp từ SQL Server, tính toán các chỉ số thống kê mô tả và xuất ra 4 biểu đồ (2 biểu đồ phân bố một biến + 2 biểu đồ quan hệ giữa hai biến), mỗi biểu đồ 1 file PNG riêng.
 * **Luồng hoạt động:**
   1. Mở kết nối tới SQL Server, dùng lệnh SQL `SELECT ... FROM dbo.VnExpress_Articles` để tải toàn bộ các bản ghi đã lưu vào DataFrame của `pandas`.
   2. Tiền xử lý đặc trưng cho EDA:
      - Tính toán độ dài số từ của bài viết (`word_count`) từ trường `content` và độ dài mô tả (`desc_wc`) từ trường `description`.
      - Lấy khung giờ xuất bản (0h - 23h) trực tiếp từ cột `DATETIME` `published_at` bằng `pandas .dt.hour` (không còn parse chuỗi tiếng Việt mong manh như trước).
-     - Chuẩn hóa nguồn bài viết thành biến phân loại nhị phân: `"Tác giả cụ thể"` vs `"Chung (VnExpress)"`.
   3. In các chỉ số thống kê mô tả ra terminal: tổng số bài, số bài có nội dung/mô tả rỗng, số bài thiếu `published_at`, count/mean/std/min/max cho `word_count` và `hour`, cùng tần số chuyên mục.
-  4. Dùng `matplotlib` dựng 5 biểu đồ và lưu thành 5 file PNG riêng trong `EDA + charts/`: top 10 chuyên mục con (bar), số bài lũy kế theo giờ (line/ECDF), tương quan mô tả - nội dung (scatter), cơ cấu tác giả theo chuyên mục (stacked bar 100%) và heatmap chuyên mục × khung giờ (`bieu_do_1_*.png` ... `bieu_do_5_*.png`), tô màu theo 20 bậc rời (thấp = xanh biển, giữa = xanh lá, cao = đỏ).
+  4. Dùng `matplotlib` dựng 4 biểu đồ và lưu thành 4 file PNG riêng trong `EDA + charts/`: số bài theo đầy đủ chuyên mục (bar ngang), số bài theo 24 khung giờ (histogram, màu động theo tần số), cơ cấu tác giả (pie 2 lát: VnExpress và các tác giả khác) và heatmap chuyên mục × khung giờ (`bieu_do_1_chuyen_muc.png` ... `bieu_do_4_nhiet_do_chuyen_muc_gio.png`), tô màu theo 10 bậc rời (thấp = xanh biển, giữa = xanh lá, cao = đỏ).
 
 ---
 
@@ -87,7 +89,7 @@ vnexpress_data.csv               (Database: ADY201m)
 | `lxml`                     | Parser XML tốc độ cao, được BeautifulSoup dùng làm backend khi đọc RSS Feed.   |
 | `pandas`                   | Cấu trúc dữ liệu dạng DataFrame, tính toán thống kê mô tả và xuất file CSV. |
 | `pyodbc`                   | Kết nối và thực thi câu lệnh SQL tới Microsoft SQL Server qua ODBC Driver.        |
-| `matplotlib`               | Vẽ 5 biểu đồ trực quan hóa và xuất ra 5 file ảnh PNG.                           |
+| `matplotlib`               | Vẽ 4 biểu đồ trực quan hóa và xuất ra 4 file ảnh PNG.                           |
 
 ---
 
@@ -112,65 +114,58 @@ Bảng **`dbo.VnExpress_Articles`** trên Microsoft SQL Server lưu trữ 10 tr�
 
 ## 4. Báo cáo thống kê mô tả dữ liệu
 
-Toàn bộ dữ liệu được truy vấn trực tiếp từ SQL Server (`dbo.VnExpress_Articles`) và trực quan hóa thành **5 biểu đồ**, mỗi biểu đồ xuất ra 1 file PNG riêng trong `EDA + charts/`. Hai biểu đồ đầu mô tả phân bố của một biến (chuyên mục con, khung giờ); ba biểu đồ sau mô tả quan hệ giữa hai biến hoặc cơ cấu bên trong từng nhóm. Số liệu dưới đây ứng với lần cào đầy đủ ngày 25/10/2026 (sau khi sửa crawler): **40 bài**, snapshot 24/10 15:12–21:55.
+Toàn bộ dữ liệu được truy vấn trực tiếp từ SQL Server (`dbo.VnExpress_Articles`) và trực quan hóa thành **4 biểu đồ**, mỗi biểu đồ xuất ra 1 file PNG riêng trong `EDA + charts/`. Ba biểu đồ đầu mô tả phân bố của một biến (chuyên mục, khung giờ, tác giả); biểu đồ 4 mô tả quan hệ giữa hai biến (chuyên mục × khung giờ). Số liệu dưới đây ứng với lần cào đầy đủ ngày 25/10/2026 (sau khi sửa crawler): **46 bài**, snapshot 25/10 13:05–19:17.
 
 | # | Biểu đồ | Loại | Trường dữ liệu | Câu hỏi thống kê |
 | :-: | :--- | :--- | :--- | :--- |
-| 1 | Top 10 chuyên mục con | Bar chart | `subcategory` | Chuyên mục con nào xuất hiện nhiều nhất? |
-| 2 | Số bài xuất bản lũy kế theo giờ | Line chart (ECDF) | `published_at` → `hour` | Bao nhiêu % bài đã đăng trước giờ t? Trung vị và P80 là mấy giờ? |
-| 3 | Độ dài mô tả và độ dài nội dung | Scatter plot | `description`, `content` | Hai độ dài có tương quan không, mạnh hay yếu? |
-| 4 | Cơ cấu nguồn tác giả theo chuyên mục | Stacked bar 100% | `category`, `author` | Trong từng chuyên mục, tỷ lệ byline chung là bao nhiêu? |
-| 5 | Chuyên mục × khung giờ xuất bản | Heatmap | `category`, `published_at` | Chuyên mục nào đăng nhiều vào giờ nào? |
+| 1 | Số bài theo chuyên mục | Bar chart ngang | `category` | Mỗi chuyên mục có bao nhiêu bài, cơ cấu ra sao? |
+| 2 | Số bài xuất bản theo 24 khung giờ | Histogram (24 bin) | `published_at` → `hour` | Mỗi giờ có bao nhiêu bài, phân bố tập trung ở đâu? |
+| 3 | Cơ cấu tác giả bài viết | Pie chart | `author` | Ai viết nhiều nhất, mức độ tập trung hay phân tán của tác giả? |
+| 4 | Chuyên mục × khung giờ xuất bản | Heatmap | `category`, `published_at` | Chuyên mục nào đăng nhiều vào giờ nào? |
 
-### 4.1. Biểu đồ 1 — Top 10 chuyên mục con (Bar Chart)
+### 4.1. Biểu đồ 1 — Số bài theo chuyên mục (Bar Chart)
 
-* **Dạng:** cột ngang, hiển thị số bài kèm % trên tổng số bài có nhãn chuyên mục con.
-* **Trường dữ liệu:** `subcategory`.
-* **Ý nghĩa thống kê:** xếp hạng tần số của biến phân loại cấp 2, tức tìm mode và mức độ tập trung của nhãn. Biến này có **cardinality cao** (21 nhãn khác nhau trên 30 bài có nhãn) nên chỉ vẽ top 10 để tránh biểu đồ rối; phần đuôi dài cho thấy dữ liệu phân mảnh mạnh.
-* **Kết quả hiện tại:** tính trên 30/40 bài có `subcategory` (10 bài ghi "Không có" không vẽ): Các bệnh 3 bài (10,0%); bảy nhãn cùng 2 bài (6,7% mỗi nhãn) gồm Tin tức, Doanh nghiệp, Bắc Mỹ, Ngoại hạng Anh, Xe điện, Bóng đá, Nhạc; các nhãn còn lại chỉ 1 bài.
-* **Lưu ý:** một phần tư số bài (10/40) thiếu chuyên mục con, nên bảng xếp hạng chỉ phản ánh nhóm có nhãn. Với đỉnh chỉ 3 bài, không nên suy ra mức độ phổ biến ngoài trang báo.
+* **Dạng:** cột ngang, hiển thị **đầy đủ 14 chuyên mục** (không cắt top 10), sắp xếp tăng dần, mỗi cột ghi số bài kèm % trên tổng 46 bài; màu lấy theo 10 bậc rời của thang giá trị.
+* **Trường dữ liệu:** `category`.
+* **Ý nghĩa thống kê:** đếm tần số của biến phân loại cấp 1, qua đó thấy cả nhóm dẫn đầu lẫn phần đuôi dài. Vẽ đủ nhãn giúp không bỏ sót chuyên mục nhỏ, đổi lại các cột 1–2 bài rất mảnh.
+* **Kết quả hiện tại:** Sức khỏe 7 bài (15,2%); Giải trí 6 (13,0%); Tâm sự 5 (10,9%); bốn chuyên mục cùng 4 bài (8,7%) gồm Khoa học công nghệ, Thể thao, Kinh doanh, Thế giới; Thời sự 3 (6,5%); Giáo dục, Bất động sản, Ý kiến cùng 2 (4,3%); Xe, Đời sống, Thư giãn cùng 1 (2,2%). Ba chuyên mục đầu chiếm 39,1% (18/46).
+* **Lưu ý:** quy mô mỗi chuyên mục rất nhỏ (lớn nhất 7 bài), nên chênh lệch vài bài chưa nói lên thứ hạng ổn định. Biến `subcategory` có 26 nhãn (25 nhãn thật + "Không có" ở 5 bài), quá phân mảnh nên không vẽ thành biểu đồ riêng.
 
-### 4.2. Biểu đồ 2 — Số bài xuất bản lũy kế theo giờ (Line Chart / ECDF)
+### 4.2. Biểu đồ 2 — Số bài xuất bản theo 24 khung giờ (Histogram)
 
-* **Dạng:** đường bậc thang (step) của tần số lũy kế theo %, kèm vùng tô và hai đường phân vị.
-* **Trường dữ liệu:** `published_at` → `hour`; 40/40 bài có timestamp.
-* **Ý nghĩa thống kê:** đây là **hàm phân bố tích lũy thực nghiệm (ECDF)**: tại giờ t, tung độ là P(giờ đăng ≤ t). Cách vẽ này cho phép đọc **phân vị trực tiếp trên đồ thị** (giao với mốc 50% ra trung vị, 80% ra P80) mà không phụ thuộc việc chọn độ rộng bin như histogram; độ dốc của đường cho biết tốc độ tích lũy bài trong từng khoảng giờ.
-* **Kết quả hiện tại:** trung vị 18h (50% bài đăng trước 18h), P80 = 20h, đạt 100% lúc 21h. Theo giờ: 15h (6 bài), 16h (4), 17h (7), 18h (7), 19h (6), 20h (7), 21h (3).
-* **Lưu ý:** dữ liệu chỉ phủ 15:12–21:55 ngày 24/10. Đoạn phẳng 0h–15h và sau 21h là do phạm vi snapshot, không phải nhịp đăng thực tế; muốn kết luận về khung giờ phải có nhiều ngày.
+* **Dạng:** histogram 24 cột, mỗi cột là một khung giờ 0h–23h, chiều cao là số bài trong giờ đó; cột tô màu động theo tần số (10 bậc rời), đầu cột ghi số bài, trục x hiện đủ **24 nhãn giờ** 0h–23h.
+* **Trường dữ liệu:** `published_at` → `hour`; 46/46 bài có timestamp.
+* **Ý nghĩa thống kê:** đếm **tần số tuyệt đối** của biến định lượng rời rạc `hour` với bin cố định 1 giờ, phủ đủ 24 bin. So với đường lũy kế, histogram cho thấy trực tiếp quy mô từng giờ, giờ cao điểm và các khoảng trống mà không phải đọc chênh lệch giữa hai điểm liên tiếp.
+* **Kết quả hiện tại:** 13h 6 bài (13,0%), 14h 6 (13,0%), 15h 9 (19,6%), 16h 9 (19,6%), 17h 6 (13,0%), 18h 7 (15,2%), 19h 3 (6,5%); 17 giờ còn lại 0 bài. Trung bình 15,8h, trung vị 16h. Hai giờ cao nhất là 15h–16h, chiếm 18/46 = 39,1% số bài.
+* **Lưu ý:** 17/24 cột bằng 0 vì snapshot chỉ phủ 13:05–19:17; cột 0 nghĩa là **ngoài phạm vi mẫu**, không phải "giờ đó không đăng bài". Bin rộng 1 giờ gộp mọi bài trong cùng giờ (ví dụ 13:05–13:59), nên không thấy được khác biệt phút.
 
-### 4.3. Biểu đồ 3 — Độ dài mô tả và độ dài nội dung (Scatter Plot)
+### 4.3. Biểu đồ 3 — Cơ cấu tác giả bài viết (Pie Chart)
 
-* **Dạng:** scatter plot hai trục định lượng, có đường hồi quy tuyến tính.
-* **Trường dữ liệu:** `description` → `desc_wc`, `content` → `word_count`.
-* **Ý nghĩa thống kê:** mô tả **phân bố đồng thời** của hai biến định lượng, cho thấy hướng, độ mạnh và dạng của mối liên hệ, đồng thời phát hiện outlier và cụm điểm. **Pearson r** đo quan hệ tuyến tính; **Spearman ρ** đo quan hệ đơn điệu và ít bị outlier chi phối. Hệ số xác định r² ≈ 0,006 nghĩa là độ dài mô tả gần như không giải thích được phương sai độ dài nội dung.
-* **Kết quả hiện tại:** cả 40 bài đều có đủ `description` và `content`: Pearson r = -0,076; Spearman ρ = -0,094 → gần như không có tương quan. Vì quality gate đã loại bài rỗng nội dung, Pearson tính trên 40 bài và tính gộp toàn mẫu cho cùng một giá trị (không còn các điểm (0 từ) kéo lệch hệ số như lần cào trước).
-* **Lưu ý:** không thể dùng độ dài sa-pô để dự báo độ dài bài. Tương quan không phải nhân quả; nếu sau này mẫu có bài khuyết dữ liệu, phải nêu rõ mẫu tính vì việc gộp điểm rỗng làm thay đổi dấu và độ lớn của hệ số.
+* **Dạng:** pie chart **2 lát**: `VnExpress` (xanh) và **Các tác giả khác** (xám); nhãn ngoài chỉ ghi tên nhóm, tỷ lệ % ghi bên trong lát.
+* **Trường dữ liệu:** `author` (crawler gán `"VnExpress"` cho bài không đề tên tác giả).
+* **Ý nghĩa thống kê:** tách dữ liệu thành **2 nhóm loại trừ nhau** để trả lời một câu hỏi nhị phân: bao nhiêu phần bài do byline mặc định `VnExpress` và bao nhiêu do tác giả có tên. Pie chart phù hợp vì hai lát cộng lại đúng 100%.
+* **Kết quả hiện tại:** 46 bài có **35 tác giả khác nhau**. `VnExpress` 6 bài (13,0%); các tác giả khác 40 bài (87,0%), thuộc 34 người (trong đó 29 người chỉ có 1 bài).
+* **Lưu ý:** `"VnExpress"` là byline mặc định, không phải một người viết thật, nên đây là biểu đồ **chất lượng dữ liệu** (tỷ lệ bài thiếu byline) hơn là cơ cấu tác giả chi tiết. Nhóm "Các tác giả khác" gộp 34 người, không thể so sánh ai viết nhiều hơn ai; muốn xem chi tiết phải quay lại bảng tần số `author`.
 
-### 4.4. Biểu đồ 4 — Cơ cấu nguồn tác giả trong từng chuyên mục (Stacked Bar 100%)
+### 4.4. Biểu đồ 4 — Số bài theo chuyên mục và khung giờ xuất bản (Heatmap)
 
-* **Dạng:** cột ngang xếp chồng chuẩn hóa 100%, sắp xếp theo tỷ lệ byline chung tăng dần; nhãn mục kèm n.
-* **Trường dữ liệu:** `category` × `author_type`.
-* **Ý nghĩa thống kê:** biểu diễn **phân bố có điều kiện** P(author_type | category). Chuẩn hóa về 100% giúp so sánh *cơ cấu* giữa các chuyên mục có quy mô khác nhau, nhưng đồng thời **xóa mất quy mô** — số lượng tuyệt đối đã ghi kèm trong nhãn `(n)` ở trục tung.
-* **Kết quả hiện tại:** toàn mẫu 1/40 bài (2,5%) dùng byline chung. Theo chuyên mục: Kinh doanh 33% (1/3); 14 chuyên mục còn lại đều 0%.
-* **Lưu ý:** sau khi crawler loại trang video/clip, không còn bài nào rơi vào nhóm "Khác", nên hiện tượng "Khác = 100% byline chung" của lần cào trước đã biến mất — đúng như dự đoán đó là lỗi thiếu metadata chứ không phải đặc điểm của chuyên mục. Các mục có n = 1–3 cho tỷ lệ 0%/33% rất bấp bênh.
-
-### 4.5. Biểu đồ 5 — Số bài theo chuyên mục và khung giờ xuất bản (Heatmap)
-
-* **Dạng:** heatmap 4 chuyên mục × 7 khung giờ (15h–21h), ô ghi số bài; màu rời từ xám (0) → xanh (ít) → đỏ (nhiều).
+* **Dạng:** heatmap 7 chuyên mục × 24 khung giờ (0h–23h), ô ghi số bài; màu rời từ xám (0) → xanh (ít) → đỏ (nhiều); vùng vẽ được thu nhỏ và căn giữa khung ảnh.
 * **Trường dữ liệu:** `category` × `hour` (từ `published_at`).
 * **Ý nghĩa thống kê:** biểu diễn **bảng tần số chéo (contingency table)** của hai biến định tính. Đây là biểu đồ duy nhất cho thấy tương tác giữa hai chiều cùng lúc: cụm ô đậm = chuyên mục tập trung đăng trong một khung giờ; ô xám = không có bài trong mẫu. Có thể đọc thêm tổng hàng (quy mô chuyên mục) và tổng cột (quy mô khung giờ) từ chính biểu đồ.
-* **Kết quả hiện tại:** 4 chuyên mục chính có ≥4 bài (40 bài có timestamp, 0 bài thiếu): Thế giới (6), Sức khỏe (4), Giải trí (4), Thể thao (4). Điểm nổi bật: Thế giới 2 bài lúc 15h; Sức khỏe 2 bài lúc 16h; Thể thao 2 bài lúc 18h; Giải trí rải đều 17h/18h/20h/21h (mỗi giờ 1 bài).
-* **Lưu ý:** ngưỡng ≥4 bài được chọn tự động theo cỡ mẫu (6% của 40, tối thiểu 4) để tránh ma trận quá thưa. Ô 0 chỉ có nghĩa "không có bài trong mẫu", không phải "chuyên mục đó không bao giờ đăng giờ đó"; không nên chạy chi-square trên ma trận này.
+* **Kết quả hiện tại:** 7 chuyên mục có ≥4 bài (34/46 bài, 73,9% mẫu): Sức khỏe (7), Giải trí (6), Tâm sự (5), Khoa học công nghệ, Thể thao, Kinh doanh, Thế giới (cùng 4). Điểm nổi bật: Sức khỏe 2 bài lúc 14h và 2 bài lúc 15h; Giải trí 2 bài lúc 17h; Kinh doanh 2 bài lúc 18h; Tâm sự 2 bài lúc 18h. Cột 15h–16h đông nhất (9 bài/giờ).
+* **Lưu ý:** ngưỡng ≥4 bài được chọn tự động theo cỡ mẫu (`max(4, 6% × n)`) để tránh ma trận quá thưa, nên 7 chuyên mục nhỏ (12 bài) không xuất hiện trên hình. Các cột 0h–12h và 20h–23h đều 0 vì snapshot chỉ phủ 13:05–19:17; ô 0 chỉ có nghĩa "không có bài trong mẫu", không phải "chuyên mục đó không bao giờ đăng giờ đó"; không nên chạy chi-square trên ma trận này.
 
-### 4.6. Giới hạn chung khi đọc kết quả
+### 4.5. Giới hạn chung khi đọc kết quả
 
-Toàn bộ 5 biểu đồ là **thống kê mô tả trên một mẫu 40 bài thuộc một RSS snapshot ngày 24/10/2026** (cào ngày 25/10), không phải điều tra toàn bộ hoạt động của VnExpress. Các giới hạn cần nêu khi bảo vệ:
+Toàn bộ 4 biểu đồ là **thống kê mô tả trên một mẫu 46 bài thuộc một RSS snapshot ngày 25/10/2026** (13:05–19:17), không phải điều tra toàn bộ hoạt động của VnExpress. Các giới hạn cần nêu khi bảo vệ:
 
-* Trong 45 liên kết RSS, crawler giữ 40 bài và loại 5: 4 trang video/clip (`og:type = website`) và 1 trang điểm tin không có tiêu đề/nội dung (5136453). Toàn bộ 40 bài đã lưu đều có `title`, `content`, `description` và `published_at`.
-* 10/40 bài (25%) không có `subcategory` (ghi "Không có"); 1/40 bài dùng byline mặc định `"VnExpress"`.
-* Quy mô mỗi chuyên mục rất nhỏ (lớn nhất 6 bài, nhiều mục 1–2 bài), nên mọi tỷ lệ % và so sánh giữa nhóm chỉ mang tính mô tả.
-* Dữ liệu chỉ phủ 15:12–21:55 của một ngày; mọi kết luận về "khung giờ vàng" hay nhịp xuất bản cần thêm nhiều ngày cào.
-* Không có kiểm định suy luận (t-test, chi-square, hồi quy suy diễn); các hệ số tương quan chỉ dùng để mô tả mức liên hệ trong mẫu.
+* RSS lúc cào có 48 item; crawler giữ 46 bài và loại 2: 1 trang video (`og:type = website`, 5136624) và 1 trang điểm tin không có tiêu đề/nội dung (5136669). Toàn bộ 46 bài đã lưu đều có `title`, `content`, `description` và `published_at`, không trùng `article_id`.
+* 5/46 bài (10,9%) không có `subcategory` (ghi "Không có"); 25 nhãn chuyên mục con còn lại phân bố rất mỏng.
+* 46 bài đến từ **35 tác giả khác nhau**; 40 bài (87,0%) thuộc 34 tác giả có tên, phần đuôi rất dài (29 người chỉ có 1 bài) nên biểu đồ 3 gộp họ thành nhóm "Các tác giả khác".
+* 6/46 bài (13,0%) dùng byline mặc định `"VnExpress"` — lát VnExpress trên pie chart là quy ước của crawler, không đại diện một người viết thật.
+* Quy mô mỗi chuyên mục rất nhỏ (lớn nhất 7 bài, nhiều mục 1–2 bài), nên mọi tỷ lệ % và so sánh giữa nhóm chỉ mang tính mô tả.
+* Dữ liệu chỉ phủ 13:05–19:17 của một ngày; mọi kết luận về "khung giờ vàng" hay nhịp xuất bản cần thêm nhiều ngày cào.
+* Không có kiểm định suy luận (t-test, chi-square, hồi quy); mọi tỷ lệ % chỉ mô tả mẫu 46 bài.
 
 ---
 
@@ -203,6 +198,6 @@ python "Web crawler\Webcrawler.py"
 # Bước 2: Nạp dữ liệu vào Microsoft SQL Server
 python "SQL importer\SQLimporter.py"
 
-# Bước 3: Xuất thống kê mô tả và vẽ 5 biểu đồ PNG
+# Bước 3: Xuất thống kê mô tả và vẽ 4 biểu đồ PNG
 python "EDA + charts\Charts.py"
 ```
