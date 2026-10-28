@@ -162,18 +162,25 @@ def generate_eda_charts():
     df["published_at"] = pd.to_datetime(df["published_at"], errors="coerce")
     df["hour"] = df["published_at"].dt.hour
 
-    # 2. In Thống kê mô tả ra terminal
-    print("\n===== THỐNG KÊ MÔ TẢ =====")
-    print(f"Tổng số bài: {len(df)}")
+    # 2. In thống kê mô tả ra cửa sổ dòng lệnh
+    print(f"\nTổng số bài: {len(df)}")
     print(f"Số bài có nội dung rỗng: {(df['word_count'] == 0).sum()}")
     print(f"Số bài có mô tả rỗng: {(df['desc_wc'] == 0).sum()}")
-    print(f"Số bài thiếu published_at: {df['published_at'].isna().sum()}")
-    print("\n-- Độ dài bài (word_count) & khung giờ (hour) --")
-    print(df[["word_count", "hour"]].describe()
-          .loc[["count", "mean", "std", "min", "max"]].round(2).to_string())
+    print(f"Số bài thiếu thời điểm xuất bản: {df['published_at'].isna().sum()}")
+    print("\n-- Độ dài bài và khung giờ --")
+    thong_ke = df[["word_count", "hour"]].describe()
+    thong_ke = thong_ke.loc[["count", "mean", "std", "min", "max"]].round(2)
+    thong_ke = thong_ke.rename(
+        index={"count": "Số lượng", "mean": "Trung bình", "std": "Độ lệch chuẩn",
+               "min": "Nhỏ nhất", "max": "Lớn nhất"},
+        columns={"word_count": "Độ dài bài (số từ)", "hour": "Khung giờ"},
+    )
+    print(thong_ke.to_string())
     print("\n-- Tần số chuyên mục --")
-    print(df["category"].value_counts().to_string())
-    print("===========================\n")
+    tan_suat = df["category"].value_counts()
+    tan_suat.index.name = "Chuyên mục"
+    print(tan_suat.to_string())
+    print(f"Tổng số bài: {tan_suat.sum()}")
 
     # 3. Xuất 4 biểu đồ: 2 biểu đồ một biến và 2 biểu đồ quan hệ
     ve_bieu_do_1(df)

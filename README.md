@@ -65,7 +65,7 @@ Hệ thống gồm 3 bước:
   2. Chuẩn bị dữ liệu cho bước phân tích khám phá (EDA):
      - Tính độ dài bài viết (`word_count`) từ trường `content` và độ dài mô tả (`desc_wc`) từ trường `description`; hai chỉ số này dùng cho phần thống kê mô tả ở cửa sổ dòng lệnh, không dùng làm trục biểu đồ.
      - Lấy khung giờ xuất bản (0h - 23h) trực tiếp từ cột `DATETIME` `published_at` bằng `pandas .dt.hour`, không phải đọc chuỗi tiếng Việt như cách cũ.
-  3. In các chỉ số thống kê mô tả ra cửa sổ dòng lệnh: tổng số bài, số bài có nội dung/mô tả rỗng, số bài thiếu `published_at`, số lượng/trung bình/độ lệch chuẩn/nhỏ nhất/lớn nhất cho `word_count` và `hour`, cùng tần số chuyên mục.
+  3. In các chỉ số thống kê mô tả ra cửa sổ dòng lệnh: tổng số bài, số bài có nội dung/mô tả rỗng, số bài thiếu thời điểm xuất bản (`published_at`), bảng số lượng/trung bình/độ lệch chuẩn/nhỏ nhất/lớn nhất cho `word_count` và `hour` với nhãn in bằng tiếng Việt, cùng tần số chuyên mục kèm tổng số bài ở cuối bảng.
   4. Dùng `matplotlib` dựng 4 biểu đồ và lưu thành 4 file PNG riêng trong `EDA + charts/`: số bài theo từng chuyên mục (biểu đồ cột ngang), số bài theo 24 khung giờ (biểu đồ tần số, màu động theo tần số), cơ cấu tác giả (biểu đồ tròn hai phần: VnExpress và các tác giả khác) và bản đồ nhiệt chuyên mục × khung giờ (`bieu_do_1_chuyen_muc.png` ... `bieu_do_4_nhiet_do_chuyen_muc_gio.png`). Biểu đồ 1, 2 và 4 tô màu theo 20 bậc rời (thấp = xanh biển, giữa = xanh lá, cao = đỏ); biểu đồ 3 dùng cặp xanh/xám để phân biệt hai nhóm.
 
 ---
