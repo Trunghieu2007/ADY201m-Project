@@ -18,9 +18,11 @@ plt.rcParams["axes.unicode_minus"] = False
 # Thư mục lưu file biểu đồ đầu ra (cùng thư mục với script này)
 SAVE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-#Bảng 10 màu rời cách đều: thấp nhất = xanh biển -> giữa = xanh lá -> cao nhất = đỏ
-PALETTE = ["#1f78b4", "#2e949b", "#34a473", "#2da136", "#6cb62e",
-           "#afc82e", "#d4c32b", "#eca221", "#eb681d", "#e31a1c"]
+#Bảng 20 màu rời cách đều: thấp nhất = xanh biển -> giữa = xanh lá -> cao nhất = đỏ
+PALETTE = ["#1f78b4", "#2685a8", "#2d939c", "#319b8a", "#33a277",
+           "#31a35d", "#2ea140", "#41a833", "#5fb230", "#7ebb2e",
+           "#9dc32e", "#b7c72d", "#c8c52c", "#d8be29", "#e3ae25",
+           "#ec9c21", "#eb801f", "#eb641d", "#e73f1c", "#e31a1c"]
 
 #get_data_from_sql: truy vấn dữ liệu bài báo từ SQL Server và trả về pandas DataFrame
 def get_data_from_sql():
@@ -36,7 +38,7 @@ def get_data_from_sql():
     conn.close()
     return df
 
-#mau_theo_gia_tri: gán mỗi giá trị vào 1 trong 10 bậc màu cách đều trên đoạn [min, max]
+#mau_theo_gia_tri: gán mỗi giá trị vào 1 trong 20 bậc màu cách đều trên đoạn [min, max]
 def mau_theo_gia_tri(values):
     vmin, vmax = min(values), max(values)
     if vmax == vmin:
@@ -64,7 +66,6 @@ def ve_bieu_do_1(df):
     ax.set_title(f"Số bài theo chuyên mục (n={len(df)})", fontsize=13, fontweight="bold")
     ax.set_xlabel("Số lượng bài viết")
     ax.set_xlim(0, cat.max() * 1.18)
-    ax.set_xticks(range(cat.max() + 1))
     ax.grid(axis="x", linestyle=":", alpha=0.45)
     ax.set_axisbelow(True)
     luu_anh(fig, "bieu_do_1_chuyen_muc.png")
@@ -89,7 +90,6 @@ def ve_bieu_do_2(df):
     ax.tick_params(axis="x", labelsize=8)
     ax.set_xlim(-0.6, 23.6)
     ax.set_ylim(0, dem.max() * 1.18)
-    ax.set_yticks(range(0, dem.max() + 2, 2))
     ax.grid(axis="y", linestyle=":", alpha=0.45)
     ax.set_axisbelow(True)
     luu_anh(fig, "bieu_do_2_phan_bo_gio.png")
