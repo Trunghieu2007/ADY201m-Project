@@ -1,0 +1,129 @@
+{
+    "accuracy_decision_tree": 0.4,
+    "accuracy_naive_bayes": 0.8,
+    "train_samples": 20,
+    "test_samples": 5,
+    "num_categories": 4,
+    "categories": [
+        "Sức khỏe",
+        "Thế giới",
+        "Thể thao",
+        "Xe"
+    ],
+    "top_features": [
+        {
+            "rank": 1,
+            "feature": "đội",
+            "importance": 0.4271
+        },
+        {
+            "rank": 2,
+            "feature": "thần",
+            "importance": 0.3365
+        },
+        {
+            "rank": 3,
+            "feature": "tổng",
+            "importance": 0.2365
+        },
+        {
+            "rank": 4,
+            "feature": "2025",
+            "importance": 0.0
+        },
+        {
+            "rank": 5,
+            "feature": "2024",
+            "importance": 0.0
+        },
+        {
+            "rank": 6,
+            "feature": "2023",
+            "importance": 0.0
+        },
+        {
+            "rank": 7,
+            "feature": "200 người",
+            "importance": 0.0
+        },
+        {
+            "rank": 8,
+            "feature": "200",
+            "importance": 0.0
+        },
+        {
+            "rank": 9,
+            "feature": "20 năm",
+            "importance": 0.0
+        },
+        {
+            "rank": 10,
+            "feature": "20",
+            "importance": 0.0
+        },
+        {
+            "rank": 11,
+            "feature": "19 tuổi",
+            "importance": 0.0
+        },
+        {
+            "rank": 12,
+            "feature": "19",
+            "importance": 0.0
+        },
+        {
+            "rank": 13,
+            "feature": "18 tuổi",
+            "importance": 0.0
+        },
+        {
+            "rank": 14,
+            "feature": "18",
+            "importance": 0.0
+        },
+        {
+            "rank": 15,
+            "feature": "16 tuổi",
+            "importance": 0.0
+        }
+    ],
+    "classification_report": {
+        "Sức khỏe": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 2.0
+        },
+        "Thế giới": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 1.0
+        },
+        "Thể thao": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "f1-score": 0.6666666666666666,
+            "support": 1.0
+        },
+        "Xe": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1-score": 1.0,
+            "support": 1.0
+        },
+        "accuracy": 0.4,
+        "macro avg": {
+            "precision": 0.375,
+            "recall": 0.5,
+            "f1-score": 0.41666666666666663,
+            "support": 5.0
+        },
+        "weighted avg": {
+            "precision": 0.3,
+            "recall": 0.4,
+            "f1-score": 0.3333333333333333,
+            "support": 5.0
+        }
+    }
+}

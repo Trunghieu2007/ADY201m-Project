@@ -7,13 +7,15 @@ from datetime import datetime
 # Đảm bảo in tiếng Việt không bị lỗi trên Windows
 sys.stdout.reconfigure(encoding="utf-8")
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Thư mục gốc của toàn dự án (thư mục cha của thư mục Automation)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOG_PATH = os.path.join(BASE_DIR, "scheduler.log")
 INTERVAL = 30 * 60  # 30 phút, tính từ lúc bắt đầu mỗi lần chạy
 
-# Ba bước của chuỗi, luôn chạy đúng thứ tự này
+# Bốn bước của chuỗi pipeline xử lý dữ liệu và AI (luôn chạy đúng thứ tự này)
 STEPS = [
     ("Web crawler", os.path.join(BASE_DIR, "Web crawler", "Webcrawler.py")),
+    ("AI classifier", os.path.join(BASE_DIR, "AI classifier", "TrainClassifier.py")),
     ("SQL importer", os.path.join(BASE_DIR, "SQL importer", "SQLimporter.py")),
     ("EDA + charts", os.path.join(BASE_DIR, "EDA + charts", "Charts.py")),
 ]
@@ -33,18 +35,18 @@ def chay_buoc(ten, duong_dan):
         return False
     return True
 
-#chay_chuoi: chạy lần lượt 3 bước, dừng ngay khi một bước lỗi
+#chay_chuoi: chạy lần lượt 4 bước, dừng ngay khi một bước lỗi
 def chay_chuoi():
-    ghi_log("Bắt đầu chuỗi 3 bước")
+    ghi_log("Bắt đầu chuỗi 4 bước")
     for ten, duong_dan in STEPS:
         if not chay_buoc(ten, duong_dan):
             return False
-    ghi_log("Hoàn tất chuỗi 3 bước")
+    ghi_log("Hoàn tất chuỗi 4 bước")
     return True
 
 #main: chạy ngay một lần, sau đó lặp lại mỗi 30 phút cho tới khi nhấn Ctrl+C
 def main():
-    print(f"Chuỗi 3 bước sẽ chạy mỗi {INTERVAL // 60} phút. Nhấn Ctrl+C để dừng.")
+    print(f"Chuỗi 4 bước (Crawl -> AI Classifier -> SQL -> EDA) sẽ chạy mỗi {INTERVAL // 60} phút. Nhấn Ctrl+C để dừng.")
     while True:
         bat_dau = time.time()
         chay_chuoi()
@@ -59,4 +61,4 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\nĐã dừng scheduler.")
+        print("\nĐã dừng automation.")

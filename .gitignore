@@ -23,3 +23,7 @@ Web crawler/vnexpress_data.csv
 
 # Log cua scheduler (khong commit)
 scheduler.log
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
