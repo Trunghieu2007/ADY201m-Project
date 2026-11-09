@@ -191,3 +191,30 @@ python "SQL importer\SQLimporter.py"
 # Bước 4: Xuất thống kê mô tả và vẽ 4 biểu đồ EDA
 python "EDA + charts\Charts.py"
 ```
+
+
+---
+
+## 7. Khởi chạy Jupyter Notebook nghiên cứu (`notebooks/ADY201m_Data_Analysis.ipynb`)
+
+Sổ tay phân tích khoa học dữ liệu hoàn chỉnh của môn học được lưu tại `notebooks/ADY201m_Data_Analysis.ipynb`.
+
+### 7.1. Cài đặt môi trường cho Jupyter Notebook
+Đảm bảo đã cài đặt đầy đủ các thư viện từ file `requirements.txt`:
+```powershell
+pip install -r requirements.txt
+pip install jupyter
+```
+
+### 7.2. Khởi động và thực thi Notebook
+Khởi chạy Jupyter Notebook hoặc JupyterLab từ thư mục gốc của dự án:
+```powershell
+jupyter notebook notebooks/ADY201m_Data_Analysis.ipynb
+# Hoặc mở toàn bộ thư mục bằng JupyterLab:
+jupyter lab
+```
+
+### 7.3. Đặc điểm thực thi của Notebook:
+* **Tương thích nguồn đa tầng (Fallback Strategy)**: Tự động ưu tiên đọc từ kho dữ liệu tích lũy trên Microsoft SQL Server (`dbo.VnExpress_Articles`). Nếu máy trạm chưa cài đặt hoặc chưa mở SQL Server, notebook tự động chuyển sang đọc dữ liệu thực từ tệp `Web crawler/vnexpress_data.csv` hoặc `vnexpress_data.json` mà không gây ra bất kỳ lỗi gián đoạn nào.
+* **Quy trình 11 giai đoạn chuẩn Data Science**: Đi từ Tổng quan dự án, Đánh giá chất lượng dữ liệu, Kỹ thuật đặc trưng, EDA trực quan hóa, Kiểm định thống kê toán học (Kruskal-Wallis, Spearman correlation), đến Huấn luyện mô hình AI (Decision Tree & Naive Bayes) và Đúc kết giá trị thực tiễn.
+* **Tính độc lập và toàn vẹn**: 100% các biến và thư viện được khai báo tuần tự, không có biến ẩn hay phụ thuộc cache, đảm bảo chạy thành công 100% từ đầu đến cuối với thao tác **Restart Kernel & Run All Cells**.
