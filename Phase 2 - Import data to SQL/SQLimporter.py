@@ -50,13 +50,8 @@ def import_json_to_sql(json_path=None):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     project_dir = os.path.dirname(base_dir)
 
-    candidates = [
-        os.path.join(project_dir, "Phase 1 - Data crawl & Post process + Quick report", "vnexpress_data.json"),
-        os.path.join(project_dir, "Phase 1 - Data crawl & Post process", "vnexpress_data.json"),
-        os.path.join(base_dir, "vnexpress_data.json"),
-        os.path.join(project_dir, "vnexpress_data.json"),
-    ]
-    path = json_path or next((c for c in candidates if os.path.exists(c)), candidates[0])
+    default_path = os.path.join(project_dir, "Phase 1 - Data crawl & Post process + Quick report", "vnexpress_data.json")
+    path = json_path or (default_path if os.path.exists(default_path) else os.path.join(base_dir, "vnexpress_data.json"))
     if not os.path.exists(path):
         print(f"[!] Không tìm thấy file dữ liệu: {path}")
         return
