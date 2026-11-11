@@ -17,7 +17,7 @@ MASTER_CONN = f"DRIVER={DRIVER};SERVER={SERVER};DATABASE=master;Trusted_Connecti
 DB_CONN = f"DRIVER={DRIVER};SERVER={SERVER};DATABASE={DATABASE};Trusted_Connection=yes;"
 
 SCHEMA_HINT = (
-    "  -> Hãy chạy file 'SQL importer/SQLschema.sql' trong SSMS để khởi tạo "
+    "  -> Hãy chạy file 'Phase 2 - Import data to SQL/SQLschema.sql' trong SSMS để khởi tạo "
     "Database ADY201m và bảng dbo.VnExpress_Articles trước khi nạp dữ liệu."
 )
 
@@ -53,7 +53,6 @@ def import_json_to_sql(json_path=None):
     candidates = [
         os.path.join(project_dir, "Phase 1 - Data crawl & Post process + Quick report", "vnexpress_data.json"),
         os.path.join(project_dir, "Phase 1 - Data crawl & Post process", "vnexpress_data.json"),
-        os.path.join(project_dir, "Web crawler", "vnexpress_data.json"),
         os.path.join(base_dir, "vnexpress_data.json"),
         os.path.join(project_dir, "vnexpress_data.json"),
     ]
@@ -61,6 +60,9 @@ def import_json_to_sql(json_path=None):
     if not os.path.exists(path):
         print(f"[!] Không tìm thấy file dữ liệu: {path}")
         return
+
+    rel_path = os.path.relpath(path, project_dir)
+    print(f"[+] Đang nạp dữ liệu từ: {rel_path} vào database...")
 
     with open(path, "r", encoding="utf-8") as f:
         articles = json.load(f)
@@ -79,6 +81,8 @@ def import_json_to_sql(json_path=None):
         cursor.close()
         conn.close()
         return
+
+    print("-> Đang kiểm tra xem có bị duplicate không...")
 
     # Bước 3a: Lọc trùng NGAY TRONG BATCH theo article_id (tránh vi phạm PRIMARY KEY)
     seen = set()
@@ -131,7 +135,7 @@ def import_json_to_sql(json_path=None):
     conn.close()
 
     skipped = len(articles) - len(new_articles)
-    print(f"[+] Hoàn tất! Đã thêm mới: {inserted} bài | Bỏ qua trùng lặp: {skipped} bài.")
+    print(f"-> Đã hoàn thành! Đã thêm mới: {inserted} bài | Bỏ qua trùng lặp: {skipped} bài.")
     if failed:
         print(f"[!] {len(failed)} bài thất bại (chi tiết dưới):")
         for aid, err in failed:
