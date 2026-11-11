@@ -82,7 +82,7 @@ def import_json_to_sql(json_path=None):
         conn.close()
         return
 
-    print("-> Đang kiểm tra xem có bị duplicate không...")
+    print("[+] Đang kiểm tra xem có bị duplicate không...")
 
     # Bước 3a: Lọc trùng NGAY TRONG BATCH theo article_id (tránh vi phạm PRIMARY KEY)
     seen = set()
@@ -135,7 +135,7 @@ def import_json_to_sql(json_path=None):
     conn.close()
 
     skipped = len(articles) - len(new_articles)
-    print(f"-> Đã hoàn thành! Đã thêm mới: {inserted} bài | Bỏ qua trùng lặp: {skipped} bài.")
+    print(f"[+] Đã hoàn thành! Đã thêm mới: {inserted} bài | Bỏ qua trùng lặp: {skipped} bài.")
     if failed:
         print(f"[!] {len(failed)} bài thất bại (chi tiết dưới):")
         for aid, err in failed:
