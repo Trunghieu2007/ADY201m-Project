@@ -12,12 +12,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOG_PATH = os.path.join(BASE_DIR, "scheduler.log")
 INTERVAL = 30 * 60  # 30 phút, tính từ lúc bắt đầu mỗi lần chạy
 
-# Bốn bước của chuỗi pipeline xử lý dữ liệu và AI (luôn chạy đúng thứ tự này)
+# Năm bước của chuỗi pipeline xử lý dữ liệu và AI (luôn chạy đúng thứ tự này)
 STEPS = [
-    ("Custom crawler", os.path.join(BASE_DIR, "Web crawler", "CustomCrawler.py")),
-    ("AI classifier", os.path.join(BASE_DIR, "AI classifier", "TrainClassifier.py")),
-    ("SQL importer", os.path.join(BASE_DIR, "SQL importer", "SQLimporter.py")),
-    ("EDA + charts", os.path.join(BASE_DIR, "EDA + charts", "Charts.py")),
+    ("Step 1: Raw Crawler", os.path.join(BASE_DIR, "Data pipeline", "Step1_RawCrawler.py")),
+    ("Step 2: Data Filter", os.path.join(BASE_DIR, "Data pipeline", "Step2_DataFilter.py")),
+    ("Step 3: AI classifier", os.path.join(BASE_DIR, "AI classifier", "TrainClassifier.py")),
+    ("Step 4: SQL importer", os.path.join(BASE_DIR, "SQL importer", "SQLimporter.py")),
+    ("Step 5: EDA + charts", os.path.join(BASE_DIR, "EDA + charts", "Charts.py")),
 ]
 
 #ghi_log: thêm một dòng có thời gian vào scheduler.log để xem lại các lần chạy
@@ -37,16 +38,16 @@ def chay_buoc(ten, duong_dan):
 
 #chay_chuoi: chạy lần lượt 4 bước, dừng ngay khi một bước lỗi
 def chay_chuoi():
-    ghi_log("Bắt đầu chuỗi 4 bước")
+    ghi_log("Bắt đầu chuỗi 5 bước")
     for ten, duong_dan in STEPS:
         if not chay_buoc(ten, duong_dan):
             return False
-    ghi_log("Hoàn tất chuỗi 4 bước")
+    ghi_log("Hoàn tất chuỗi 5 bước")
     return True
 
 #main: chạy ngay một lần, sau đó lặp lại mỗi 30 phút cho tới khi nhấn Ctrl+C
 def main():
-    print(f"Chuỗi 4 bước (Crawl -> AI Classifier -> SQL -> EDA) sẽ chạy mỗi {INTERVAL // 60} phút. Nhấn Ctrl+C để dừng.")
+    print(f"Chuỗi 5 bước (Raw Crawl -> Filter -> AI Classifier -> SQL -> EDA) sẽ chạy mỗi {INTERVAL // 60} phút. Nhấn Ctrl+C để dừng.")
     while True:
         bat_dau = time.time()
         chay_chuoi()

@@ -20,6 +20,11 @@ Thumbs.db
 # Du lieu tu sinh tu crawler (khong commit)
 Web crawler/vnexpress_data.json
 Web crawler/vnexpress_data.csv
+Data pipeline/vnexpress_raw.json
+Data pipeline/vnexpress_data.json
+Data pipeline/audit_rejection_report.json
+vnexpress_raw.json
+audit_rejection_report.json
 *.csv
 vnexpress_data.json
 vnexpress_data.csv
