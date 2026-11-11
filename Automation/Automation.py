@@ -18,7 +18,7 @@ STEPS = [
     ("Step 2: Data Filter", os.path.join(BASE_DIR, "Phase 1 - Data crawl & Post process + Quick report", "Step2_DataFilter.py")),
     ("Step 3: Train model", os.path.join(BASE_DIR, "Train model", "TrainClassifier.py")),
     ("Step 4: SQL importer", os.path.join(BASE_DIR, "Phase 2 - Import data to SQL", "SQLimporter.py")),
-    ("Step 5: EDA + charts", os.path.join(BASE_DIR, "EDA + charts", "Charts.py")),
+    ("Step 5: EDA + charts", os.path.join(BASE_DIR, "Phase 3 - EDA", "Charts.py")),
 ]
 
 #ghi_log: thêm một dòng có thời gian vào scheduler.log để xem lại các lần chạy
