@@ -34,9 +34,9 @@ Hệ thống được thiết kế theo phương pháp luận Data Science của
 
 *Lưu ý:* biểu đồ khung giờ phản ánh mẫu cào tại thời điểm chạy, không đại diện cho nhịp xuất bản trong ngày.
 
-### 1.2. Thu thập và làm sạch dữ liệu tại nguồn (`Web crawler`)
+### 1.2. Thu thập và làm sạch dữ liệu tại nguồn (`CustomCrawler`)
 
-* **Mục tiêu:** Thu thập bài mới từ nguồn tin RSS của VnExpress và làm sạch dữ liệu ngay khi bóc tách.
+* **Mục tiêu:** Thu thập bài viết đa luồng từ 16 chuyên mục chính của VnExpress (qua RSS và quét phân trang danh mục), làm sạch và kiểm tra hợp lệ ngay khi bóc tách. Bản cũ dạng tuần tự đơn kênh đã được lưu trữ an toàn tại Web crawler/archive/Webcrawler_legacy.py.
 * **Luồng hoạt động:**
   1. Gửi yêu cầu HTTP tải danh sách bài viết mới từ nguồn tin RSS (`https://vnexpress.net/rss/tin-moi-nhat.rss`) bằng thư viện `requests` và bộ phân tích XML `lxml`. Các yêu cầu đi qua hàm `fetch()` có gọi `raise_for_status()` (bắt lỗi 4xx/5xx để không nạp trang rác) và đặt `encoding = "utf-8"`.
   2. Truy cập vào từng liên kết bài viết (nghỉ `CRAWL_DELAY` = 1.0s giữa các yêu cầu), kiểm tra `is_article_page()` trước khi bóc tách: `og:type` cần là `article` (nếu trang có khai báo) và trang cần có thẻ `h1`. Trang video/clip/album (`og:type = website`, không có `h1`) bị loại, không đưa vào dữ liệu.
@@ -180,7 +180,7 @@ Hệ thống sẽ chạy liên hoàn 4 bước (Web crawler → AI classifier �
 
 ```powershell
 # Bước 1: Thu thập bài báo mới từ RSS VnExpress
-python "Web crawler\Webcrawler.py"
+python "Web crawler\CustomCrawler.py"
 
 # Bước 2: Huấn luyện và đánh giá mô hình AI phân loại chuyên mục
 python "AI classifier\TrainClassifier.py"

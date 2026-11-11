@@ -14,7 +14,7 @@ INTERVAL = 30 * 60  # 30 phút, tính từ lúc bắt đầu mỗi lần chạy
 
 # Bốn bước của chuỗi pipeline xử lý dữ liệu và AI (luôn chạy đúng thứ tự này)
 STEPS = [
-    ("Web crawler", os.path.join(BASE_DIR, "Web crawler", "Webcrawler.py")),
+    ("Custom crawler", os.path.join(BASE_DIR, "Web crawler", "CustomCrawler.py")),
     ("AI classifier", os.path.join(BASE_DIR, "AI classifier", "TrainClassifier.py")),
     ("SQL importer", os.path.join(BASE_DIR, "SQL importer", "SQLimporter.py")),
     ("EDA + charts", os.path.join(BASE_DIR, "EDA + charts", "Charts.py")),
