@@ -111,40 +111,55 @@ def ve_bieu_do_3(df):
                  fontsize=13, fontweight="bold")
     luu_anh(fig, "bieu_do_3_tac_gia.png")
 
-#ve_bieu_do_4: heatmap chuyên mục x khung giờ, màu động theo tần số
+#ve_bieu_do_4: heatmap 1 tháng, đậm nhạt biểu thị mật độ bài viết (không có trục)
 def ve_bieu_do_4(df):
-    counts = df["category"].value_counts()
-    nguong = max(4, round(len(df) * 0.06))
-    top = [c for c in counts.index if c != "Khác" and counts[c] >= nguong][:9]
-    top = top or list(counts.index[:9])
-    hours = range(24)
-    heat = pd.crosstab(df["category"], df["hour"]).reindex(
-        index=top, columns=hours, fill_value=0
-    )
-    vmax = int(heat.values.max())
-    colors = ["#f2f2f2"] + mau_theo_gia_tri(list(range(1, vmax + 1)))
+    import calendar
+    valid_dates = df["published_at"].dropna()
+    if valid_dates.empty:
+        return
 
-    fig, ax = plt.subplots(figsize=(15, 5.6))
-    ax.imshow(heat.values, aspect="auto", cmap=ListedColormap(colors),
-              vmin=-0.5, vmax=vmax + 0.5)
-    ax.set_xticks(range(len(hours)), [f"{h}h" for h in hours])
-    ax.tick_params(axis="x", labelsize=8)
-    ax.set_yticks(range(len(top)), [f"{c} ({int(counts[c])})" for c in top])
-    ax.set_xlabel("Khung giờ xuất bản")
-    ax.set_ylabel("Chuyên mục (số bài)")
-    for i, row in enumerate(heat.values):
-        for j, v in enumerate(row):
-            if v:
-                ax.text(j, i, int(v), ha="center", va="center",
-                        color="white", fontsize=9, fontweight="bold")
-    ax.set_xticks(np.arange(-0.5, len(hours), 1), minor=True)
-    ax.set_yticks(np.arange(-0.5, len(top), 1), minor=True)
-    ax.grid(which="minor", color="white", linewidth=2)
-    ax.tick_params(which="minor", length=0)
-    ax.set_title("Số bài theo chuyên mục và khung giờ xuất bản",
-                 fontsize=12.5, fontweight="bold")
-    # rect thu nhỏ vùng vẽ và giữ heatmap ở giữa khung ảnh
-    luu_anh(fig, "bieu_do_4_nhiet_do_chuyen_muc_gio.png", rect=[0.16, 0.16, 0.84, 0.86])
+    latest = valid_dates.max()
+    year, month = latest.year, latest.month
+    month_data = df[(df["published_at"].dt.year == year) & (df["published_at"].dt.month == month)]
+    day_counts = month_data["published_at"].dt.day.value_counts().to_dict()
+
+    cal = calendar.monthcalendar(year, month)
+    vmax = max(day_counts.values()) if day_counts else 1
+
+    fig, ax = plt.subplots(figsize=(10, 7))
+
+    for r, week in enumerate(cal):
+        for c, day in enumerate(week):
+            y_pos = len(cal) - 1 - r
+            if day == 0:
+                color = "#f4f4f4"
+                rect = plt.Rectangle((c, y_pos), 1, 1, facecolor=color, edgecolor="white", linewidth=2.5)
+                ax.add_patch(rect)
+            else:
+                val = day_counts.get(day, 0)
+                if val == 0:
+                    color = "#e8e8e8"
+                    txt_color = "#888888"
+                else:
+                    # Tính bậc màu theo bảng PALETTE
+                    color_idx = int(round((val / vmax) * (len(PALETTE) - 1)))
+                    color = PALETTE[min(len(PALETTE) - 1, color_idx)]
+                    txt_color = "white"
+
+                rect = plt.Rectangle((c, y_pos), 1, 1, facecolor=color, edgecolor="white", linewidth=2.5)
+                ax.add_patch(rect)
+
+                txt = f"{day}\n({val})" if val > 0 else f"{day}"
+                ax.text(c + 0.5, y_pos + 0.5, txt, ha="center", va="center",
+                        fontsize=11, fontweight="bold", color=txt_color)
+
+    ax.set_xlim(0, 7)
+    ax.set_ylim(0, len(cal))
+    ax.axis("off")  # Tuyệt đối không hiển thị trục
+    ax.set_title(f"Bản đồ nhiệt mật độ bài viết tháng {month}/{year} (n={len(month_data)})",
+                 fontsize=14, fontweight="bold", pad=20)
+
+    luu_anh(fig, "bieu_do_4_nhiet_do_chuyen_muc_gio.png", rect=[0.05, 0.05, 0.95, 0.95])
 
 #generate_eda_charts: phân tích khám phá dữ liệu (EDA) và xuất 4 biểu đồ ra 4 file PNG riêng
 def generate_eda_charts():
