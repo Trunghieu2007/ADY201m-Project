@@ -117,6 +117,7 @@ def extract_raw_article(html, url, fallback_date=None, default_category="Khác")
     }
 
 def collect_all_rss_links():
+    print("[*] Quét toàn bộ RSS feeds của 16 chuyên mục VnExpress...")
     urls = {}
     for cat in CATEGORIES:
         xml = fetch(f"https://vnexpress.net/rss/{cat}.rss")
@@ -145,11 +146,12 @@ def collect_all_rss_links():
         except Exception:
             pass
 
+    print(f"[+] Tổng số liên kết độc nhất tìm thấy: {len(urls)} links.")
     return urls
 
 def main():
-    print("-> Đang cào dữ liệu...")
     links_dict = collect_all_rss_links()
+    print("-> Đang cào dữ liệu...")
 
     raw_articles = []
     for url, (pub_date, cat) in links_dict.items():
@@ -162,6 +164,8 @@ def main():
         json.dump(raw_articles, f, ensure_ascii=False, indent=2)
 
     print(f"-> Đã cào xong {len(raw_articles)} bài!")
+    rel_raw = os.path.relpath(RAW_OUTPUT_PATH, PROJECT_DIR)
+    print(f"[+] Đã lưu tại: {rel_raw}")
 
 if __name__ == "__main__":
     main()
