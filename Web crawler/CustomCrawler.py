@@ -3,27 +3,23 @@ import re
 import sys
 import time
 import json
-import random
 from datetime import datetime, timedelta
 from email.utils import parsedate_to_datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
-import pandas as pd
 from bs4 import BeautifulSoup
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 # ==============================================================================
-# CẤU HÌNH THAY ĐỔI
+# BIẾN SỐ CẤU HÌNH (Được phép tùy chỉnh)
 # ==============================================================================
 CRAWL_DAYS = 7        # Số ngày cào tính từ thời điểm hiện tại ngược về quá khứ
-REQUEST_DELAY = 0.5   # Thời gian nghỉ cơ bản (giây) giữa các request, tránh bị chặn / 429
+REQUEST_DELAY = 0.5   # Thời gian nghỉ (giây) giữa các request để bảo vệ server
 
 # ==============================================================================
 # HẰNG SỐ HỆ THỐNG
 # ==============================================================================
-MAX_WORKERS = 3       # Giới hạn số luồng đồng thời an toàn để không dồn request
 TIMEOUT = 12
 
 HEADERS = {
@@ -43,24 +39,16 @@ CATEGORIES = [
 ]
 
 def fetch(url):
-    """Gửi HTTP GET có kiểm soát tần số (jitter delay) và cơ chế thử lại khi gặp 429."""
-    time.sleep(REQUEST_DELAY * random.uniform(0.8, 1.2))
-    for attempt in range(3):
-        try:
-            res = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
-            if res.status_code == 429:
-                wait_time = (attempt + 1) * 3
-                print(f"[!] 429 Too Many Requests tại {url}. Chờ {wait_time}s...")
-                time.sleep(wait_time)
-                continue
-            res.raise_for_status()
-            res.encoding = "utf-8"
-            return res.text
-        except requests.RequestException as e:
-            if attempt == 2:
-                raise e
-            time.sleep(2)
-    return ""
+    """Gửi HTTP GET đơn luồng có thời gian nghỉ cố định REQUEST_DELAY."""
+    time.sleep(REQUEST_DELAY)
+    try:
+        res = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+        res.raise_for_status()
+        res.encoding = "utf-8"
+        return res.text
+    except requests.RequestException as e:
+        print(f"[!] Lỗi fetch {url}: {e}")
+        return ""
 
 def normalize_datetime(raw):
     """Chuẩn hóa chuỗi ngày giờ từ web về YYYY-MM-DD HH:MM:SS."""
@@ -81,7 +69,7 @@ def normalize_datetime(raw):
     return None
 
 def refine_article(html, url, fallback_date=None):
-    """Trích xuất 9 trường thông tin bài viết từ HTML."""
+    """Trích xuất thông tin bài viết từ HTML (mặc định tác giả 'VnExpress')."""
     if not html:
         return None
 
@@ -98,10 +86,11 @@ def refine_article(html, url, fallback_date=None):
         raw_date = m_date.get("content", "").strip() if m_date else ""
     published_at = normalize_datetime(raw_date) or fallback_date
 
-    # Tiêu đề và tóm tắt
+    # Tiêu đề
     h1 = soup.find("h1", class_="title-detail") or soup.find("h1")
     title = h1.text.strip() if h1 else ""
 
+    # Tóm tắt
     desc_tag = soup.find("p", class_="description")
     description = desc_tag.text.strip() if desc_tag else ""
     if not description:
@@ -116,26 +105,12 @@ def refine_article(html, url, fallback_date=None):
     category = crumbs[0] if crumbs else "Khác"
     subcategory = crumbs[1] if len(crumbs) > 1 else "Không có"
 
-    # Nội dung và tác giả
+    # Nội dung toàn văn (gán cố định author = 'VnExpress')
     paragraphs = [
-        p for p in soup.select(".fck_detail p.Normal, .fck_detail p, article p")
+        p.text.strip() for p in soup.select(".fck_detail p.Normal, .fck_detail p, article p")
         if p.text.strip()
     ]
-    author = "VnExpress"
-    idx = len(paragraphs) - 1
-
-    while idx >= 0 and (len(paragraphs) - 1 - idx) < 3:
-        txt = paragraphs[idx].text.strip()
-        strong = paragraphs[idx].find("strong")
-        if txt.startswith(("*", "Ảnh:", "Video:")):
-            paragraphs.pop(idx)
-        elif strong and len(txt) < 50:
-            author = strong.text.strip()
-            paragraphs.pop(idx)
-            break
-        idx -= 1
-
-    content = "\n".join(p.text.strip() for p in paragraphs)
+    content = "\n".join(paragraphs)
 
     # ID bài viết
     meta_id = soup.find("meta", {"name": "tt_article_id"})
@@ -146,7 +121,7 @@ def refine_article(html, url, fallback_date=None):
         "title": title,
         "description": description,
         "content": content,
-        "author": author,
+        "author": "VnExpress",
         "published_at": published_at,
         "category": category,
         "subcategory": subcategory,
@@ -154,7 +129,7 @@ def refine_article(html, url, fallback_date=None):
     }
 
 def validate_article(art, cutoff_datetime):
-    """Kiểm tra hợp lệ nội dung và giới hạn thời gian N ngày."""
+    """Kiểm tra hợp lệ nội dung và đảm bảo bài nằm trong khoảng N ngày."""
     if not art:
         return False, "Không phải bài báo văn bản"
     if not art.get("title"):
@@ -176,28 +151,17 @@ def validate_article(art, cutoff_datetime):
 
     return True, "Hợp lệ"
 
-def parse_pipeline(url, fallback_date, cutoff_datetime):
-    """Quy trình xử lý một URL: fetch -> refine -> validate."""
-    try:
-        html = fetch(url)
-        raw_article = refine_article(html, url, fallback_date)
-        is_valid, reason = validate_article(raw_article, cutoff_datetime)
-        if is_valid:
-            return raw_article, "OK"
-        return None, reason
-    except Exception as e:
-        return None, f"Lỗi: {e}"
-
-def collect_urls_by_time_window(cutoff_datetime):
-    """Thu thập danh sách URL bài viết từ RSS và phân trang trong khung thời gian."""
+def collect_urls_from_rss(cutoff_datetime):
+    """Thu thập danh sách URL bài viết từ RSS feeds của 16 chuyên mục."""
     now = datetime.now()
-    print(f"[*] Thu thập URL từ {cutoff_datetime:%Y-%m-%d %H:%M:%S} đến {now:%Y-%m-%d %H:%M:%S}...")
+    print(f"[*] Thu thập URL bài viết từ RSS ({cutoff_datetime:%d/%m/%Y} -> {now:%d/%m/%Y})...")
     urls = {}
 
-    # Bước A: Quét RSS 16 chuyên mục
     for cat in CATEGORIES:
+        xml = fetch(f"https://vnexpress.net/rss/{cat}.rss")
+        if not xml:
+            continue
         try:
-            xml = fetch(f"https://vnexpress.net/rss/{cat}.rss")
             soup = BeautifulSoup(xml, "xml")
             for item in soup.find_all("item"):
                 link_tag = item.find("link")
@@ -215,101 +179,54 @@ def collect_urls_by_time_window(cutoff_datetime):
                         urls[link.split("?")[0]] = (0.0, None)
                 else:
                     urls[link.split("?")[0]] = (0.0, None)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[!] Lỗi phân tích RSS chuyên mục {cat}: {e}")
 
-    print(f"  [+] Tìm thấy {len(urls)} bài từ RSS feeds.")
-
-    # Bước B: Quét phân trang bổ sung
-    for cat in CATEGORIES:
-        page = 1
-        while page <= 15:
-            try:
-                page_url = f"https://vnexpress.net/{cat}" if page == 1 else f"https://vnexpress.net/{cat}-p{page}"
-                html = fetch(page_url)
-                soup = BeautifulSoup(html, "html.parser")
-                articles_tags = soup.select("article.item-news h3.title-news a[href]")
-                if not articles_tags:
-                    break
-
-                for a in articles_tags:
-                    href = a["href"].split("?")[0]
-                    if href.startswith("/"):
-                        href = "https://vnexpress.net" + href
-                    if href.endswith(".html") and "/video/" not in href and href not in urls:
-                        urls[href] = (0.0, None)
-            except Exception:
-                break
-            page += 1
-
-    return sorted(urls.items(), key=lambda x: x[1][0], reverse=True)
+    sorted_urls = sorted(urls.items(), key=lambda x: x[1][0], reverse=True)
+    print(f"[+] Tìm thấy tổng cộng {len(sorted_urls)} bài viết hợp lệ trong 7 ngày từ RSS.")
+    return sorted_urls
 
 def main():
-    """Hàm chính điều phối tiến trình cào và xuất dữ liệu ra CSV/JSON."""
+    """Hàm chính điều phối tiến trình cào đơn luồng và chỉ xuất dữ liệu ra JSON."""
     now = datetime.now()
     cutoff_datetime = now - timedelta(days=CRAWL_DAYS)
 
     print("=" * 65)
     print(" THU THẬP BÀI VIẾT VNEXPRESS (CUSTOM CRAWLER) ")
-    print(f" Khung thời gian: {CRAWL_DAYS} ngày gần nhất ({cutoff_datetime:%d/%m/%Y} -> {now:%d/%m/%Y})")
-    print(f" Cấu hình an toàn: Delay = {REQUEST_DELAY}s | Luồng tối đa = {MAX_WORKERS}")
+    print(f" Cấu hình: Cào {CRAWL_DAYS} ngày gần nhất | Delay = {REQUEST_DELAY}s (Đơn luồng)")
+    print(f" Nguồn: 16 RSS chuyên mục chính thức | Định dạng xuất: Chỉ file JSON")
     print("=" * 65)
 
     start_time = time.time()
-    links = collect_urls_by_time_window(cutoff_datetime)
-    print(f"[*] Bắt đầu xử lý {len(links)} liên kết bài viết...")
+    links = collect_urls_from_rss(cutoff_datetime)
+    print(f"[*] Bắt đầu tải và xử lý {len(links)} bài viết...")
 
     articles = []
     report = {}
 
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        futures = {
-            executor.submit(parse_pipeline, u, d[1], cutoff_datetime): u
-            for u, d in links
-        }
-        for f in as_completed(futures):
-            art, reason = f.result()
-            report[reason] = report.get(reason, 0) + 1
-            if art:
-                articles.append(art)
+    for idx, (url, date_info) in enumerate(links, 1):
+        html = fetch(url)
+        raw_article = refine_article(html, url, date_info[1])
+        is_valid, reason = validate_article(raw_article, cutoff_datetime)
+        report[reason] = report.get(reason, 0) + 1
 
-    # Lọc lại lần cuối bảo đảm 100% bài thuộc đúng khung N ngày
-    valid_articles = []
-    for art in articles:
-        pub_str = art.get("published_at")
-        if pub_str:
-            try:
-                pub_dt = datetime.strptime(pub_str, "%Y-%m-%d %H:%M:%S")
-                if pub_dt >= cutoff_datetime:
-                    valid_articles.append(art)
-                else:
-                    report[f"Ngoài phạm vi {CRAWL_DAYS} ngày"] = report.get(f"Ngoài phạm vi {CRAWL_DAYS} ngày", 0) + 1
-            except Exception:
-                valid_articles.append(art)
-        else:
-            valid_articles.append(art)
+        if is_valid:
+            articles.append(raw_article)
 
-    valid_articles.sort(key=lambda x: str(x.get("published_at", "")), reverse=True)
-    df = pd.DataFrame(valid_articles)
+        if idx % 50 == 0 or idx == len(links):
+            print(f"  -> Tiến độ: {idx}/{len(links)} bài (Đã lưu hợp lệ: {len(articles)} bài)")
 
-    out_file = os.path.join(os.path.dirname(__file__), "vnexpress_data.csv")
-    df.to_csv(out_file, index=False, encoding="utf-8-sig")
-
+    # Lưu duy nhất ra file JSON
     out_json = os.path.join(os.path.dirname(__file__), "vnexpress_data.json")
     with open(out_json, "w", encoding="utf-8") as f:
-        json.dump(valid_articles, f, ensure_ascii=False, indent=2)
+        json.dump(articles, f, ensure_ascii=False, indent=2)
 
     elapsed = time.time() - start_time
     print("\n" + "=" * 65)
     print(" KẾT QUẢ THU THẬP ")
     print("=" * 65)
-    print(f"[+] Đã lưu: {len(df)} bài viết đạt tiêu chuẩn")
-    print(f"[+] Tệp kết quả: {os.path.basename(out_file)} & {os.path.basename(out_json)}")
+    print(f"[+] Đã lưu thành công: {len(articles)} bài viết vào {os.path.basename(out_json)}")
     print(f"[+] Thời gian hoàn thành: {elapsed:.1f} giây ({elapsed / 60:.1f} phút)")
-    if not df.empty and "published_at" in df.columns:
-        valid_dates = df["published_at"].dropna()
-        if not valid_dates.empty:
-            print(f"[+] Khoảng thời gian thực tế: từ {valid_dates.min()} đến {valid_dates.max()}")
 
     print("\n[+] Thống kê kiểm duyệt nội dung:")
     for reason, count in sorted(report.items(), key=lambda x: x[1], reverse=True):

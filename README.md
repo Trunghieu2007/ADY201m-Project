@@ -53,7 +53,7 @@ Hệ thống được thiết kế theo phương pháp luận Data Science của
 
 * **Mục tiêu:** Thực hiện Phase 7 (Xây dựng Mô hình) và Phase 8 (Đánh giá Mô hình) theo chuẩn John Rollins, nhận dữ liệu trực tiếp từ bước Web crawler để huấn luyện mô hình phân loại chuyên mục mà không phụ thuộc vào CSDL.
 * **Luồng hoạt động:**
-  1. Nạp trực tiếp dữ liệu thô từ file CSV/JSON do `Web crawler` tạo ra.
+  1. Nạp trực tiếp dữ liệu thô từ file JSON do `Web crawler` tạo ra.
   2. Chuẩn hóa văn bản tiếng Việt: làm sạch URL, ký tự đặc biệt, ghép nối `title + description + content`.
   3. Phân chia tập dữ liệu độc lập (Stratified Train/Test Split: 80% train, 20% test) nhằm bảo vệ tính toàn vẹn (Quality Gate 1 - chống data leakage).
   4. Trích xuất đặc trưng văn bản bằng `TfidfVectorizer` (N-gram 1-2, sublinear TF scaling).
