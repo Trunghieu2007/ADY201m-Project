@@ -57,7 +57,7 @@ def filter_articles(raw_articles):
 
         words = len(content.split())
         if words < MIN_WORD_COUNT:
-            reason = f"Nội dung quá ngắn ({words} từ < ngưỡng {MIN_WORD_COUNT} từ)"
+            reason = f"Nội dung quá ngắn (< ngưỡng {MIN_WORD_COUNT} từ)"
             reason_stats[reason] = reason_stats.get(reason, 0) + 1
             continue
 

@@ -3,7 +3,7 @@ import re
 import sys
 import time
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from email.utils import parsedate_to_datetime
 import requests
 from bs4 import BeautifulSoup
@@ -13,6 +13,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 REQUEST_DELAY = 0.5
 TIMEOUT = 12
+CRAWL_DAYS = 7   # Phạm vi lấy bài: 7 ngày gần nhất tính từ thời điểm chạy
 
 HEADERS = {
     "User-Agent": (
@@ -118,6 +119,7 @@ def extract_raw_article(html, url, fallback_date=None, default_category="Khác")
 
 def collect_all_rss_links():
     print("[*] Quét toàn bộ RSS feeds của 16 chuyên mục VnExpress...")
+    cutoff_dt = datetime.now() - timedelta(days=CRAWL_DAYS)
     urls = {}
     for cat in CATEGORIES:
         xml = fetch(f"https://vnexpress.net/rss/{cat}.rss")
@@ -133,12 +135,18 @@ def collect_all_rss_links():
 
                 pub_tag = item.find("pubDate")
                 pub_str = None
+                is_within_days = True
                 if pub_tag and pub_tag.text:
                     try:
                         dt = parsedate_to_datetime(pub_tag.text.strip()).astimezone().replace(tzinfo=None)
                         pub_str = dt.strftime("%Y-%m-%d %H:%M:%S")
+                        if dt < cutoff_dt:
+                            is_within_days = False
                     except Exception:
                         pass
+
+                if not is_within_days:
+                    continue
 
                 clean_url = link.split("?")[0]
                 if clean_url not in urls:
