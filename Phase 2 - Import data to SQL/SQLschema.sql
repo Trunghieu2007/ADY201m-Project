@@ -1,8 +1,3 @@
--- =======================================================
--- SCRIPT KHỞI TẠO BẢNG DỮ LIỆU BÁO CHÍ TRÊN MICROSOFT SQL SERVER
--- Bạn có thể mở file này trong SSMS (SQL Server Management Studio) và bấm Execute (F5)
--- =======================================================
-
 -- 1. Tạo Database nếu chưa có (Mặc định dùng ADY201m)
 IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'ADY201m')
 BEGIN

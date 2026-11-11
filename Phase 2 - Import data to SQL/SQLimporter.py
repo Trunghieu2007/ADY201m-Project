@@ -47,12 +47,17 @@ def table_exists(cursor):
 
 #Đọc JSON, lọc trùng (trong batch và với CSDL) rồi nạp vào SQL Server qua executemany
 def import_json_to_sql(json_path=None):
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    project_dir = os.path.dirname(base_dir)
+
     candidates = [
-        "Web crawler/vnexpress_data.json", "../Web crawler/vnexpress_data.json",
-        "Crawler/vnexpress_data.json", "../Crawler/vnexpress_data.json",
-        "vnexpress_data.json"
+        os.path.join(project_dir, "Phase 1 - Data crawl & Post process + Quick report", "vnexpress_data.json"),
+        os.path.join(project_dir, "Phase 1 - Data crawl & Post process", "vnexpress_data.json"),
+        os.path.join(project_dir, "Web crawler", "vnexpress_data.json"),
+        os.path.join(base_dir, "vnexpress_data.json"),
+        os.path.join(project_dir, "vnexpress_data.json"),
     ]
-    path = json_path or next((c for c in candidates if os.path.exists(c)), "Web crawler/vnexpress_data.json")
+    path = json_path or next((c for c in candidates if os.path.exists(c)), candidates[0])
     if not os.path.exists(path):
         print(f"[!] Không tìm thấy file dữ liệu: {path}")
         return

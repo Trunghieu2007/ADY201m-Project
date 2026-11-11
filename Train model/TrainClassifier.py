@@ -26,6 +26,8 @@ METRICS_PATH = os.path.join(BASE_DIR, "evaluation_metrics.json")
 
 # Danh sách ứng viên file dữ liệu đầu vào trực tiếp từ Web crawler (hoàn toàn không dùng SQL)
 DATA_CANDIDATES = [
+    os.path.join(PROJECT_DIR, "Phase 1 - Data crawl & Post process + Quick report", "vnexpress_data.json"),
+    os.path.join(PROJECT_DIR, "Phase 1 - Data crawl & Post process", "vnexpress_data.json"),
     os.path.join(PROJECT_DIR, "Web crawler", "vnexpress_data.json"),
     os.path.join(PROJECT_DIR, "Web crawler", "vnexpress_historical_data.csv"),
     os.path.join(PROJECT_DIR, "Web crawler", "vnexpress_data.csv"),

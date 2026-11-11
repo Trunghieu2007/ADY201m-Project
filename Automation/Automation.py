@@ -14,10 +14,10 @@ INTERVAL = 30 * 60  # 30 phút, tính từ lúc bắt đầu mỗi lần chạy
 
 # Năm bước của chuỗi pipeline xử lý dữ liệu và AI (luôn chạy đúng thứ tự này)
 STEPS = [
-    ("Step 1: Raw Crawler", os.path.join(BASE_DIR, "Phase 1 - Data crawl & Post process", "Step1_RawCrawler.py")),
-    ("Step 2: Data Filter", os.path.join(BASE_DIR, "Phase 1 - Data crawl & Post process", "Step2_DataFilter.py")),
-    ("Step 3: AI classifier", os.path.join(BASE_DIR, "AI classifier", "TrainClassifier.py")),
-    ("Step 4: SQL importer", os.path.join(BASE_DIR, "SQL importer", "SQLimporter.py")),
+    ("Step 1: Raw Crawler", os.path.join(BASE_DIR, "Phase 1 - Data crawl & Post process + Quick report", "Step1_RawCrawler.py")),
+    ("Step 2: Data Filter", os.path.join(BASE_DIR, "Phase 1 - Data crawl & Post process + Quick report", "Step2_DataFilter.py")),
+    ("Step 3: Train model", os.path.join(BASE_DIR, "Train model", "TrainClassifier.py")),
+    ("Step 4: SQL importer", os.path.join(BASE_DIR, "Phase 2 - Import data to SQL", "SQLimporter.py")),
     ("Step 5: EDA + charts", os.path.join(BASE_DIR, "EDA + charts", "Charts.py")),
 ]
 
