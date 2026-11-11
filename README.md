@@ -64,7 +64,7 @@ Tách bạch rõ ràng thành 2 bước độc lập:
      - `bieu_do_1_chuyen_muc.png`: Cột ngang cơ cấu chuyên mục.
      - `bieu_do_2_phan_bo_gio.png`: Biểu đồ tần số xuất bản theo 24 khung giờ trong ngày.
      - `bieu_do_3_tac_gia.png`: Tỷ trọng tác giả VnExpress và nhóm tác giả khác.
-     - `bieu_do_4_nhiet_do_chuyen_muc_gio.png`: Bản đồ nhiệt ma trận lịch tháng (Calendar Heatmap không trục) biểu thị mật độ bài viết theo độ đậm nhạt của màu sắc.
+     - `bieu_do_4_nhiet_do_thang.png`: Bản đồ nhiệt ma trận lịch tháng (Calendar Heatmap không trục) biểu thị mật độ bài viết theo độ đậm nhạt của màu sắc.
 
 ### 1.5. Huấn luyện và đánh giá mô hình phân loại tin tức (`Train model`)
 
