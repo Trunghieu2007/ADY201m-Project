@@ -35,6 +35,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(BASE_DIR)
 RAW_OUTPUT_PATH = os.path.join(BASE_DIR, "vnexpress_raw.json")
 
+# Tải mã nguồn HTML của URL với cấu hình User-Agent, timeout và độ trễ ngắt quãng
 def fetch(url):
     time.sleep(REQUEST_DELAY)
     try:
@@ -45,6 +46,7 @@ def fetch(url):
     except requests.RequestException:
         return ""
 
+# Chuẩn hóa chuỗi thời gian xuất bản thô sang định dạng chuẩn 'YYYY-MM-DD HH:MM:SS'
 def normalize_datetime(raw):
     if not raw:
         return None
@@ -62,6 +64,7 @@ def normalize_datetime(raw):
         return dt.strftime("%Y-%m-%d %H:%M:%S")
     return None
 
+# Bóc tách 9 trường dữ liệu bài viết từ HTML của trang bài báo VnExpress
 def extract_raw_article(html, url, fallback_date=None, default_category="Khác"):
     if not html:
         return None
@@ -117,6 +120,7 @@ def extract_raw_article(html, url, fallback_date=None, default_category="Khác")
         "crawled_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 
+# Quét danh sách các liên kết RSS của 16 chuyên mục trong 7 ngày gần nhất
 def collect_all_rss_links():
     print("[*] Quét toàn bộ RSS feeds của 16 chuyên mục VnExpress...")
     cutoff_dt = datetime.now() - timedelta(days=CRAWL_DAYS)
@@ -156,7 +160,7 @@ def collect_all_rss_links():
 
     print(f"[+] Tổng số liên kết độc nhất tìm thấy: {len(urls)} links.")
     return urls
-
+# Cào toàn bộ bài viết từ RSS và lưu trữ vào tệp json vnexpress_raw.json
 def main():
     links_dict = collect_all_rss_links()
     print("-> Đang cào dữ liệu...")

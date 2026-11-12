@@ -21,7 +21,7 @@ SCHEMA_HINT = (
     "Database ADY201m và bảng dbo.VnExpress_Articles trước khi nạp dữ liệu."
 )
 
-#Ép chuỗi ngày 'YYYY-MM-DD HH:MM:SS' (từ crawler) về datetime để ghi cột DATETIME
+# Chuyển đổi chuỗi ngày giờ 'YYYY-MM-DD HH:MM:SS' sang đối tượng datetime cho SQL DATETIME
 def to_datetime(value):
     if not value:
         return None
@@ -30,7 +30,7 @@ def to_datetime(value):
     except ValueError:
         return None
 
-#Kiểm tra Database ADY201m tồn tại qua kết nối master; trả về True/False
+# Kiểm tra xem CSDL ADY201m đã tồn tại trên SQL Server hay chưa
 def database_exists():
     conn = pyodbc.connect(MASTER_CONN, autocommit=True)
     cursor = conn.cursor()
@@ -40,12 +40,12 @@ def database_exists():
     conn.close()
     return found
 
-#Kiểm tra bảng dbo.VnExpress_Articles đã tồn tại trong ADY201m hay chưa
+# Kiểm tra xem bảng dbo.VnExpress_Articles đã được tạo trong CSDL hay chưa
 def table_exists(cursor):
     cursor.execute("SELECT OBJECT_ID(N'dbo.VnExpress_Articles', N'U')")
     return cursor.fetchone()[0] is not None
 
-#Đọc JSON, lọc trùng (trong batch và với CSDL) rồi nạp vào SQL Server qua executemany
+# Đọc file JSON, khử trùng lặp và nạp các bài viết mới vào bảng dbo.VnExpress_Articles
 def import_json_to_sql(json_path=None):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     project_dir = os.path.dirname(base_dir)

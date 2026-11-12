@@ -1,129 +1,213 @@
 {
-    "accuracy_decision_tree": 0.4,
-    "accuracy_naive_bayes": 0.8,
-    "train_samples": 20,
-    "test_samples": 5,
-    "num_categories": 4,
+    "accuracy_decision_tree": 0.5774,
+    "accuracy_naive_bayes": 0.8155,
+    "train_samples": 672,
+    "test_samples": 168,
+    "num_categories": 16,
     "categories": [
+        "Bất động sản",
+        "Du lịch",
+        "Giáo dục",
+        "Giải trí",
+        "Khoa học công nghệ",
+        "Kinh doanh",
+        "Pháp luật",
         "Sức khỏe",
+        "Thư giãn",
         "Thế giới",
         "Thể thao",
-        "Xe"
+        "Thời sự",
+        "Tâm sự",
+        "Xe",
+        "Ý kiến",
+        "Đời sống"
     ],
     "top_features": [
         {
             "rank": 1,
-            "feature": "đội",
-            "importance": 0.4271
+            "feature": "hlv",
+            "importance": 0.0581
         },
         {
             "rank": 2,
-            "feature": "thần",
-            "importance": 0.3365
+            "feature": "bệnh",
+            "importance": 0.0538
         },
         {
             "rank": 3,
-            "feature": "tổng",
-            "importance": 0.2365
+            "feature": "xe",
+            "importance": 0.0519
         },
         {
             "rank": 4,
-            "feature": "2025",
-            "importance": 0.0
+            "feature": "họa ai",
+            "importance": 0.049
         },
         {
             "rank": 5,
-            "feature": "2024",
-            "importance": 0.0
+            "feature": "diện tích",
+            "importance": 0.0403
         },
         {
             "rank": 6,
-            "feature": "2023",
-            "importance": 0.0
+            "feature": "công an",
+            "importance": 0.0384
         },
         {
             "rank": 7,
-            "feature": "200 người",
-            "importance": 0.0
+            "feature": "du khách",
+            "importance": 0.0378
         },
         {
             "rank": 8,
-            "feature": "200",
-            "importance": 0.0
+            "feature": "xem",
+            "importance": 0.0368
         },
         {
             "rank": 9,
-            "feature": "20 năm",
-            "importance": 0.0
+            "feature": "và đào",
+            "importance": 0.0323
         },
         {
             "rank": 10,
-            "feature": "20",
-            "importance": 0.0
+            "feature": "phường",
+            "importance": 0.0319
         },
         {
             "rank": 11,
-            "feature": "19 tuổi",
-            "importance": 0.0
+            "feature": "diễn",
+            "importance": 0.0317
         },
         {
             "rank": 12,
-            "feature": "19",
-            "importance": 0.0
+            "feature": "tổng thống",
+            "importance": 0.0293
         },
         {
             "rank": 13,
-            "feature": "18 tuổi",
-            "importance": 0.0
+            "feature": "tôi",
+            "importance": 0.0289
         },
         {
             "rank": 14,
-            "feature": "18",
-            "importance": 0.0
+            "feature": "tổng hợp",
+            "importance": 0.0253
         },
         {
             "rank": 15,
-            "feature": "16 tuổi",
-            "importance": 0.0
+            "feature": "giao dịch",
+            "importance": 0.0199
         }
     ],
     "classification_report": {
+        "Bất động sản": {
+            "precision": 0.6363636363636364,
+            "recall": 0.6363636363636364,
+            "f1-score": 0.6363636363636364,
+            "support": 11.0
+        },
+        "Du lịch": {
+            "precision": 0.6363636363636364,
+            "recall": 0.7,
+            "f1-score": 0.6666666666666666,
+            "support": 10.0
+        },
+        "Giáo dục": {
+            "precision": 0.5,
+            "recall": 0.5,
+            "f1-score": 0.5,
+            "support": 10.0
+        },
+        "Giải trí": {
+            "precision": 0.5384615384615384,
+            "recall": 0.5833333333333334,
+            "f1-score": 0.56,
+            "support": 12.0
+        },
+        "Khoa học công nghệ": {
+            "precision": 0.6,
+            "recall": 0.5454545454545454,
+            "f1-score": 0.5714285714285714,
+            "support": 11.0
+        },
+        "Kinh doanh": {
+            "precision": 0.25925925925925924,
+            "recall": 0.5833333333333334,
+            "f1-score": 0.358974358974359,
+            "support": 12.0
+        },
+        "Pháp luật": {
+            "precision": 0.7777777777777778,
+            "recall": 0.5833333333333334,
+            "f1-score": 0.6666666666666666,
+            "support": 12.0
+        },
         "Sức khỏe": {
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1-score": 0.0,
-            "support": 2.0
+            "precision": 0.8,
+            "recall": 0.6666666666666666,
+            "f1-score": 0.7272727272727273,
+            "support": 12.0
+        },
+        "Thư giãn": {
+            "precision": 0.6666666666666666,
+            "recall": 0.5,
+            "f1-score": 0.5714285714285714,
+            "support": 8.0
         },
         "Thế giới": {
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1-score": 0.0,
-            "support": 1.0
+            "precision": 0.5,
+            "recall": 0.4166666666666667,
+            "f1-score": 0.45454545454545453,
+            "support": 12.0
         },
         "Thể thao": {
-            "precision": 0.5,
-            "recall": 1.0,
-            "f1-score": 0.6666666666666666,
-            "support": 1.0
+            "precision": 1.0,
+            "recall": 0.5833333333333334,
+            "f1-score": 0.7368421052631579,
+            "support": 12.0
+        },
+        "Thời sự": {
+            "precision": 0.5384615384615384,
+            "recall": 0.5833333333333334,
+            "f1-score": 0.56,
+            "support": 12.0
+        },
+        "Tâm sự": {
+            "precision": 0.7777777777777778,
+            "recall": 0.875,
+            "f1-score": 0.8235294117647058,
+            "support": 8.0
         },
         "Xe": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1-score": 1.0,
-            "support": 1.0
+            "precision": 0.7692307692307693,
+            "recall": 0.9090909090909091,
+            "f1-score": 0.8333333333333334,
+            "support": 11.0
         },
-        "accuracy": 0.4,
+        "Ý kiến": {
+            "precision": 0.3333333333333333,
+            "recall": 0.2857142857142857,
+            "f1-score": 0.3076923076923077,
+            "support": 7.0
+        },
+        "Đời sống": {
+            "precision": 0.3333333333333333,
+            "recall": 0.125,
+            "f1-score": 0.18181818181818182,
+            "support": 8.0
+        },
+        "accuracy": 0.5773809523809523,
         "macro avg": {
-            "precision": 0.375,
-            "recall": 0.5,
-            "f1-score": 0.41666666666666663,
-            "support": 5.0
+            "precision": 0.6041893291893292,
+            "recall": 0.5672889610389611,
+            "f1-score": 0.5722851245761462,
+            "support": 168.0
         },
         "weighted avg": {
-            "precision": 0.3,
-            "recall": 0.4,
-            "f1-score": 0.3333333333333333,
-            "support": 5.0
+            "precision": 0.6127872127872128,
+            "recall": 0.5773809523809523,
+            "f1-score": 0.5813018978907966,
+            "support": 168.0
         }
     }
 }

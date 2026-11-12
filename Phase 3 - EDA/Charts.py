@@ -26,8 +26,8 @@ PALETTE = [
     "#ec9c21", "#eb801f", "#eb641d", "#e73f1c", "#e31a1c"
 ]
 
+# Tải dữ liệu từ SQL Server, tự động fallback đọc file JSON nếu SQL chưa sẵn sàng
 def get_data():
-    """Tải dữ liệu từ SQL Server, tự động fallback đọc file JSON nếu SQL chưa sẵn sàng."""
     conn_str = "DRIVER={ODBC Driver 17 for SQL Server};SERVER=.\\SQLEXPRESS;DATABASE=ADY201m;Trusted_Connection=yes;"
     try:
         conn = pyodbc.connect(conn_str, timeout=3)
@@ -57,22 +57,22 @@ def get_data():
 
     return pd.DataFrame()
 
+# Gán mỗi giá trị vào 1 trong 20 bậc màu rời cách đều trên đoạn [min, max]
 def mau_theo_gia_tri(values):
-    """Gán mỗi giá trị vào 1 trong 20 bậc màu cách đều trên đoạn [min, max]."""
     vmin, vmax = min(values), max(values)
     if vmax == vmin:
         return [PALETTE[len(PALETTE) // 2]] * len(values)
     return [PALETTE[int(round((v - vmin) / (vmax - vmin) * (len(PALETTE) - 1)))] for v in values]
 
+# Lưu figure ra tệp PNG với độ phân giải cao và giải phóng bộ nhớ
 def luu_anh(fig, ten_file, rect=(0, 0, 1, 1)):
-    """Lưu figure ra PNG với độ phân giải cao và đóng bộ nhớ."""
     fig.tight_layout(rect=rect)
     fig.savefig(os.path.join(SAVE_DIR, ten_file), dpi=200, facecolor="white")
     plt.close(fig)
     print(f"[+] Đã lưu: {ten_file}")
 
+# Biểu đồ 1: Số bài theo chuyên mục (cột ngang, tô màu theo số lượng)
 def ve_bieu_do_1(df):
-    """Biểu đồ 1: Số bài theo chuyên mục (cột ngang, tô màu theo số lượng)."""
     cat = df["category"].fillna("Khác").str.strip().value_counts().sort_values()
     fig, ax = plt.subplots(figsize=(10, 7))
     bars = ax.barh(cat.index, cat.values, edgecolor="black", color=mau_theo_gia_tri(list(cat.values)))
@@ -86,8 +86,8 @@ def ve_bieu_do_1(df):
     ax.set_axisbelow(True)
     luu_anh(fig, "bieu_do_1_chuyen_muc.png")
 
+# Biểu đồ 2: Tần số bài xuất bản theo 24 khung giờ trong ngày
 def ve_bieu_do_2(df):
-    """Biểu đồ 2: Tần số bài xuất bản theo 24 khung giờ trong ngày."""
     hour = df["hour"].dropna().astype(int)
     dem = hour.value_counts().reindex(range(24), fill_value=0)
     fig, ax = plt.subplots(figsize=(13, 6.5))
@@ -106,8 +106,8 @@ def ve_bieu_do_2(df):
     ax.set_axisbelow(True)
     luu_anh(fig, "bieu_do_2_phan_bo_gio.png")
 
+# Biểu đồ 3: Cơ cấu tác giả bài viết (tròn: VnExpress vs Khác)
 def ve_bieu_do_3(df):
-    """Biểu đồ 3: Cơ cấu tác giả bài viết (tròn: VnExpress vs Khác)."""
     author = df["author"].fillna("VnExpress").str.strip()
     vne = int((author == "VnExpress").sum())
     vals = [vne, len(author) - vne]
@@ -122,8 +122,8 @@ def ve_bieu_do_3(df):
     ax.set_title(f"Cơ cấu tác giả bài viết (n={len(df)})", fontsize=13, fontweight="bold")
     luu_anh(fig, "bieu_do_3_tac_gia.png")
 
+# Biểu đồ 4: Bản đồ nhiệt 1 tháng dạng ma trận Lịch (Calendar Heatmap không trục)
 def ve_bieu_do_4(df):
-    """Biểu đồ 4: Bản đồ nhiệt 1 tháng dạng ma trận Lịch (Calendar Heatmap không trục)."""
     valid_dates = df["published_at"].dropna()
     if valid_dates.empty:
         return
@@ -176,8 +176,8 @@ def ve_bieu_do_4(df):
 
     luu_anh(fig, "bieu_do_4_nhiet_do_thang.png", rect=[0.05, 0.05, 0.95, 0.95])
 
+# Quy trình EDA: nạp dữ liệu, tính thống kê mô tả và xuất 4 biểu đồ PNG
 def generate_eda_charts():
-    """Khởi chạy quy trình phân tích mô tả và xuất 4 biểu đồ trực quan hóa."""
     df = get_data()
     if df.empty:
         print("[!] Không có dữ liệu, dừng xuất biểu đồ.")

@@ -23,6 +23,7 @@ FILTERED_OUTPUT_PATHS = [
     os.path.join(PROJECT_DIR, "Web crawler", "vnexpress_data.json"),
 ]
 
+# Nạp tập dữ liệu bài viết thô (JSON) từ các thư mục ứng viên khả dĩ
 def load_raw_dataset():
     for path in RAW_CANDIDATES:
         if os.path.exists(path):
@@ -33,6 +34,7 @@ def load_raw_dataset():
             return data
     raise FileNotFoundError("Chưa tìm thấy tệp dữ liệu thô 'vnexpress_raw.json'. Hãy chạy Step1_RawCrawler.py trước.")
 
+# Sàng lọc bài viết theo chất lượng: bắt buộc có tiêu đề, đúng định dạng bài báo văn bản, đủ độ dài và trong 7 ngày
 def filter_articles(raw_articles):
     cutoff_datetime = datetime.now() - timedelta(days=FILTER_DAYS)
     cutoff_str = cutoff_datetime.strftime("%Y-%m-%d %H:%M:%S")
@@ -85,6 +87,7 @@ def filter_articles(raw_articles):
     valid_articles.sort(key=lambda x: str(x.get("published_at", "")), reverse=True)
     return valid_articles, reason_stats
 
+# Lọc sạch dữ liệu bài viết thô, xuất ra file vnexpress_data.json và in thống kê
 def main():
     raw_data = load_raw_dataset()
     valid_articles, reason_stats = filter_articles(raw_data)

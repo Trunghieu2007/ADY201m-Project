@@ -35,8 +35,8 @@ DATA_CANDIDATES = [
     os.path.join(BASE_DIR, "vnexpress_data.csv"),
 ]
 
+# Nạp dữ liệu bài viết trực tiếp từ file CSV hoặc JSON của crawler
 def load_crawler_data():
-    """Tải dữ liệu cào trực tiếp từ các file CSV/JSON của Web crawler."""
     found_path = None
     for path in DATA_CANDIDATES:
         if os.path.exists(path):
@@ -66,8 +66,8 @@ def load_crawler_data():
 
     return df
 
+# Làm sạch văn bản tiếng Việt: chữ thường, bỏ url, ký tự lạ và chuẩn hóa khoảng trắng
 def clean_vietnamese_text(text):
-    """Làm sạch văn bản cơ bản: loại bỏ thẻ thừa, ký tự đặc biệt, chuẩn hóa khoảng trắng."""
     if not isinstance(text, str):
         return ""
     text = text.lower()
@@ -76,8 +76,8 @@ def clean_vietnamese_text(text):
     text = re.sub(r"\s+", " ", text).strip()
     return text
 
+# Chuẩn bị dữ liệu: ghép text, làm sạch và lọc các chuyên mục đủ số mẫu huấn luyện
 def preprocess_dataset(df):
-    """Chuẩn hóa dữ liệu theo chỉ dẫn của AI Agent Guide (Data Preparation)."""
     # Lấy tiêu đề, mô tả và nội dung ghép lại để tạo biểu diễn thông tin ngữ cảnh đầy đủ nhất
     titles = df["title"].fillna("")
     descriptions = df["description"].fillna("")
@@ -100,8 +100,8 @@ def preprocess_dataset(df):
     print(f"[*] Dữ liệu sau chuẩn hóa: {len(df)} bài báo thuộc {len(valid_categories)} chuyên mục hợp lệ.")
     return df
 
+# Vẽ ma trận nhầm lẫn (Confusion Matrix) dạng Heatmap và lưu vào file ảnh
 def plot_confusion_matrix(cm, labels, save_path):
-    """Vẽ và lưu ma trận nhầm lẫn (Confusion Matrix) dưới dạng Heatmap trực quan."""
     fig, ax = plt.subplots(figsize=(10, 8))
     im = ax.imshow(cm, interpolation="nearest", cmap=plt.cm.Blues)
     ax.figure.colorbar(im, ax=ax)
@@ -135,8 +135,8 @@ def plot_confusion_matrix(cm, labels, save_path):
     plt.close(fig)
     print(f"[+] Đã lưu biểu đồ ma trận nhầm lẫn tại: {os.path.relpath(save_path, PROJECT_DIR)}")
 
+# Huấn luyện mô hình Decision Tree và Naive Bayes, đánh giá và lưu kết quả
 def train_and_evaluate():
-    """Quy trình Phase 7 (Huấn luyện) & Phase 8 (Đánh giá chẩn đoán) theo chỉ dẫn John Rollins."""
     print("=" * 65)
     print(" GIAI ĐOẠN 7 & 8: HUẤN LUYỆN VÀ ĐÁNH GIÁ MÔ HÌNH AI PHÂN LOẠI ")
     print(" (Xử lý độc lập từ Web crawler, không phụ thuộc CSDL) ")
@@ -243,8 +243,8 @@ def train_and_evaluate():
 
     return dt_model, vectorizer
 
+# Dự đoán chuyên mục cho một bài báo mới dựa trên mô hình và TF-IDF đã lưu
 def predict_article_category(title, description, content):
-    """Hàm phụ trợ: Dự đoán chuyên mục cho một bài báo mới chưa dán nhãn."""
     if not os.path.exists(MODEL_PATH) or not os.path.exists(VECTORIZER_PATH):
         raise FileNotFoundError("Mô hình chưa được huấn luyện. Hãy chạy train_and_evaluate() trước.")
 
