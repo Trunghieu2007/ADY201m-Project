@@ -166,7 +166,7 @@ Tách bạch rõ ràng thành 2 bước độc lập:
   2. Kiểm tra database `ADY201m` và bảng `dbo.VnExpress_Articles` qua kết nối ODBC (`.\SQLEXPRESS`).
   3. Khử trùng lặp 2 lớp: loại `article_id` trùng ngay trong file JSON và đối chiếu với tập `article_id` đã có trong CSDL để chỉ thêm bài mới.
   4. Nạp siêu tốc theo lô với `cursor.fast_executemany = True` cùng cơ chế phục hồi chèn từng dòng nếu gặp lỗi.
-  5. Đi kèm script khởi tạo schema (`SQLschema.sql`) và script truy vấn mẫu (`DemoTruyVan.sql`).
+  5. Đi kèm script khởi tạo schema (`SQLschema.sql`).
 
 ### 1.6. Phân tích khám phá dữ liệu & Trực quan hóa (`Phase 3 - EDA`)
 
@@ -282,3 +282,30 @@ python "Phase 3 - EDA\Charts.py"
 # Bước 5: Huấn luyện và đánh giá mô hình AI phân loại chuyên mục
 python "Train model\TrainClassifier.py"
 ```
+
+---
+
+## 6. Hướng dẫn khởi chạy Báo cáo Jupyter Notebook trên trình duyệt
+
+Dự án cung cấp 2 tệp Jupyter Notebook được biên soạn chi tiết và khoa học:
+1. **`Bao_Cao_Tong_Hop_Hoan_Chinh.ipynb`**: Báo cáo tổng thể tích hợp lý thuyết Data Science, 9 giai đoạn của John Rollins, giải trình mã nguồn từng hàm kèm hình ảnh trực quan (4 biểu đồ EDA và Ma trận nhầm lẫn).
+2. **`Bao_Cao_Giai_Trinh_Source_Code.ipynb`**: Tài liệu kỹ thuật chi tiết phân rã từng hàm trong từng tệp mã nguồn.
+
+### Các lệnh khởi chạy trên Terminal / PowerShell:
+
+- **Khởi chạy Báo cáo Tổng hợp Hoàn chỉnh (Khuyến nghị):**
+  ```powershell
+  python -m jupyter notebook "Bao_Cao_Tong_Hop_Hoan_Chinh.ipynb"
+  ```
+
+- **Khởi chạy Báo cáo Giải trình Mã nguồn:**
+  ```powershell
+  python -m jupyter notebook "Bao_Cao_Giai_Trinh_Source_Code.ipynb"
+  ```
+
+- **Khởi chạy trên giao diện JupyterLab:**
+  ```powershell
+  python -m jupyter lab "Bao_Cao_Tong_Hop_Hoan_Chinh.ipynb"
+  ```
+
+> Trình duyệt web mặc định sẽ tự động mở lên giao diện Notebook. Để dừng server sau khi xem xong, nhấn tổ hợp phím **`Ctrl + C`** trên cửa sổ Terminal.
