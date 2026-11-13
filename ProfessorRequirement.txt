@@ -1,0 +1,90 @@
+QUY TRÌNH THỰC HIỆN DỰ ÁN DATA SCIENCE / AI
+Luồng tổng quát:
+Problem → Approach → Data → Preparation → EDA → Modeling → Evaluation → Deployment → Feedback
+1. Xác định bài toán – Business Understanding
+Xác định vấn đề thực tế cần giải quyết.
+Xác định Goal, Objectives, Stakeholders.
+Chuyển yêu cầu thực tế thành câu hỏi phân tích cụ thể và đo lường được.
+Xác định tiêu chí thành công của dự án.
+Output: Problem Statement + Objectives + Success Criteria.
+2. Xác định hướng phân tích – Analytic Approach
+Dựa vào câu hỏi để lựa chọn dạng bài toán:
+Descriptive: Điều gì đang xảy ra?
+Diagnostic: Tại sao xảy ra?
+Predictive: Điều gì sẽ xảy ra?
+Classification: Thuộc lớp nào?
+Regression: Giá trị dự đoán là bao nhiêu?
+Clustering/Association: Có những nhóm/quy luật nào?
+Output: Loại bài toán + phương pháp/thuật toán dự kiến.
+3. Xác định yêu cầu dữ liệu – Data Requirements
+Xác định:
+Cần những biến/thuộc tính nào?
+Dữ liệu dạng gì: số, category, text, ảnh, thời gian...?
+Dữ liệu nằm ở đâu?
+Khối lượng và chất lượng dữ liệu cần thiết.
+Output: Danh sách dữ liệu cần thu thập.
+4. Thu thập và tích hợp dữ liệu – Data Collection
+Thu thập từ:
+Database → SQL: SELECT, JOIN, GROUP BY, WHERE...
+CSV/Excel/JSON/API/Web...
+Nhiều bảng hoặc nhiều nguồn dữ liệu.
+Dùng SQL để trích xuất, lọc, tổng hợp và kết nối dữ liệu trước khi chuyển sang Python.
+Output: Raw Dataset.
+5. Thấu hiểu dữ liệu – Data Understanding / EDA
+Dùng Python: Pandas, NumPy, Matplotlib... để:
+Kiểm tra kích thước, kiểu dữ liệu.
+Mean, median, min, max, standard deviation.
+Kiểm tra missing values, duplicate, outlier.
+Phân phối dữ liệu bằng histogram/boxplot.
+Kiểm tra tương quan giữa các biến.
+Xem dữ liệu có thực sự đại diện cho bài toán không.
+Output: Báo cáo EDA + các vấn đề của dữ liệu.
+6. Chuẩn bị dữ liệu – Data Preparation
+Thực hiện:
+Xử lý missing values.
+Xóa duplicate, sửa dữ liệu sai.
+Xử lý outlier.
+Chuyển đổi kiểu dữ liệu.
+Encoding biến categorical.
+Normalization/Standardization.
+Feature selection.
+Feature Engineering tạo đặc trưng mới.
+Chia dữ liệu Train / Validation / Test.
+Output: Clean Dataset / Modeling Dataset.
+7. Xây dựng mô hình – Modeling
+Chọn một hoặc nhiều thuật toán.
+Huấn luyện trên training set.
+Thử các mô hình khác nhau.
+Điều chỉnh tham số/hyperparameter.
+So sánh các mô hình.
+Ví dụ:Logistic Regression / Decision Tree / Random Forest / KNN / SVM / K-means / Neural Network...
+Output: Trained Models.
+8. Đánh giá và cải tiến – Evaluation
+Chọn metric phù hợp:
+Classification: Accuracy, Precision, Recall, F1-score, ROC-AUC.
+Regression: MAE, MSE, RMSE, R².
+Clustering: Silhouette Score...
+Ngoài metric, cần kiểm tra: Mô hình có thực sự giải quyết câu hỏi ban đầu hay không?
+Nếu chưa đạt → quay lại Preparation / Feature Engineering / Modeling.
+Output: Best Model + Evaluation Report.
+9. Triển khai và trình bày kết quả – Deployment
+Đưa kết quả vào sử dụng thực tế dưới dạng:
+Dashboard.
+Report.
+API/Web application.
+Hệ thống dự báo/phân loại.
+Visualization hỗ trợ ra quyết định.
+Mục tiêu cuối cùng không chỉ là model chính xác, mà phải tạo được giá trị thực tế cho người dùng/tổ chức.
+
+| # | Evaluation criteria | Descriptions | Max. points |
+| --- | --- | --- | --- |
+| 1 | Final report document | Assessment of the submitted final report | 10 |
+| 2 | Understand the problem | Understand the problem to be solved, choose the approach | 10 |
+| 3 | Data Understand | Collect data, understand data and perform data preprocessing | 10 |
+| 4 | Analysis with SQL | Data Analysis with SQL- Demonstration | 10 |
+| 5 | Analysis with Python | Data Analysis with Python- Demonstration | 10 |
+| 6 | Visualization | Data Visualization with Python- Demonstration | 10 |
+| 7 | Regression Analysis | Data Analysis Using Regression Analysis- Demonstration | 10 |
+| 8 | Analysis tool | Use data analysis tools: R studio, Watson Studio, Power BI, Looker studio- Demonstration | 10 |
+| 9 | Q&A | Evaluation of students' comprehension of their project's execution | 20 |
+|  | **Total (in scale 100)** |  | **100** |
